@@ -811,11 +811,10 @@ window.bukaFormResit = async function(id) {
     (r.items || []).forEach(it => tambahItem(it));
     kiraSemula();
   } else {
-    // Resit baru
+    // Resit baru — NO RESIT belum dijana lagi
     document.getElementById('form-title').textContent = 'Resit Baru';
     hapusBtn.style.display = 'none';
-    const no = await getNextNoResit();
-    document.getElementById('form-no-resit').textContent = '#' + no;
+    document.getElementById('form-no-resit').textContent = 'AUTO';
     document.getElementById('form-tarikh').value = todayStr();
     tambahItem();
     tambahItem();
@@ -919,7 +918,18 @@ window.simpanResit = async function() {
   });
 
   const jumlah = items.reduce((s, i) => s + i.jumlah, 0);
-  const noResit = document.getElementById('form-no-resit').textContent.replace('#', '');
+
+  // Jana no. resit HANYA masa simpan (bukan masa buka form)
+  let noResit;
+  const displayed = document.getElementById('form-no-resit').textContent.replace('#', '');
+  if (currentResitId) {
+    // Edit resit lama — guna no. asal
+    noResit = displayed;
+  } else {
+    // Resit baru — baru jana nombor sekarang
+    noResit = await getNextNoResit();
+    document.getElementById('form-no-resit').textContent = '#' + noResit;
+  }
 
   const data = {
     noResit,
