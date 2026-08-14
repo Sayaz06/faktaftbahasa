@@ -735,12 +735,12 @@ window.simpanTetapan = async function() {
 
 // ═══════════════ NO RESIT AUTO ═══════════════
 async function getNextNoResit() {
-  const ref = doc(db, 'bengkel', currentUser.uid, 'tetapan', 'counter');
-  const snap = await getDoc(ref);
-  let next = 1;
-  if (snap.exists()) next = (snap.data().lastNo || 0) + 1;
-  await setDoc(ref, { lastNo: next });
-  return String(next).padStart(5, '0');
+  if (!allResit.length) return '00001';
+  const highest = allResit.reduce((max, r) => {
+    const n = parseInt(r.noResit) || 0;
+    return n > max ? n : max;
+  }, 0);
+  return String(highest + 1).padStart(5, '0');
 }
 
 // ═══════════════ SUBSCRIBE RESIT ═══════════════
