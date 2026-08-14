@@ -838,29 +838,38 @@ function setAutoSaveStatus(msg) {
   if (el) el.textContent = msg;
 }
 
-function pasangAutoSaveListeners() {
+  function pasangAutoSaveListeners() {
   const form = document.getElementById('sec-form');
   form.querySelectorAll('input, textarea').forEach(el => {
     el.addEventListener('input', triggerAutoSave);
-    el.addEventListener('change', triggerAutoSave);
+    el.addEventListener('blur', triggerAutoSaveOnBlur);
   });
 }
 
 function triggerAutoSave() {
-  // Semak ada input berguna atau tidak
   const nama = document.getElementById('form-nama').value.trim();
   const plate = document.getElementById('form-plate').value.trim();
   const adaItem = [...document.querySelectorAll('#item-list .item-row')]
     .some(row => row.querySelectorAll('input')[0].value.trim());
 
-  if (!nama && !plate && !adaItem) return; // Kosong — jangan save
+  if (!nama && !plate && !adaItem) return;
 
   formDirty = true;
   setAutoSaveStatus('✏️ Menaip...');
   clearAutoSaveTimer();
-  autoSaveTimer = setTimeout(simpanResit, 1800); // Auto-save 1.8s selepas berhenti taip
 }
 
+function triggerAutoSaveOnBlur() {
+  const nama = document.getElementById('form-nama').value.trim();
+  const plate = document.getElementById('form-plate').value.trim();
+  const adaItem = [...document.querySelectorAll('#item-list .item-row')]
+    .some(row => row.querySelectorAll('input')[0].value.trim());
+
+  if (!nama && !plate && !adaItem) return;
+
+  simpanResit();
+}
+  
 function clearForm() {
   document.getElementById('form-nama').value = '';
   document.getElementById('form-tel').value = '';
