@@ -466,9 +466,10 @@
       <textarea class="input-field" id="form-nota" rows="3" placeholder="Nota tambahan untuk pelanggan..."></textarea>
     </div>
 
-    <!-- BUTANG SIMPAN -->
-    <button class="btn btn-primary" style="margin-bottom:10px" onclick="simpanResit()">💾 Simpan Resit</button>
-    <button class="btn btn-secondary" style="margin-bottom:30px" onclick="previewResit()">👁 Preview & Print / PDF</button>
+<!-- STATUS AUTO-SAVE -->
+    <div id="autosave-status" style="text-align:center;font-size:12px;color:var(--text3);margin-bottom:12px;min-height:18px"></div>
+    <button class="btn btn-secondary" style="margin-bottom:10px" onclick="previewResit()">🖨️ Print / PDF</button>
+    <button class="btn btn-primary" style="margin-bottom:30px" onclick="kongsiResit()">📤 Kongsi Resit</button>
 
   </div>
 </div>
@@ -790,13 +791,17 @@ window.filterResit = function() {
 };
 
 // ═══════════════ FORM RESIT ═══════════════
+let autoSaveTimer = null;
+let formDirty = false;
+
 window.bukaFormResit = async function(id) {
   currentResitId = id;
+  formDirty = false;
+  clearAutoSaveTimer();
   const hapusBtn = document.getElementById('btn-hapus-resit');
   clearForm();
 
   if (id) {
-    // Edit resit lama
     document.getElementById('form-title').textContent = 'Edit Resit';
     hapusBtn.style.display = '';
     const r = allResit.find(x => x.id === id);
@@ -811,16 +816,50 @@ window.bukaFormResit = async function(id) {
     (r.items || []).forEach(it => tambahItem(it));
     kiraSemula();
   } else {
-    // Resit baru — NO RESIT belum dijana lagi
     document.getElementById('form-title').textContent = 'Resit Baru';
     hapusBtn.style.display = 'none';
-    document.getElementById('form-no-resit').textContent = 'AUTO';
+    document.getElementById('form-no-resit').textContent = 'DRAF';
     document.getElementById('form-tarikh').value = todayStr();
     tambahItem();
     tambahItem();
   }
+
+  // Pasang auto-save listener pada semua input dalam form
+  setTimeout(pasangAutoSaveListeners, 100);
   showSection('sec-form');
 };
+
+function clearAutoSaveTimer() {
+  if (autoSaveTimer) { clearTimeout(autoSaveTimer); autoSaveTimer = null; }
+}
+
+function setAutoSaveStatus(msg) {
+  const el = document.getElementById('autosave-status');
+  if (el) el.textContent = msg;
+}
+
+function pasangAutoSaveListeners() {
+  const form = document.getElementById('sec-form');
+  form.querySelectorAll('input, textarea').forEach(el => {
+    el.addEventListener('input', triggerAutoSave);
+    el.addEventListener('change', triggerAutoSave);
+  });
+}
+
+function triggerAutoSave() {
+  // Semak ada input berguna atau tidak
+  const nama = document.getElementById('form-nama').value.trim();
+  const plate = document.getElementById('form-plate').value.trim();
+  const adaItem = [...document.querySelectorAll('#item-list .item-row')]
+    .some(row => row.querySelectorAll('input')[0].value.trim());
+
+  if (!nama && !plate && !adaItem) return; // Kosong — jangan save
+
+  formDirty = true;
+  setAutoSaveStatus('✏️ Menaip...');
+  clearAutoSaveTimer();
+  autoSaveTimer = setTimeout(simpanResit, 1800); // Auto-save 1.8s selepas berhenti taip
+}
 
 function clearForm() {
   document.getElementById('form-nama').value = '';
@@ -907,7 +946,10 @@ document.addEventListener('click', e => {
 // ═══════════════ SIMPAN RESIT ═══════════════
 window.simpanResit = async function() {
   const nama = document.getElementById('form-nama').value.trim();
-  if (!nama) { showToast('⚠️ Masukkan nama pelanggan'); return; }
+  if (!nama) { setAutoSaveStatus(''); return; }
+
+  clearAutoSaveTimer();
+  setAutoSaveStatus('💾 Menyimpan...');
 
   const items = [];
   document.querySelectorAll('#item-list .item-row').forEach(row => {
@@ -919,14 +961,11 @@ window.simpanResit = async function() {
 
   const jumlah = items.reduce((s, i) => s + i.jumlah, 0);
 
-  // Jana no. resit HANYA masa simpan (bukan masa buka form)
   let noResit;
-  const displayed = document.getElementById('form-no-resit').textContent.replace('#', '');
+  const displayed = document.getElementById('form-no-resit').textContent.replace('#', '').trim();
   if (currentResitId) {
-    // Edit resit lama — guna no. asal
     noResit = displayed;
   } else {
-    // Resit baru — baru jana nombor sekarang
     noResit = await getNextNoResit();
     document.getElementById('form-no-resit').textContent = '#' + noResit;
   }
@@ -961,10 +1000,11 @@ window.simpanResit = async function() {
       });
     }
 
-    showToast('✅ Resit #' + noResit + ' disimpan');
-    showSection('sec-resit');
+setAutoSaveStatus('✅ Disimpan #' + noResit);
+    formDirty = false;
   } catch(e) {
-    showToast('❌ Gagal simpan: ' + e.message);
+    setAutoSaveStatus('❌ Gagal simpan');
+    showToast('❌ ' + e.message);
   }
 };
 
@@ -1240,6 +1280,52 @@ window.printResit = function() {
   </head><body>${html}</body></html>`);
   printWin.document.close();
   setTimeout(() => { printWin.focus(); printWin.print(); }, 400);
+};
+
+window.kongsiResit = async function() {
+  // Bina resit sebagai HTML dalam div tersembunyi
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;background:#fff;width:390px;padding:0';
+  wrap.innerHTML = binaHtmlResit();
+  document.body.appendChild(wrap);
+
+  try {
+    const { default: html2canvas } = await import('https://esm.sh/html2canvas@1.4.1');
+    setAutoSaveStatus('📸 Menjana gambar...');
+    const canvas = await html2canvas(wrap, {
+      scale: 2, useCORS: true, backgroundColor: '#ffffff',
+      width: 390, windowWidth: 390
+    });
+    document.body.removeChild(wrap);
+
+    canvas.toBlob(async blob => {
+      const file = new File([blob], 'resit-' + document.getElementById('form-no-resit').textContent.replace('#','') + '.png', { type: 'image/png' });
+
+      if (navigator.share && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'Resit Bengkel Ruzaimi',
+            text: 'Resit servis ' + document.getElementById('form-nama').value,
+            files: [file]
+          });
+          setAutoSaveStatus('✅ Dikongsi');
+        } catch(e) {
+          if (e.name !== 'AbortError') showToast('❌ Gagal kongsi');
+        }
+      } else {
+        // Fallback — download gambar
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = file.name; a.click();
+        URL.revokeObjectURL(url);
+        showToast('📥 Gambar disimpan — boleh kongsi dari galeri');
+      }
+    }, 'image/png');
+  } catch(e) {
+    document.body.removeChild(wrap);
+    showToast('❌ Gagal jana gambar: ' + e.message);
+    setAutoSaveStatus('');
+  }
 };
 
 // Overlay klik luar untuk tutup
