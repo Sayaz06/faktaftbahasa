@@ -841,7 +841,7 @@ window.tambahItem = function(data = {}) {
   div.className = 'item-row';
   div.innerHTML = `
     <input class="item-input" placeholder="Nama kerja/part" value="${data.nama || ''}" oninput="kiraSemula()">
-    <input class="item-input num" type="number" min="1" placeholder="1" value="${data.qty || ''}" oninput="kiraSemula()">
+    <input class="item-input num" type="number" min="1" placeholder="1" value="${data.qty !== undefined ? data.qty : 1}" oninput="kiraSemula()">
     <input class="item-input num" type="number" min="0" step="0.01" placeholder="0.00" value="${data.harga || ''}" oninput="kiraSemula()">
     <div class="item-input num" style="background:none;border-color:transparent;color:var(--accent);font-weight:600" data-jumlah>RM 0.00</div>
     <button class="btn-del-item" onclick="this.closest('.item-row').remove();kiraSemula()">✕</button>
