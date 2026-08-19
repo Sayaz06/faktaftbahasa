@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Istigfar Kindle</title>
   <style>
-    /* Skrin Kindle ~10.86cm x 15.78cm (portrait) */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%;
@@ -15,18 +14,18 @@
       -webkit-text-size-adjust: 100%;
     }
     body {
-      padding: 8px;
+      padding: 6px;
       max-width: 420px;
       margin: 0 auto;
     }
     .screen { display: none; }
     .screen.active { display: block; }
 
-    h1 { font-size: 1.2rem; text-align: center; margin: 6px 0 8px; }
-    .sub { text-align: center; font-size: 0.8rem; color: #333; margin-bottom: 10px; }
+    h1 { font-size: 1.15rem; text-align: center; margin: 4px 0 6px; }
+    .sub { text-align: center; font-size: 0.78rem; color: #333; margin-bottom: 8px; }
 
     .btn {
-      display: block; width: 100%; padding: 13px 10px; margin: 7px 0;
+      display: block; width: 100%; padding: 12px 8px; margin: 5px 0;
       font-size: 1.05rem; font-weight: bold; text-align: center;
       border: 2px solid #000; background: #fff; color: #000;
       cursor: pointer; border-radius: 6px;
@@ -34,11 +33,37 @@
     .btn:active { background: #000; color: #fff; }
     .btn-primary { background: #000; color: #fff; }
     .btn-primary:active { background: #333; }
-    .btn-sm {
-      padding: 9px 8px; font-size: 0.88rem; width: auto;
-      display: inline-block; margin: 3px;
+
+    /* 4 butang sebaris */
+    .btn-row {
+      display: table;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 4px 0;
+      margin: 4px 0 2px;
     }
-    .btn-sm.on { background: #000; color: #fff; }
+    .btn-row .btn-sm {
+      display: table-cell;
+      width: 25%;
+      padding: 10px 2px;
+      font-size: 0.82rem;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+      border-radius: 6px;
+      vertical-align: middle;
+    }
+    .btn-row .btn-sm.on {
+      background: #000;
+      color: #fff;
+    }
+    .btn-row .btn-sm:active {
+      background: #000;
+      color: #fff;
+    }
 
     .pin-input {
       width: 100%; padding: 12px; font-size: 1.4rem; text-align: center;
@@ -48,30 +73,36 @@
     }
 
     .status-bar {
-      border: 1px solid #000; padding: 6px 8px; font-size: 0.75rem;
-      text-align: center; margin-bottom: 8px; background: #f5f5f5;
+      border: 1px solid #000; padding: 4px 6px; font-size: 0.7rem;
+      text-align: center; margin-bottom: 4px; background: #f5f5f5;
     }
     .counter-box {
-      border: 3px solid #000; border-radius: 10px; padding: 12px 10px;
-      text-align: center; margin: 8px 0; min-height: 140px;
+      border: 3px solid #000; border-radius: 10px; padding: 8px 8px;
+      text-align: center; margin: 4px 0;
     }
-    .mode-label { font-size: 0.72rem; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 3px; }
-    .side-label { font-size: 0.72rem; font-weight: bold; margin-bottom: 3px; }
+    .mode-label { font-size: 0.68rem; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 2px; }
+    .side-label { font-size: 0.68rem; font-weight: bold; margin-bottom: 2px; }
     .big-text {
-      font-size: 1.35rem; line-height: 1.35; font-weight: bold;
-      word-break: break-word; margin: 6px 0; white-space: pre-wrap;
+      font-size: 1.3rem; line-height: 1.35; font-weight: bold;
+      word-break: break-word; margin: 4px 0; white-space: pre-wrap;
+      text-align: center;
+    }
+    .big-text.tips-mode {
+      font-size: 0.95rem;
+      line-height: 1.45;
+      font-weight: normal;
+      text-align: center;
     }
     .card-img {
-      display: block; max-width: 100%; max-height: 160px;
-      margin: 6px auto; border: 1px solid #000;
+      display: block; max-width: 100%; max-height: 220px;
+      margin: 4px auto; border: 1px solid #000;
     }
-    .progress { font-size: 0.8rem; margin-top: 4px; }
-    .meta { font-size: 0.75rem; color: #444; margin-top: 3px; }
+    .progress { font-size: 0.75rem; margin-top: 2px; }
+    .meta { font-size: 0.7rem; color: #444; margin-top: 2px; }
 
-    .row { text-align: center; margin: 5px 0; }
-    .msg { text-align: center; font-size: 0.85rem; margin: 8px 0; min-height: 1.1em; }
+    .msg { text-align: center; font-size: 0.8rem; margin: 4px 0; min-height: 1em; }
     .error { color: #800; font-weight: bold; }
-    .footer { text-align: center; font-size: 0.68rem; color: #666; margin-top: 10px; }
+    .footer { text-align: center; font-size: 0.65rem; color: #666; margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -89,7 +120,7 @@
     <div class="sub" id="menu-user">—</div>
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
-    <button id="btn-logout" class="btn btn-sm" style="margin-top:14px;width:auto;display:block;margin-left:auto;margin-right:auto;">Logout</button>
+    <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
   </div>
 
@@ -104,13 +135,11 @@
       <div class="meta" id="play-meta"></div>
     </div>
     <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
-    <div class="row">
-      <button id="btn-flip" class="btn btn-sm">Flip</button>
-      <button id="btn-tips" class="btn btn-sm">Tips</button>
-    </div>
-    <div class="row">
-      <button id="btn-back-menu" class="btn btn-sm">Menu</button>
-      <button id="btn-reload" class="btn btn-sm">Reload</button>
+    <div class="btn-row">
+      <button id="btn-flip" class="btn-sm">Flip</button>
+      <button id="btn-tips" class="btn-sm">Tips</button>
+      <button id="btn-back-menu" class="btn-sm">Menu</button>
+      <button id="btn-reload" class="btn-sm">Reload</button>
     </div>
     <div id="play-err" class="msg error"></div>
   </div>
@@ -146,14 +175,13 @@
     ];
 
     var currentUser = null;
-    var mode = ''; // bahasa | fakta
+    var mode = '';
     var cards = [];
     var cardIndex = 0;
     var isFlipped = false;
     var showTips = false;
     var isBusy = false;
 
-    // Cache data
     var allBahasaDrawers = [];
     var allBahasaPerkataan = [];
     var allDrawers = [];
@@ -187,7 +215,6 @@
       return 'Fasa ' + (fasaIndex + 1) + ' — +' + (8 + (fasaIndex - 8)) + ' hari';
     }
 
-    // ── CARD BUILDERS (mirror phone) ──
     function cardsFromBahasaDrawer(d, isSR) {
       var out = [];
       var title = d.title || 'Laci';
@@ -265,7 +292,6 @@
       return out;
     }
 
-    // ── LOAD DATA ──
     function loadCollections(cb) {
       var uid = currentUser.uid;
       Promise.all([
@@ -288,7 +314,6 @@
       });
     }
 
-    // ── SR ──
     function loadSROverdue(colName) {
       return db.collection('users').doc(currentUser.uid).collection(colName).get()
         .then(function(snap) {
@@ -371,7 +396,6 @@
       }
     }
 
-    // ── BUILD BAHASA (mirror rebuildBahasa) ──
     function rebuildBahasaCards() {
       activePerkataan = null;
       for (var i = 0; i < allBahasaPerkataan.length; i++) {
@@ -403,7 +427,6 @@
 
       var saved = activePerkataan.lastIndex || 0;
       if (saved >= cards.length) saved = 0;
-      // Align ke F0 laci semasa
       if (cards[saved] && !cards[saved].isF0 && !cards[saved].isTamat) {
         for (var k = saved; k >= 0; k--) {
           if (cards[k].isF0 && cards[k].drawerId === cards[saved].drawerId) {
@@ -473,7 +496,6 @@
       return true;
     }
 
-    // ── START MODE ──
     function startBahasa() {
       mode = 'bahasa';
       isFlipped = false;
@@ -536,7 +558,6 @@
       });
     }
 
-    // ── RENDER ──
     function setCardImage(url) {
       var img = document.getElementById('card-img');
       if (!img) return;
@@ -551,13 +572,16 @@
     }
 
     function renderCard() {
+      var mainEl = document.getElementById('main-text');
       if (!cards.length) {
         setText('main-text', 'Tiada kad');
+        mainEl.className = 'big-text';
         setCardImage('');
         return;
       }
       if (cardIndex >= cards.length) {
         setText('main-text', 'Selesai');
+        mainEl.className = 'big-text';
         setText('side-label', '');
         setText('play-progress', '');
         setCardImage('');
@@ -580,22 +604,24 @@
       if (showTips) {
         setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
         setText('main-text', c.tips ? c.tips : '(Tiada tips)');
-        document.getElementById('btn-tips').className = 'btn btn-sm on';
-        document.getElementById('btn-flip').className = 'btn btn-sm';
+        mainEl.className = 'big-text tips-mode';
+        document.getElementById('btn-tips').className = 'btn-sm on';
+        document.getElementById('btn-flip').className = 'btn-sm';
       } else if (isFlipped) {
         setText('side-label', 'MUKA BELAKANG');
         setText('main-text', c.back || '(Tiada terjemahan)');
-        document.getElementById('btn-flip').className = 'btn btn-sm on';
-        document.getElementById('btn-tips').className = 'btn btn-sm';
+        mainEl.className = 'big-text';
+        document.getElementById('btn-flip').className = 'btn-sm on';
+        document.getElementById('btn-tips').className = 'btn-sm';
       } else {
         setText('side-label', 'MUKA DEPAN');
         setText('main-text', c.front || '(kosong)');
-        document.getElementById('btn-flip').className = 'btn btn-sm';
-        document.getElementById('btn-tips').className = 'btn btn-sm';
+        mainEl.className = 'big-text';
+        document.getElementById('btn-flip').className = 'btn-sm';
+        document.getElementById('btn-tips').className = 'btn-sm';
       }
     }
 
-    // ── NEXT (mirror phone completion flow) ──
     function findNextDrawerStart(fromIdx) {
       var i = fromIdx + 1;
       while (i < cards.length && !cards[i].isF0 && !cards[i].isTamat) i++;
@@ -645,7 +671,6 @@
       var isSR = c.isSR || srModeAktif;
 
       var done = function() {
-        // Cuba SR seterusnya dulu
         if (srQueue.length) {
           srLaciSemasa = srQueue.shift();
           if (loadSRIntoCards(srLaciSemasa, mode)) {
@@ -659,7 +684,6 @@
           }
         }
 
-        // Kembali ke countdown biasa
         var ok;
         if (mode === 'bahasa') ok = rebuildBahasaCards();
         else ok = rebuildFaktaCards();
@@ -670,8 +694,6 @@
           return;
         }
 
-        // Jump to next drawer start after finished one — use saved index or next F0
-        // After SR, restore lastIndex from perkataan/topic
         isFlipped = false;
         showTips = false;
         setText('play-status', mode === 'bahasa'
@@ -686,19 +708,16 @@
         ? selesaiSRUlangan(drawerId, mode)
         : daftarSRBaru(drawerId, mode);
 
-      // Advance index past this tamat card
       var nextIdx = findNextDrawerStart(cardIndex);
       var isLast = nextIdx >= cards.length;
 
       p.then(function() {
         if (isSR) {
-          // After SR, just done() which rebuilds normal queue from lastIndex
           done();
           return;
         }
 
         if (isLast && mode === 'bahasa') {
-          // All drawers in perkataan done → next perkataan
           lompatPerkataanSeterusnya().then(function(ok) {
             isBusy = false;
             setText('play-err', '');
@@ -740,8 +759,6 @@
       if (!cards.length || cardIndex >= cards.length) return;
 
       var c = cards[cardIndex];
-
-      // If on tamat card → handle completion
       if (c.isTamat) {
         afterTamat(c);
         return;
@@ -754,12 +771,10 @@
         syncIndex(cardIndex);
         renderCard();
       } else {
-        // Shouldn't happen if every drawer ends with isTamat
         renderCard();
       }
     }
 
-    // ── AUTH ──
     function cubaLoginPin() {
       var pin = document.getElementById('pin-input').value.trim();
       if (!pin || !/^\d{4,6}$/.test(pin)) {
