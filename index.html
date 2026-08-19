@@ -57,6 +57,10 @@
     }
     .btn-row .btn-sm.on { background: #000; color: #fff; }
     .btn-row .btn-sm:active { background: #000; color: #fff; }
+    .btn-row .btn-menu {
+      background: #ddd;
+      color: #000;
+    }   
 
     .pin-input {
       width: 100%; padding: 12px; font-size: 1.4rem; text-align: center;
@@ -134,11 +138,11 @@
     </div>
     <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
     <div class="btn-row">
-      <button id="btn-flip" class="btn-sm">Flip</button>
-      <button id="btn-tips" class="btn-sm">Tips</button>
-      <button id="btn-back-menu" class="btn-sm">Menu</button>
+      <button id="btn-back-menu" class="btn-sm btn-menu">Menu</button>
+      <button id="btn-flip" class="btn-sm">🔄 Flip</button>
+      <button id="btn-tips" class="btn-sm">💡 Tips</button>
       <button id="btn-reload" class="btn-sm">Reload</button>
-    </div>
+    </div>    
     <div id="play-err" class="msg error"></div>
   </div>
 
@@ -233,25 +237,50 @@
       var tips0 = (d.tipsFasa0 || '').trim();
       var tips12 = (d.tips || '').trim();
       var img = d.imageUrl || '';
+      var r, i;
 
-      out.push({
-        front: title, back: '', tips: tips0, imageUrl: img,
-        title: title, drawerId: d.id, isF0: true, isTamat: false, isSR: !!isSR
-      });
+      // F0 × 5
+      for (r = 0; r < 5; r++) {
+        out.push({
+          front: title, back: '', tips: tips0, imageUrl: img,
+          title: title, drawerId: d.id, isF0: true, isTamat: false, isSR: !!isSR, fasa: 0
+        });
+      }
 
       var notes = (d.notes || '').trim();
+      var noteCards = [];
       if (notes) {
         var lines = notes.split('\n');
-        for (var i = 0; i < lines.length; i++) {
+        for (i = 0; i < lines.length; i++) {
           var line = lines[i].trim();
           if (!line) continue;
           var parts = line.split('=');
-          out.push({
+          noteCards.push({
             front: parts[0].trim(),
             back: parts.length > 1 ? parts.slice(1).join('=').trim() : '',
             tips: tips12, imageUrl: img,
             title: title, drawerId: d.id, isF0: false, isTamat: false, isSR: !!isSR
           });
+        }
+      }
+
+      // F1 × 5 (setiap baris notes)
+      for (r = 0; r < 5; r++) {
+        for (i = 0; i < noteCards.length; i++) {
+          var c1 = {};
+          for (var k1 in noteCards[i]) c1[k1] = noteCards[i][k1];
+          c1.fasa = 1;
+          out.push(c1);
+        }
+      }
+
+      // F2 × 5 (setiap baris notes)
+      for (r = 0; r < 5; r++) {
+        for (i = 0; i < noteCards.length; i++) {
+          var c2 = {};
+          for (var k2 in noteCards[i]) c2[k2] = noteCards[i][k2];
+          c2.fasa = 2;
+          out.push(c2);
         }
       }
 
@@ -262,19 +291,21 @@
       });
       return out;
     }
-
+    
     function cardsFromFaktaDrawer(d, isSR) {
       var out = [];
       var tips = (d.tipsFakta || d.tips || '').trim();
       var title = d.title || 'Laci';
+      var itemCards = [];
+      var i, r;
 
       if (d.items && d.items.length) {
-        for (var i = 0; i < d.items.length; i++) {
+        for (i = 0; i < d.items.length; i++) {
           var it = d.items[i];
           var ayat = (it.ayat || it.text || '').trim();
           if (!ayat) continue;
           var parts = ayat.split('=');
-          out.push({
+          itemCards.push({
             front: parts[0].trim(),
             back: parts.length > 1 ? parts.slice(1).join('=').trim() : (it.maksud || ''),
             tips: tips, imageUrl: it.imageUrl || d.imageUrl || '',
@@ -287,12 +318,25 @@
           var line = lines[j].trim();
           if (!line) continue;
           var p = line.split('=');
-          out.push({
+          itemCards.push({
             front: p[0].trim(),
             back: p.length > 1 ? p.slice(1).join('=').trim() : '',
             tips: tips, imageUrl: d.imageUrl || '',
             title: title, drawerId: d.id, isF0: false, isTamat: false, isSR: !!isSR
           });
+        }
+      }
+
+      // F0 × 5, F1 × 5, F2 × 5
+      for (var fasa = 0; fasa < 3; fasa++) {
+        for (r = 0; r < 5; r++) {
+          for (i = 0; i < itemCards.length; i++) {
+            var c = {};
+            for (var k in itemCards[i]) c[k] = itemCards[i][k];
+            c.fasa = fasa;
+            c.isF0 = (fasa === 0);
+            out.push(c);
+          }
         }
       }
 
@@ -302,7 +346,7 @@
         title: title, drawerId: d.id, isF0: false, isTamat: true, isSR: !!isSR
       });
       return out;
-    }
+    }   
 
     function loadCollections(cb) {
       var uid = currentUser.uid;
@@ -592,14 +636,12 @@
       }
 
       var c = cards[cardIndex];
-      var label = (srModeAktif ? 'SR · ' : '') + (c.isF0 ? 'F0 · ' : c.isTamat ? 'TAMAT · ' : '') + (c.title || '');
+      var fasaLabel = c.isTamat ? 'TAMAT · ' : (c.isF0 || c.fasa === 0) ? 'F0 · ' : (c.fasa === 1) ? 'F1 · ' : (c.fasa === 2) ? 'F2 · ' : '';
+      var label = (srModeAktif ? 'SR · ' : '') + fasaLabel + (c.title || '');      
       setText('play-mode', label);
       setText('play-progress', (cardIndex + 1) + ' / ' + cards.length);
 
-      var meta = '';
-      if (mode === 'bahasa' && activePerkataan) meta = 'Perkataan: ' + (activePerkataan.name || '');
-      if (mode === 'fakta' && activeTopic) meta = 'Topik: ' + (activeTopic.name || '');
-      setText('play-meta', meta);
+      setText('play-meta', '');
 
       var displayText = '';
       if (showTips) {
