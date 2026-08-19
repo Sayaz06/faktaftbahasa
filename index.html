@@ -58,6 +58,10 @@
       display: inline-block;
       margin: 4px;
     }
+    .btn-sm.on {
+      background: #000;
+      color: #fff;
+    }
 
     .counter-box {
       border: 3px solid #000;
@@ -65,7 +69,7 @@
       padding: 18px 12px;
       text-align: center;
       margin: 14px 0;
-      min-height: 140px;
+      min-height: 160px;
     }
     .mode-label {
       font-size: 0.8rem;
@@ -80,11 +84,12 @@
       font-weight: bold;
     }
     .big-text {
-      font-size: 1.6rem;
-      line-height: 1.35;
+      font-size: 1.5rem;
+      line-height: 1.4;
       font-weight: bold;
       word-break: break-word;
       margin: 10px 0;
+      white-space: pre-wrap;
     }
     .progress {
       font-size: 0.9rem;
@@ -94,6 +99,12 @@
       font-size: 0.8rem;
       color: #444;
       margin-top: 6px;
+    }
+    .side-label {
+      font-size: 0.75rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+      letter-spacing: 0.05em;
     }
 
     .status-bar {
@@ -121,7 +132,7 @@
       text-align: center;
       font-size: 0.7rem;
       color: #666;
-      margin-top: 20px;
+      margin-top: 16px;
     }
   </style>
 </head>
@@ -141,12 +152,18 @@
     <div class="counter-box">
       <div class="mode-label" id="mode-label">—</div>
       <div class="phase" id="phase-label">—</div>
+      <div class="side-label" id="side-label">MUKA DEPAN</div>
       <div class="big-text" id="main-text">Belum ada sesi aktif</div>
       <div class="progress" id="progress-label"></div>
       <div class="meta" id="meta-label"></div>
     </div>
 
     <button id="btn-next" class="btn btn-primary">SETERUSNYA →</button>
+
+    <div class="row">
+      <button id="btn-flip" class="btn btn-sm">Flip</button>
+      <button id="btn-tips" class="btn btn-sm">Tips</button>
+    </div>
 
     <div class="row">
       <button id="btn-mode-bahasa" class="btn btn-sm">Bahasa</button>
@@ -160,7 +177,7 @@
     </div>
 
     <div id="err-msg" class="error"></div>
-    <div class="footer">Tap SETERUSNYA = next laci / tick ikut phone</div>
+    <div class="footer">Flip = muka / maksud · Tips = tips sebutan</div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -184,6 +201,8 @@
     var currentUser = null;
     var unsubSession = null;
     var sessionData = null;
+    var isFlipped = false;
+    var showTips = false;
 
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
@@ -203,13 +222,47 @@
       setText('err-msg', msg || '');
     }
 
+    function updateDisplay() {
+      if (!sessionData) {
+        setText('main-text', 'Belum ada sesi aktif');
+        setText('side-label', '');
+        return;
+      }
+
+      var front = sessionData.text || sessionData.title || '(kosong)';
+      var back = sessionData.translation || '';
+      var tips = sessionData.tips || '';
+
+      if (showTips) {
+        setText('side-label', 'TIPS SEBUTAN');
+        setText('main-text', tips ? tips : '(Tiada tips untuk kad ini)');
+        document.getElementById('btn-tips').className = 'btn btn-sm on';
+        document.getElementById('btn-flip').className = 'btn btn-sm';
+      } else if (isFlipped) {
+        setText('side-label', 'MUKA BELAKANG');
+        setText('main-text', back ? back : '(Tiada terjemahan)');
+        document.getElementById('btn-flip').className = 'btn btn-sm on';
+        document.getElementById('btn-tips').className = 'btn btn-sm';
+      } else {
+        setText('side-label', 'MUKA DEPAN');
+        setText('main-text', front);
+        document.getElementById('btn-flip').className = 'btn btn-sm';
+        document.getElementById('btn-tips').className = 'btn btn-sm';
+      }
+    }
+
     function renderSession(data) {
       sessionData = data || null;
+      // Reset view bila data baru datang (next laci)
+      isFlipped = false;
+      showTips = false;
+
       if (!data) {
         setText('status-bar', 'Tiada sesi aktif — buka countdown di phone');
         setText('mode-label', '—');
         setText('phase-label', '—');
         setText('main-text', 'Belum ada sesi aktif');
+        setText('side-label', '');
         setText('progress-label', '');
         setText('meta-label', '');
         return;
@@ -218,16 +271,15 @@
       var mode = data.mode || '—';
       var isSR = !!data.isSR;
       var phase = data.phase || '';
-      var text = data.text || data.title || '(kosong)';
       var progress = data.progress || '';
       var meta = data.meta || '';
 
       setText('status-bar', 'Sync OK · ' + (data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString() : ''));
       setText('mode-label', (isSR ? 'SR · ' : '') + (mode === 'bahasa' ? 'LACI BAHASA' : mode === 'fakta' ? 'LACI FAKTA' : String(mode).toUpperCase()));
       setText('phase-label', phase);
-      setText('main-text', text);
       setText('progress-label', progress);
       setText('meta-label', meta);
+      updateDisplay();
     }
 
     function startSessionListener(uid) {
@@ -284,7 +336,23 @@
     };
 
     document.getElementById('btn-next').onclick = function() {
+      isFlipped = false;
+      showTips = false;
       sendCommand('next');
+    };
+
+    document.getElementById('btn-flip').onclick = function() {
+      if (!sessionData) return;
+      showTips = false;
+      isFlipped = !isFlipped;
+      updateDisplay();
+    };
+
+    document.getElementById('btn-tips').onclick = function() {
+      if (!sessionData) return;
+      isFlipped = false;
+      showTips = !showTips;
+      updateDisplay();
     };
 
     document.getElementById('btn-enter-sr').onclick = function() {
