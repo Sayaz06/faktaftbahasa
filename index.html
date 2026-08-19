@@ -344,11 +344,13 @@
         }
       }
 
-      // Setiap baris × 5 kali (mirrors rest count phone)
+      // Setiap baris × 5 (F1+F2 digabung sebagai 5 countdown per baris di Kindle)
       for (i = 0; i < itemCards.length; i++) {
         for (r = 0; r < 5; r++) {
           var c = {};
           for (var k in itemCards[i]) c[k] = itemCards[i][k];
+          c.itemIndex = i;
+          c.isLastOfBaris = (r === 4);
           out.push(c);
         }
       }
@@ -359,7 +361,7 @@
         title: title, drawerId: d.id, isF0: false, isTamat: true, isSR: !!isSR
       });
       return out;
-    }  
+    }
 
     function loadCollections(cb) {
       var uid = currentUser.uid;
@@ -398,7 +400,7 @@
         });
     }
 
-    function daftarSRBaru(drawerId, modeName) {
+    function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {
       var drawer, srColl;
       if (modeName === 'fakta') {
         drawer = allDrawers.filter(function(d) { return d.id === drawerId; })[0];
@@ -409,7 +411,13 @@
       }
       if (!drawer) return Promise.resolve();
 
-      var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(drawerId);
+      // Fakta: satu baris = satu SR (docId = drawerId_b{itemIndex})
+      var srDocId = drawerId;
+      if (modeName === 'fakta' && itemIndex !== undefined && itemIndex !== null) {
+        srDocId = drawerId + '_b' + itemIndex;
+      }
+
+      var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(srDocId);
       return ref.get().then(function(snap) {
         if (snap.exists) return;
         var now = Date.now();
@@ -421,21 +429,27 @@
           nextDueAt: now + SR_INTERVALS[0],
           sejarahFasa: [],
           createdAt: now,
-          mode: modeName
+          mode: modeName,
+          srDocId: srDocId
         };
         if (modeName === 'bahasa') {
           srData.perkataanId = drawer.perkataanId || '';
           srData.jenisId = drawer.jenisId || '';
         } else {
           srData.topicId = drawer.topicId || '';
+          if (itemIndex !== undefined && itemIndex !== null) {
+            srData.itemIndex = itemIndex;
+            srData.barisText = (barisText || '').slice(0, 200);
+          }
         }
         return ref.set(srData);
       });
     }
 
-    function selesaiSRUlangan(drawerId, modeName) {
+    function selesaiSRUlangan(srDocId, modeName) {
       var srColl = modeName === 'fakta' ? 'fakta_sr_queue' : 'bahasa_sr_queue';
-      var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(drawerId);
+      var docId = srDocId || '';
+      var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(docId);
       return ref.get().then(function(snap) {
         if (!snap.exists) return;
         var data = snap.data();
@@ -804,9 +818,11 @@
         });
       }
 
+      // isTamat fakta: SR sudah didaftar per-baris dalam nextCard; jangan daftar semula whole-laci
+      var srId = (srLaciSemasa && (srLaciSemasa.srDocId || srLaciSemasa.id)) || drawerId;
       var p = isSR
-        ? selesaiSRUlangan(drawerId, mode)
-        : daftarSRBaru(drawerId, mode);
+        ? selesaiSRUlangan(srId, mode)
+        : (mode === 'fakta' ? Promise.resolve() : daftarSRBaru(drawerId, mode));
 
       p.then(function() {
         terusSelepasSR();
@@ -820,6 +836,25 @@
       if (!cards.length || cardIndex >= cards.length) return;
       var c = cards[cardIndex];
       if (c.isTamat) { afterTamat(c); return; }
+
+      // Fakta: habis 5× satu baris → daftar SR untuk baris itu
+      if (mode === 'fakta' && !srModeAktif && c.isLastOfBaris && c.drawerId != null && c.itemIndex != null) {
+        isBusy = true;
+        setText('play-err', 'Daftar SR baris...');
+        daftarSRBaru(c.drawerId, 'fakta', c.itemIndex, c.front).then(function() {
+          isBusy = false;
+          setText('play-err', '');
+          isFlipped = false; showTips = false;
+          cardIndex++;
+          if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
+          else renderCard();
+        }).catch(function(e) {
+          isBusy = false;
+          setText('play-err', e.message || 'Gagal SR');
+        });
+        return;
+      }
+
       isFlipped = false; showTips = false;
       cardIndex++;
       if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
