@@ -63,6 +63,21 @@
       color: #fff;
     }
 
+    .pin-input {
+      width: 100%;
+      padding: 16px;
+      font-size: 1.6rem;
+      text-align: center;
+      letter-spacing: 0.35em;
+      border: 2px solid #000;
+      border-radius: 8px;
+      background: #fff;
+      color: #000;
+      outline: none;
+      margin: 12px 0;
+      font-family: monospace;
+    }
+
     .counter-box {
       border: 3px solid #000;
       border-radius: 12px;
@@ -140,10 +155,11 @@
 
   <div id="screen-login" class="screen active">
     <h1>Istigfar Kindle</h1>
-    <div class="sub">Countdown Bahasa & Fakta<br>Sync dengan phone</div>
-    <button id="btn-login" class="btn btn-primary">Login Google</button>
+    <div class="sub">Countdown Bahasa & Fakta<br>Login dengan PIN Admin</div>
+    <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
+    <button id="btn-login" class="btn btn-primary">Masuk</button>
     <div id="login-msg"></div>
-    <div class="footer">Kindle Edition · Ringan · E-ink</div>
+    <div class="footer">Guna PIN yang sama seperti app phone</div>
   </div>
 
   <div id="screen-main" class="screen">
@@ -197,6 +213,9 @@
     firebase.initializeApp(firebaseConfig);
     var auth = firebase.auth();
     var db = firebase.firestore();
+
+    // Email admin yang diguna untuk PIN (sama seperti phone)
+    var ADMIN_EMAIL = 'adha86614@gmail.com';
 
     var currentUser = null;
     var unsubSession = null;
@@ -253,7 +272,6 @@
 
     function renderSession(data) {
       sessionData = data || null;
-      // Reset view bila data baru datang (next laci)
       isFlipped = false;
       showTips = false;
 
@@ -320,14 +338,35 @@
         });
     }
 
-    document.getElementById('btn-login').onclick = function() {
-      setText('login-msg', 'Membuka Google...');
-      var provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(function(e) {
-        auth.signInWithRedirect(provider).catch(function(e2) {
-          setText('login-msg', 'Login gagal: ' + (e2.message || e.message));
+    function cubaLoginPin() {
+      var pin = document.getElementById('pin-input').value.trim();
+      if (!pin || !/^\d{4,6}$/.test(pin)) {
+        setText('login-msg', 'PIN mesti 4-6 digit angka');
+        return;
+      }
+      setText('login-msg', 'Mengesahkan...');
+      document.getElementById('btn-login').disabled = true;
+
+      auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
+        .then(function() {
+          document.getElementById('pin-input').value = '';
+          setText('login-msg', '');
+        })
+        .catch(function(e) {
+          document.getElementById('btn-login').disabled = false;
+          if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') {
+            setText('login-msg', 'PIN salah. Cuba lagi.');
+          } else if (e.code === 'auth/user-not-found') {
+            setText('login-msg', 'PIN belum ditetapkan. Setup di phone dulu.');
+          } else {
+            setText('login-msg', 'Ralat: ' + (e.message || e.code));
+          }
         });
-      });
+    }
+
+    document.getElementById('btn-login').onclick = cubaLoginPin;
+    document.getElementById('pin-input').onkeydown = function(e) {
+      if (e.key === 'Enter') cubaLoginPin();
     };
 
     document.getElementById('btn-logout').onclick = function() {
@@ -374,17 +413,16 @@
 
     auth.onAuthStateChanged(function(user) {
       currentUser = user;
+      document.getElementById('btn-login').disabled = false;
       if (user) {
         showScreen('screen-main');
-        setText('status-bar', 'Logged in: ' + (user.email || user.uid));
+        setText('status-bar', 'Logged in');
         startSessionListener(user.uid);
       } else {
         showScreen('screen-login');
         setText('login-msg', '');
       }
     });
-
-    auth.getRedirectResult().catch(function() {});
   </script>
 </body>
 </html>
