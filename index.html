@@ -60,6 +60,13 @@
       font-size: 1.45rem; line-height: 1.4; font-weight: bold;
       word-break: break-word; margin: 8px 0; white-space: pre-wrap;
     }
+    .card-img {
+      display: block;
+      max-width: 100%;
+      max-height: 180px;
+      margin: 8px auto;
+      border: 1px solid #000;
+    }
     .progress { font-size: 0.85rem; margin-top: 6px; }
 
     .status-bar {
@@ -75,7 +82,6 @@
 </head>
 <body>
 
-  <!-- LOGIN -->
   <div id="screen-login" class="screen active">
     <h1>Istigfar Kindle</h1>
     <div class="sub">Berdiri sendiri · Tiada perlu phone buka</div>
@@ -85,45 +91,43 @@
     <div class="footer">PIN sama seperti app phone</div>
   </div>
 
-  <!-- MENU -->
   <div id="screen-menu" class="screen">
     <h1>Istigfar Kindle</h1>
     <div class="sub" id="menu-user">—</div>
-    <button id="btn-go-bahasa" class="btn btn-primary">📝 Laci Bahasa</button>
-    <button id="btn-go-fakta" class="btn">📚 Laci Fakta</button>
-    <button id="btn-go-sr-bahasa" class="btn">⏰ SR Bahasa</button>
-    <button id="btn-go-sr-fakta" class="btn">⏰ SR Fakta</button>
+    <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
+    <button id="btn-go-fakta" class="btn">Laci Fakta</button>
+    <button id="btn-go-sr-bahasa" class="btn">SR Bahasa</button>
+    <button id="btn-go-sr-fakta" class="btn">SR Fakta</button>
     <button id="btn-logout" class="btn btn-sm" style="margin-top:16px;width:auto;display:block;margin-left:auto;margin-right:auto;">Logout</button>
     <div class="footer">Pilih mode untuk mula</div>
   </div>
 
-  <!-- LIST LACI -->
   <div id="screen-list" class="screen">
     <div class="status-bar" id="list-title">Senarai Laci</div>
     <div class="row">
-      <button id="btn-back-menu" class="btn btn-sm">← Menu</button>
+      <button id="btn-back-menu" class="btn btn-sm">Menu</button>
       <button id="btn-mula-semua" class="btn btn-sm">Mula Semua</button>
     </div>
     <div id="list-status" class="msg">Memuat...</div>
     <div id="list-body" class="scroll-list"></div>
   </div>
 
-  <!-- COUNTDOWN -->
   <div id="screen-play" class="screen">
     <div class="status-bar" id="play-status">—</div>
     <div class="counter-box">
       <div class="mode-label" id="play-mode">—</div>
       <div class="side-label" id="side-label">MUKA DEPAN</div>
+      <img id="card-img" class="card-img" alt="" style="display:none;">
       <div class="big-text" id="main-text">—</div>
       <div class="progress" id="play-progress"></div>
     </div>
-    <button id="btn-next" class="btn btn-primary">SETERUSNYA →</button>
+    <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
     <div class="row">
       <button id="btn-flip" class="btn btn-sm">Flip</button>
       <button id="btn-tips" class="btn btn-sm">Tips</button>
     </div>
     <div class="row">
-      <button id="btn-back-list" class="btn btn-sm">← Senarai</button>
+      <button id="btn-back-list" class="btn btn-sm">Senarai</button>
       <button id="btn-back-menu2" class="btn btn-sm">Menu</button>
     </div>
     <div id="play-err" class="msg error"></div>
@@ -149,12 +153,12 @@
     var ADMIN_EMAIL = 'adha86614@gmail.com';
 
     var currentUser = null;
-    var cards = [];       // { front, back, tips, title, drawerId }
+    var cards = [];
     var cardIndex = 0;
     var isFlipped = false;
     var showTips = false;
-    var currentMode = ''; // bahasa | fakta | sr-bahasa | sr-fakta
-    var listItems = [];   // for list screen
+    var currentMode = '';
+    var listItems = [];
 
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
@@ -167,13 +171,24 @@
       if (el) el.textContent = t || '';
     }
 
-    // ── BUILD CARDS FROM DRAWER ──
+    // Bahasa: tipsFasa0 = F0, tips = F1&2 (gabung)
     function cardsFromBahasaDrawer(d) {
       var out = [];
-      var tips = d.tipsSebutan || d.tips || '';
       var title = d.title || 'Laci';
-      // F0 — tajuk
-      out.push({ front: title, back: '', tips: tips, title: title, drawerId: d.id, isF0: true });
+      var tips0 = (d.tipsFasa0 || '').trim();
+      var tips12 = (d.tips || '').trim();
+      var img = d.imageUrl || '';
+
+      out.push({
+        front: title,
+        back: '',
+        tips: tips0,
+        imageUrl: img,
+        title: title,
+        drawerId: d.id,
+        isF0: true
+      });
+
       var notes = (d.notes || '').trim();
       if (!notes) return out;
       var lines = notes.split('\n');
@@ -181,17 +196,24 @@
         var line = lines[i].trim();
         if (!line) continue;
         var parts = line.split('=');
-        var front = parts[0].trim();
-        var back = parts.length > 1 ? parts.slice(1).join('=').trim() : '';
-        out.push({ front: front, back: back, tips: tips, title: title, drawerId: d.id });
+        out.push({
+          front: parts[0].trim(),
+          back: parts.length > 1 ? parts.slice(1).join('=').trim() : '',
+          tips: tips12,
+          imageUrl: img,
+          title: title,
+          drawerId: d.id,
+          isF0: false
+        });
       }
       return out;
     }
 
     function cardsFromFaktaDrawer(d) {
       var out = [];
-      var tips = d.tipsFakta || d.tips || '';
+      var tips = (d.tipsFakta || d.tips || '').trim();
       var title = d.title || 'Laci';
+
       if (d.items && d.items.length) {
         for (var i = 0; i < d.items.length; i++) {
           var it = d.items[i];
@@ -202,8 +224,10 @@
             front: parts[0].trim(),
             back: parts.length > 1 ? parts.slice(1).join('=').trim() : (it.maksud || it.translation || ''),
             tips: tips,
+            imageUrl: it.imageUrl || d.imageUrl || '',
             title: title,
-            drawerId: d.id
+            drawerId: d.id,
+            isF0: false
           });
         }
       } else if (d.notes) {
@@ -216,15 +240,16 @@
             front: p[0].trim(),
             back: p.length > 1 ? p.slice(1).join('=').trim() : '',
             tips: tips,
+            imageUrl: d.imageUrl || '',
             title: title,
-            drawerId: d.id
+            drawerId: d.id,
+            isF0: false
           });
         }
       }
       return out;
     }
 
-    // ── LOAD DATA ──
     function loadBahasaList() {
       currentMode = 'bahasa';
       setText('list-title', 'Laci Bahasa');
@@ -232,23 +257,20 @@
       document.getElementById('list-body').innerHTML = '';
       showScreen('screen-list');
 
-      db.collection('users').doc(currentUser.uid).collection('bahasa_drawers')
-        .get()
+      db.collection('users').doc(currentUser.uid).collection('bahasa_drawers').get()
         .then(function(snap) {
           listItems = [];
           snap.forEach(function(doc) {
             var d = doc.data();
             d.id = doc.id;
-            if ((d.notes || '').trim()) listItems.push(d);
+            if ((d.notes || '').trim() || (d.title || '').trim()) listItems.push(d);
           });
           listItems.sort(function(a, b) {
             return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
           });
           renderList();
         })
-        .catch(function(e) {
-          setText('list-status', 'Ralat: ' + e.message);
-        });
+        .catch(function(e) { setText('list-status', 'Ralat: ' + e.message); });
     }
 
     function loadFaktaList() {
@@ -258,8 +280,7 @@
       document.getElementById('list-body').innerHTML = '';
       showScreen('screen-list');
 
-      db.collection('users').doc(currentUser.uid).collection('drawer')
-        .get()
+      db.collection('users').doc(currentUser.uid).collection('drawer').get()
         .then(function(snap) {
           listItems = [];
           snap.forEach(function(doc) {
@@ -273,9 +294,7 @@
           });
           renderList();
         })
-        .catch(function(e) {
-          setText('list-status', 'Ralat: ' + e.message);
-        });
+        .catch(function(e) { setText('list-status', 'Ralat: ' + e.message); });
     }
 
     function loadSR(type) {
@@ -304,7 +323,6 @@
             return;
           }
 
-          // Load drawer content for each
           var promises = due.map(function(sr) {
             return db.collection('users').doc(currentUser.uid).collection(drawerCol).doc(sr.drawerId || sr.id).get()
               .then(function(ds) {
@@ -321,9 +339,14 @@
             renderList();
           });
         })
-        .catch(function(e) {
-          setText('list-status', 'Ralat: ' + e.message);
-        });
+        .catch(function(e) { setText('list-status', 'Ralat: ' + e.message); });
+    }
+
+    function escapeHtml(s) {
+      return String(s || '')
+        .replace(/&/g, '&')
+        .replace(/</g, '<')
+        .replace(/>/g, '>');
     }
 
     function renderList() {
@@ -344,6 +367,8 @@
           if (currentMode.indexOf('bahasa') !== -1) {
             var n = (d.notes || '').split('\n').filter(function(l) { return l.trim(); }).length;
             sub = n + ' baris';
+            if ((d.tipsFasa0 || '').trim() || (d.tips || '').trim()) sub += ' · ada tips';
+            if (d.imageUrl) sub += ' · gambar';
           } else {
             var n2 = (d.items && d.items.length) ? d.items.length : (d.notes || '').split('\n').filter(function(l) { return l.trim(); }).length;
             sub = n2 + ' item';
@@ -353,10 +378,6 @@
           body.appendChild(div);
         })(i);
       }
-    }
-
-    function escapeHtml(s) {
-      return String(s || '').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
     }
 
     function startFromDrawer(d) {
@@ -397,13 +418,27 @@
       renderCard();
     }
 
+    function setCardImage(url) {
+      var img = document.getElementById('card-img');
+      if (!img) return;
+      if (url) {
+        img.src = url;
+        img.style.display = 'block';
+        img.onerror = function() { img.style.display = 'none'; };
+      } else {
+        img.removeAttribute('src');
+        img.style.display = 'none';
+      }
+    }
+
     function renderCard() {
       if (!cards.length || cardIndex >= cards.length) {
-        setText('main-text', '✅ Selesai');
+        setText('main-text', 'Selesai');
         setText('side-label', '');
         setText('play-progress', '');
         setText('play-mode', currentMode);
         setText('play-status', 'Tamat');
+        setCardImage('');
         return;
       }
       var c = cards[cardIndex];
@@ -411,9 +446,16 @@
       setText('play-status', currentMode.toUpperCase());
       setText('play-progress', (cardIndex + 1) + ' / ' + cards.length);
 
+      // Gambar: tunjuk bila muka depan (bukan tips)
+      if (!showTips && c.imageUrl) {
+        setCardImage(c.imageUrl);
+      } else {
+        setCardImage('');
+      }
+
       if (showTips) {
-        setText('side-label', 'TIPS');
-        setText('main-text', c.tips || '(Tiada tips)');
+        setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
+        setText('main-text', c.tips ? c.tips : '(Tiada tips)');
         document.getElementById('btn-tips').className = 'btn btn-sm on';
         document.getElementById('btn-flip').className = 'btn btn-sm';
       } else if (isFlipped) {
@@ -441,7 +483,6 @@
       }
     }
 
-    // ── AUTH ──
     function cubaLoginPin() {
       var pin = document.getElementById('pin-input').value.trim();
       if (!pin || !/^\d{4,6}$/.test(pin)) {
@@ -471,21 +512,15 @@
     document.getElementById('pin-input').onkeydown = function(e) {
       if (e.key === 'Enter') cubaLoginPin();
     };
-
-    document.getElementById('btn-logout').onclick = function() {
-      auth.signOut();
-    };
-
+    document.getElementById('btn-logout').onclick = function() { auth.signOut(); };
     document.getElementById('btn-go-bahasa').onclick = loadBahasaList;
     document.getElementById('btn-go-fakta').onclick = loadFaktaList;
     document.getElementById('btn-go-sr-bahasa').onclick = function() { loadSR('bahasa'); };
     document.getElementById('btn-go-sr-fakta').onclick = function() { loadSR('fakta'); };
-
     document.getElementById('btn-back-menu').onclick = function() { showScreen('screen-menu'); };
     document.getElementById('btn-back-menu2').onclick = function() { showScreen('screen-menu'); };
     document.getElementById('btn-back-list').onclick = function() { showScreen('screen-list'); };
     document.getElementById('btn-mula-semua').onclick = startAll;
-
     document.getElementById('btn-next').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
       if (!cards.length || cardIndex >= cards.length) return;
