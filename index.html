@@ -746,54 +746,74 @@
       setText('play-err', 'Menyimpan...');
       var drawerId = c.drawerId;
       var isSR = c.isSR || srModeAktif;
-
-      var done = function() {
-        if (srQueue.length) {
-          srLaciSemasa = srQueue.shift();
-          if (loadSRIntoCards(srLaciSemasa, mode)) {
-            setText('play-status', (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-            isFlipped = false; showTips = false; isBusy = false;
-            setText('play-err', ''); renderCard(); return;
-          }
-        }
-        var ok = mode === 'bahasa' ? rebuildBahasaCards() : rebuildFaktaCards();
-        if (!ok) { isBusy = false; setText('play-err', ''); return; }
-        isFlipped = false; showTips = false;
-        setText('play-status', mode === 'bahasa'
-          ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
-          : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
-        isBusy = false; setText('play-err', ''); renderCard();
-      };
-
-      var p = isSR ? selesaiSRUlangan(drawerId, mode) : daftarSRBaru(drawerId, mode);
       var nextIdx = findNextDrawerStart(cardIndex);
       var isLast = nextIdx >= cards.length;
+      var srCol = mode === 'fakta' ? 'fakta_sr_queue' : 'bahasa_sr_queue';
+
+      // Selepas simpan: check SR overdue dulu (mirrors phone)
+      function terusSelepasSR() {
+        loadSROverdue(srCol).then(function(overdue) {
+          srQueue = overdue || [];
+          if (srQueue.length) {
+            srLaciSemasa = srQueue.shift();
+            if (loadSRIntoCards(srLaciSemasa, mode)) {
+              setText('play-status', (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+              isFlipped = false; showTips = false; isBusy = false;
+              setText('play-err', ''); renderCard();
+              return;
+            }
+          }
+          // Tiada SR due → laci / perkataan seterusnya
+          if (!isSR && isLast && mode === 'bahasa') {
+            lompatPerkataanSeterusnya().then(function(ok) {
+              isBusy = false; setText('play-err', '');
+              if (!ok) {
+                setText('main-text', 'Habis semua perkataan dalam jenis kata ini.');
+                setText('side-label', ''); setCardImage('');
+              }
+            });
+            return;
+          }
+          if (!isSR && isLast && mode === 'fakta') {
+            cardIndex = 0; syncIndex(0); isBusy = false; setText('play-err', '');
+            setText('main-text', 'Habis semua laci topik ini. (Kitar semula dari awal)');
+            setText('side-label', ''); setCardImage('');
+            return;
+          }
+          if (isSR) {
+            // Lepas SR: rebuild countdown normal dari lastIndex
+            var ok = mode === 'bahasa' ? rebuildBahasaCards() : rebuildFaktaCards();
+            if (!ok) { isBusy = false; setText('play-err', ''); return; }
+            isFlipped = false; showTips = false;
+            setText('play-status', mode === 'bahasa'
+              ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
+            isBusy = false; setText('play-err', ''); renderCard();
+            return;
+          }
+          // Laci biasa selesai, ada laci seterusnya
+          cardIndex = nextIdx; syncIndex(cardIndex);
+          isFlipped = false; showTips = false; isBusy = false;
+          setText('play-err', '');
+          setText('play-status', mode === 'bahasa'
+            ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+            : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
+          renderCard();
+        }).catch(function(e) {
+          isBusy = false; setText('play-err', e.message || 'Gagal check SR');
+        });
+      }
+
+      var p = isSR
+        ? selesaiSRUlangan(drawerId, mode)
+        : daftarSRBaru(drawerId, mode);
 
       p.then(function() {
-        if (isSR) { done(); return; }
-        if (isLast && mode === 'bahasa') {
-          lompatPerkataanSeterusnya().then(function(ok) {
-            isBusy = false; setText('play-err', '');
-            if (!ok) {
-              setText('main-text', 'Habis semua perkataan dalam jenis kata ini.');
-              setText('side-label', ''); setCardImage('');
-            }
-          });
-          return;
-        }
-        if (isLast && mode === 'fakta') {
-          cardIndex = 0; syncIndex(0); isBusy = false; setText('play-err', '');
-          setText('main-text', 'Habis semua laci topik ini. (Kitar semula dari awal)');
-          setText('side-label', ''); setCardImage('');
-          return;
-        }
-        cardIndex = nextIdx; syncIndex(cardIndex);
-        isFlipped = false; showTips = false; isBusy = false;
-        setText('play-err', ''); renderCard();
+        terusSelepasSR();
       }).catch(function(e) {
         isBusy = false; setText('play-err', e.message || 'Gagal simpan');
       });
-    }
+    }  
 
     function nextCard() {
       if (isBusy) return;
