@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Istigfar Kindle</title>
   <style>
+    /* Skrin Kindle ~10.86cm x 15.78cm (portrait) */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%;
@@ -13,16 +14,20 @@
       font-family: Georgia, "Times New Roman", serif;
       -webkit-text-size-adjust: 100%;
     }
-    body { padding: 10px; max-width: 480px; margin: 0 auto; }
+    body {
+      padding: 8px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
     .screen { display: none; }
     .screen.active { display: block; }
 
-    h1 { font-size: 1.3rem; text-align: center; margin: 8px 0 10px; }
-    .sub { text-align: center; font-size: 0.85rem; color: #333; margin-bottom: 14px; }
+    h1 { font-size: 1.2rem; text-align: center; margin: 6px 0 8px; }
+    .sub { text-align: center; font-size: 0.8rem; color: #333; margin-bottom: 10px; }
 
     .btn {
-      display: block; width: 100%; padding: 14px 12px; margin: 8px 0;
-      font-size: 1.1rem; font-weight: bold; text-align: center;
+      display: block; width: 100%; padding: 13px 10px; margin: 7px 0;
+      font-size: 1.05rem; font-weight: bold; text-align: center;
       border: 2px solid #000; background: #fff; color: #000;
       cursor: pointer; border-radius: 6px;
     }
@@ -30,65 +35,53 @@
     .btn-primary { background: #000; color: #fff; }
     .btn-primary:active { background: #333; }
     .btn-sm {
-      padding: 10px 8px; font-size: 0.9rem; width: auto;
-      display: inline-block; margin: 4px;
+      padding: 9px 8px; font-size: 0.88rem; width: auto;
+      display: inline-block; margin: 3px;
     }
     .btn-sm.on { background: #000; color: #fff; }
 
     .pin-input {
-      width: 100%; padding: 14px; font-size: 1.5rem; text-align: center;
+      width: 100%; padding: 12px; font-size: 1.4rem; text-align: center;
       letter-spacing: 0.3em; border: 2px solid #000; border-radius: 8px;
-      background: #fff; color: #000; outline: none; margin: 10px 0;
+      background: #fff; color: #000; outline: none; margin: 8px 0;
       font-family: monospace;
     }
 
-    .list-item {
-      border: 1px solid #000; border-radius: 8px; padding: 12px;
-      margin: 8px 0; cursor: pointer;
+    .status-bar {
+      border: 1px solid #000; padding: 6px 8px; font-size: 0.75rem;
+      text-align: center; margin-bottom: 8px; background: #f5f5f5;
     }
-    .list-item:active { background: #eee; }
-    .list-title { font-size: 1rem; font-weight: bold; }
-    .list-sub { font-size: 0.8rem; color: #444; margin-top: 4px; }
-
     .counter-box {
-      border: 3px solid #000; border-radius: 12px; padding: 16px 12px;
-      text-align: center; margin: 12px 0; min-height: 150px;
+      border: 3px solid #000; border-radius: 10px; padding: 12px 10px;
+      text-align: center; margin: 8px 0; min-height: 140px;
     }
-    .mode-label { font-size: 0.75rem; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
-    .side-label { font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; }
+    .mode-label { font-size: 0.72rem; font-weight: bold; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 3px; }
+    .side-label { font-size: 0.72rem; font-weight: bold; margin-bottom: 3px; }
     .big-text {
-      font-size: 1.45rem; line-height: 1.4; font-weight: bold;
-      word-break: break-word; margin: 8px 0; white-space: pre-wrap;
+      font-size: 1.35rem; line-height: 1.35; font-weight: bold;
+      word-break: break-word; margin: 6px 0; white-space: pre-wrap;
     }
     .card-img {
-      display: block;
-      max-width: 100%;
-      max-height: 180px;
-      margin: 8px auto;
-      border: 1px solid #000;
+      display: block; max-width: 100%; max-height: 160px;
+      margin: 6px auto; border: 1px solid #000;
     }
-    .progress { font-size: 0.85rem; margin-top: 6px; }
+    .progress { font-size: 0.8rem; margin-top: 4px; }
+    .meta { font-size: 0.75rem; color: #444; margin-top: 3px; }
 
-    .status-bar {
-      border: 1px solid #000; padding: 8px; font-size: 0.8rem;
-      text-align: center; margin-bottom: 10px; background: #f5f5f5;
-    }
-    .row { text-align: center; margin: 6px 0; }
-    .msg { text-align: center; font-size: 0.9rem; margin: 10px 0; min-height: 1.2em; }
+    .row { text-align: center; margin: 5px 0; }
+    .msg { text-align: center; font-size: 0.85rem; margin: 8px 0; min-height: 1.1em; }
     .error { color: #800; font-weight: bold; }
-    .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 14px; }
-    .scroll-list { max-height: 55vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .footer { text-align: center; font-size: 0.68rem; color: #666; margin-top: 10px; }
   </style>
 </head>
 <body>
 
   <div id="screen-login" class="screen active">
     <h1>Istigfar Kindle</h1>
-    <div class="sub">Berdiri sendiri · Tiada perlu phone buka</div>
+    <div class="sub">Linked dengan phone · PIN</div>
     <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
     <button id="btn-login" class="btn btn-primary">Masuk</button>
     <div id="login-msg" class="msg"></div>
-    <div class="footer">PIN sama seperti app phone</div>
   </div>
 
   <div id="screen-menu" class="screen">
@@ -96,20 +89,8 @@
     <div class="sub" id="menu-user">—</div>
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
-    <button id="btn-go-sr-bahasa" class="btn">SR Bahasa</button>
-    <button id="btn-go-sr-fakta" class="btn">SR Fakta</button>
-    <button id="btn-logout" class="btn btn-sm" style="margin-top:16px;width:auto;display:block;margin-left:auto;margin-right:auto;">Logout</button>
-    <div class="footer">Pilih mode untuk mula</div>
-  </div>
-
-  <div id="screen-list" class="screen">
-    <div class="status-bar" id="list-title">Senarai Laci</div>
-    <div class="row">
-      <button id="btn-back-menu" class="btn btn-sm">Menu</button>
-      <button id="btn-mula-semua" class="btn btn-sm">Mula Semua</button>
-    </div>
-    <div id="list-status" class="msg">Memuat...</div>
-    <div id="list-body" class="scroll-list"></div>
+    <button id="btn-logout" class="btn btn-sm" style="margin-top:14px;width:auto;display:block;margin-left:auto;margin-right:auto;">Logout</button>
+    <div class="footer">SR auto-check · progress sync phone</div>
   </div>
 
   <div id="screen-play" class="screen">
@@ -120,6 +101,7 @@
       <img id="card-img" class="card-img" alt="" style="display:none;">
       <div class="big-text" id="main-text">—</div>
       <div class="progress" id="play-progress"></div>
+      <div class="meta" id="play-meta"></div>
     </div>
     <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
     <div class="row">
@@ -127,8 +109,8 @@
       <button id="btn-tips" class="btn btn-sm">Tips</button>
     </div>
     <div class="row">
-      <button id="btn-back-list" class="btn btn-sm">Senarai</button>
-      <button id="btn-back-menu2" class="btn btn-sm">Menu</button>
+      <button id="btn-back-menu" class="btn btn-sm">Menu</button>
+      <button id="btn-reload" class="btn btn-sm">Reload</button>
     </div>
     <div id="play-err" class="msg error"></div>
   </div>
@@ -152,13 +134,35 @@
     var db = firebase.firestore();
     var ADMIN_EMAIL = 'adha86614@gmail.com';
 
+    var SR_INTERVALS = [
+      20 * 60 * 1000,
+      2 * 60 * 60 * 1000,
+      4 * 60 * 60 * 1000,
+      6 * 60 * 60 * 1000,
+      2 * 24 * 60 * 60 * 1000,
+      4 * 24 * 60 * 60 * 1000,
+      6 * 24 * 60 * 60 * 1000,
+      7 * 24 * 60 * 60 * 1000
+    ];
+
     var currentUser = null;
+    var mode = ''; // bahasa | fakta
     var cards = [];
     var cardIndex = 0;
     var isFlipped = false;
     var showTips = false;
-    var currentMode = '';
-    var listItems = [];
+    var isBusy = false;
+
+    // Cache data
+    var allBahasaDrawers = [];
+    var allBahasaPerkataan = [];
+    var allDrawers = [];
+    var allTopics = [];
+    var activePerkataan = null;
+    var activeTopic = null;
+    var srModeAktif = false;
+    var srLaciSemasa = null;
+    var srQueue = [];
 
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
@@ -170,9 +174,21 @@
       var el = document.getElementById(id);
       if (el) el.textContent = t || '';
     }
+    function getSRInterval(fasaIndex) {
+      if (fasaIndex < SR_INTERVALS.length) return SR_INTERVALS[fasaIndex];
+      return (8 + (fasaIndex - SR_INTERVALS.length)) * 24 * 60 * 60 * 1000;
+    }
+    function getLabelFasaSR(fasaIndex) {
+      var labels = [
+        'Fasa 1 — +20 minit', 'Fasa 2 — +2 jam', 'Fasa 3 — +4 jam', 'Fasa 4 — +6 jam',
+        'Fasa 5 — +2 hari', 'Fasa 6 — +4 hari', 'Fasa 7 — +6 hari', 'Fasa 8 — +7 hari'
+      ];
+      if (fasaIndex < labels.length) return labels[fasaIndex];
+      return 'Fasa ' + (fasaIndex + 1) + ' — +' + (8 + (fasaIndex - 8)) + ' hari';
+    }
 
-    // Bahasa: tipsFasa0 = F0, tips = F1&2 (gabung)
-    function cardsFromBahasaDrawer(d) {
+    // ── CARD BUILDERS (mirror phone) ──
+    function cardsFromBahasaDrawer(d, isSR) {
       var out = [];
       var title = d.title || 'Laci';
       var tips0 = (d.tipsFasa0 || '').trim();
@@ -180,36 +196,35 @@
       var img = d.imageUrl || '';
 
       out.push({
-        front: title,
-        back: '',
-        tips: tips0,
-        imageUrl: img,
-        title: title,
-        drawerId: d.id,
-        isF0: true
+        front: title, back: '', tips: tips0, imageUrl: img,
+        title: title, drawerId: d.id, isF0: true, isTamat: false, isSR: !!isSR
       });
 
       var notes = (d.notes || '').trim();
-      if (!notes) return out;
-      var lines = notes.split('\n');
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i].trim();
-        if (!line) continue;
-        var parts = line.split('=');
-        out.push({
-          front: parts[0].trim(),
-          back: parts.length > 1 ? parts.slice(1).join('=').trim() : '',
-          tips: tips12,
-          imageUrl: img,
-          title: title,
-          drawerId: d.id,
-          isF0: false
-        });
+      if (notes) {
+        var lines = notes.split('\n');
+        for (var i = 0; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (!line) continue;
+          var parts = line.split('=');
+          out.push({
+            front: parts[0].trim(),
+            back: parts.length > 1 ? parts.slice(1).join('=').trim() : '',
+            tips: tips12, imageUrl: img,
+            title: title, drawerId: d.id, isF0: false, isTamat: false, isSR: !!isSR
+          });
+        }
       }
+
+      out.push({
+        front: isSR ? ('SR selesai — ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0)) : 'Laci Tamat. Tekan SETERUSNYA.',
+        back: '', tips: '', imageUrl: '',
+        title: title, drawerId: d.id, isF0: false, isTamat: true, isSR: !!isSR
+      });
       return out;
     }
 
-    function cardsFromFaktaDrawer(d) {
+    function cardsFromFaktaDrawer(d, isSR) {
       var out = [];
       var tips = (d.tipsFakta || d.tips || '').trim();
       var title = d.title || 'Laci';
@@ -222,12 +237,9 @@
           var parts = ayat.split('=');
           out.push({
             front: parts[0].trim(),
-            back: parts.length > 1 ? parts.slice(1).join('=').trim() : (it.maksud || it.translation || ''),
-            tips: tips,
-            imageUrl: it.imageUrl || d.imageUrl || '',
-            title: title,
-            drawerId: d.id,
-            isF0: false
+            back: parts.length > 1 ? parts.slice(1).join('=').trim() : (it.maksud || ''),
+            tips: tips, imageUrl: it.imageUrl || d.imageUrl || '',
+            title: title, drawerId: d.id, isF0: false, isTamat: false, isSR: !!isSR
           });
         }
       } else if (d.notes) {
@@ -239,185 +251,292 @@
           out.push({
             front: p[0].trim(),
             back: p.length > 1 ? p.slice(1).join('=').trim() : '',
-            tips: tips,
-            imageUrl: d.imageUrl || '',
-            title: title,
-            drawerId: d.id,
-            isF0: false
+            tips: tips, imageUrl: d.imageUrl || '',
+            title: title, drawerId: d.id, isF0: false, isTamat: false, isSR: !!isSR
           });
         }
       }
+
+      out.push({
+        front: isSR ? ('SR Fakta selesai — ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0)) : 'Laci Tamat. Tekan SETERUSNYA.',
+        back: '', tips: '', imageUrl: '',
+        title: title, drawerId: d.id, isF0: false, isTamat: true, isSR: !!isSR
+      });
       return out;
     }
 
-    function loadBahasaList() {
-      currentMode = 'bahasa';
-      setText('list-title', 'Laci Bahasa');
-      setText('list-status', 'Memuat...');
-      document.getElementById('list-body').innerHTML = '';
-      showScreen('screen-list');
+    // ── LOAD DATA ──
+    function loadCollections(cb) {
+      var uid = currentUser.uid;
+      Promise.all([
+        db.collection('users').doc(uid).collection('bahasa_drawers').get(),
+        db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
+        db.collection('users').doc(uid).collection('drawer').get(),
+        db.collection('users').doc(uid).collection('topics').get()
+      ]).then(function(res) {
+        allBahasaDrawers = [];
+        res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaDrawers.push(x); });
+        allBahasaPerkataan = [];
+        res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
+        allDrawers = [];
+        res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allDrawers.push(x); });
+        allTopics = [];
+        res[3].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
+        cb && cb();
+      }).catch(function(e) {
+        setText('play-err', 'Gagal load: ' + e.message);
+      });
+    }
 
-      db.collection('users').doc(currentUser.uid).collection('bahasa_drawers').get()
+    // ── SR ──
+    function loadSROverdue(colName) {
+      return db.collection('users').doc(currentUser.uid).collection(colName).get()
         .then(function(snap) {
-          listItems = [];
+          var now = Date.now();
+          var overdue = [];
           snap.forEach(function(doc) {
             var d = doc.data();
             d.id = doc.id;
-            if ((d.notes || '').trim() || (d.title || '').trim()) listItems.push(d);
+            if (!d.nextDueAt || d.nextDueAt <= now) overdue.push(d);
           });
-          listItems.sort(function(a, b) {
-            return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
-          });
-          renderList();
-        })
-        .catch(function(e) { setText('list-status', 'Ralat: ' + e.message); });
+          overdue.sort(function(a, b) { return (a.nextDueAt || 0) - (b.nextDueAt || 0); });
+          return overdue;
+        });
     }
 
-    function loadFaktaList() {
-      currentMode = 'fakta';
-      setText('list-title', 'Laci Fakta');
-      setText('list-status', 'Memuat...');
-      document.getElementById('list-body').innerHTML = '';
-      showScreen('screen-list');
-
-      db.collection('users').doc(currentUser.uid).collection('drawer').get()
-        .then(function(snap) {
-          listItems = [];
-          snap.forEach(function(doc) {
-            var d = doc.data();
-            d.id = doc.id;
-            var ada = (d.items && d.items.length) || (d.notes || '').trim();
-            if (ada) listItems.push(d);
-          });
-          listItems.sort(function(a, b) {
-            return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
-          });
-          renderList();
-        })
-        .catch(function(e) { setText('list-status', 'Ralat: ' + e.message); });
-    }
-
-    function loadSR(type) {
-      currentMode = type === 'bahasa' ? 'sr-bahasa' : 'sr-fakta';
-      var col = type === 'bahasa' ? 'bahasa_sr_queue' : 'fakta_sr_queue';
-      var drawerCol = type === 'bahasa' ? 'bahasa_drawers' : 'drawer';
-      setText('list-title', type === 'bahasa' ? 'SR Bahasa' : 'SR Fakta');
-      setText('list-status', 'Memuat SR...');
-      document.getElementById('list-body').innerHTML = '';
-      showScreen('screen-list');
-
-      var now = Date.now();
-      db.collection('users').doc(currentUser.uid).collection(col).get()
-        .then(function(snap) {
-          var due = [];
-          snap.forEach(function(doc) {
-            var d = doc.data();
-            d.id = doc.id;
-            if (!d.nextDueAt || d.nextDueAt <= now) due.push(d);
-          });
-          due.sort(function(a, b) { return (a.nextDueAt || 0) - (b.nextDueAt || 0); });
-
-          if (!due.length) {
-            setText('list-status', 'Tiada SR due sekarang');
-            listItems = [];
-            return;
-          }
-
-          var promises = due.map(function(sr) {
-            return db.collection('users').doc(currentUser.uid).collection(drawerCol).doc(sr.drawerId || sr.id).get()
-              .then(function(ds) {
-                if (!ds.exists) return null;
-                var data = ds.data();
-                data.id = ds.id;
-                data._sr = sr;
-                return data;
-              });
-          });
-
-          return Promise.all(promises).then(function(arr) {
-            listItems = arr.filter(function(x) { return x; });
-            renderList();
-          });
-        })
-        .catch(function(e) { setText('list-status', 'Ralat: ' + e.message); });
-    }
-
-    function escapeHtml(s) {
-      return String(s || '')
-        .replace(/&/g, '&')
-        .replace(/</g, '<')
-        .replace(/>/g, '>');
-    }
-
-    function renderList() {
-      var body = document.getElementById('list-body');
-      body.innerHTML = '';
-      if (!listItems.length) {
-        setText('list-status', 'Tiada laci');
-        return;
-      }
-      setText('list-status', listItems.length + ' laci');
-      for (var i = 0; i < listItems.length; i++) {
-        (function(idx) {
-          var d = listItems[idx];
-          var div = document.createElement('div');
-          div.className = 'list-item';
-          var title = d.title || d.id;
-          var sub = '';
-          if (currentMode.indexOf('bahasa') !== -1) {
-            var n = (d.notes || '').split('\n').filter(function(l) { return l.trim(); }).length;
-            sub = n + ' baris';
-            if ((d.tipsFasa0 || '').trim() || (d.tips || '').trim()) sub += ' · ada tips';
-            if (d.imageUrl) sub += ' · gambar';
-          } else {
-            var n2 = (d.items && d.items.length) ? d.items.length : (d.notes || '').split('\n').filter(function(l) { return l.trim(); }).length;
-            sub = n2 + ' item';
-          }
-          div.innerHTML = '<div class="list-title">' + escapeHtml(title) + '</div><div class="list-sub">' + sub + '</div>';
-          div.onclick = function() { startFromDrawer(d); };
-          body.appendChild(div);
-        })(i);
-      }
-    }
-
-    function startFromDrawer(d) {
-      if (currentMode.indexOf('bahasa') !== -1) {
-        cards = cardsFromBahasaDrawer(d);
+    function daftarSRBaru(drawerId, modeName) {
+      var drawer, srColl;
+      if (modeName === 'fakta') {
+        drawer = allDrawers.filter(function(d) { return d.id === drawerId; })[0];
+        srColl = 'fakta_sr_queue';
       } else {
-        cards = cardsFromFaktaDrawer(d);
+        drawer = allBahasaDrawers.filter(function(d) { return d.id === drawerId; })[0];
+        srColl = 'bahasa_sr_queue';
       }
-      if (!cards.length) {
-        setText('list-status', 'Laci kosong');
-        return;
-      }
-      cardIndex = 0;
-      isFlipped = false;
-      showTips = false;
-      showScreen('screen-play');
-      renderCard();
+      if (!drawer) return Promise.resolve();
+
+      var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(drawerId);
+      return ref.get().then(function(snap) {
+        if (snap.exists) return;
+        var now = Date.now();
+        var srData = {
+          drawerId: drawerId,
+          drawerTitle: drawer.title || '',
+          hafalAt: now,
+          fasaSemasa: 0,
+          nextDueAt: now + SR_INTERVALS[0],
+          sejarahFasa: [],
+          createdAt: now,
+          mode: modeName
+        };
+        if (modeName === 'bahasa') {
+          srData.perkataanId = drawer.perkataanId || '';
+          srData.jenisId = drawer.jenisId || '';
+        } else {
+          srData.topicId = drawer.topicId || '';
+        }
+        return ref.set(srData);
+      });
     }
 
-    function startAll() {
+    function selesaiSRUlangan(drawerId, modeName) {
+      var srColl = modeName === 'fakta' ? 'fakta_sr_queue' : 'bahasa_sr_queue';
+      var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(drawerId);
+      return ref.get().then(function(snap) {
+        if (!snap.exists) return;
+        var data = snap.data();
+        var fasaBaru = (data.fasaSemasa || 0) + 1;
+        var now = Date.now();
+        var sejarah = (data.sejarahFasa || []).slice();
+        sejarah.push({ fasa: data.fasaSemasa, selesaiAt: now, labelFasa: getLabelFasaSR(data.fasaSemasa) });
+        return ref.update({
+          fasaSemasa: fasaBaru,
+          nextDueAt: now + getSRInterval(fasaBaru),
+          sejarahFasa: sejarah,
+          updatedAt: now
+        });
+      });
+    }
+
+    function syncIndex(newIndex) {
+      if (!currentUser) return;
+      if (mode === 'bahasa' && activePerkataan) {
+        db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
+          .update({ lastIndex: newIndex }).catch(function() {});
+        activePerkataan.lastIndex = newIndex;
+      } else if (mode === 'fakta' && activeTopic) {
+        db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
+          .update({ lastIndex: newIndex }).catch(function() {});
+        activeTopic.lastIndex = newIndex;
+      }
+    }
+
+    // ── BUILD BAHASA (mirror rebuildBahasa) ──
+    function rebuildBahasaCards() {
+      activePerkataan = null;
+      for (var i = 0; i < allBahasaPerkataan.length; i++) {
+        if (allBahasaPerkataan[i].isActive) { activePerkataan = allBahasaPerkataan[i]; break; }
+      }
+      if (!activePerkataan) {
+        cards = [];
+        cardIndex = 0;
+        setText('main-text', 'Tiada perkataan aktif.\nTick SATU perkataan di phone.');
+        setText('play-mode', 'BAHASA');
+        setText('play-status', 'Tiada perkataan aktif');
+        setText('play-progress', '');
+        setText('play-meta', '');
+        setCardImage('');
+        return false;
+      }
+
+      var activeDrawers = allBahasaDrawers
+        .filter(function(d) { return d.perkataanId === activePerkataan.id; })
+        .sort(function(a, b) {
+          return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+        });
+
       cards = [];
-      for (var i = 0; i < listItems.length; i++) {
-        var d = listItems[i];
-        if (currentMode.indexOf('bahasa') !== -1) {
-          cards = cards.concat(cardsFromBahasaDrawer(d));
-        } else {
-          cards = cards.concat(cardsFromFaktaDrawer(d));
+      for (var j = 0; j < activeDrawers.length; j++) {
+        var d = activeDrawers[j];
+        if ((d.notes || '').trim()) cards = cards.concat(cardsFromBahasaDrawer(d, false));
+      }
+
+      var saved = activePerkataan.lastIndex || 0;
+      if (saved >= cards.length) saved = 0;
+      // Align ke F0 laci semasa
+      if (cards[saved] && !cards[saved].isF0 && !cards[saved].isTamat) {
+        for (var k = saved; k >= 0; k--) {
+          if (cards[k].isF0 && cards[k].drawerId === cards[saved].drawerId) {
+            saved = k;
+            break;
+          }
         }
       }
-      if (!cards.length) {
-        setText('list-status', 'Tiada kad');
-        return;
-      }
-      cardIndex = 0;
-      isFlipped = false;
-      showTips = false;
-      showScreen('screen-play');
-      renderCard();
+      cardIndex = saved;
+      srModeAktif = false;
+      srLaciSemasa = null;
+      return cards.length > 0;
     }
 
+    function rebuildFaktaCards() {
+      activeTopic = null;
+      for (var i = 0; i < allTopics.length; i++) {
+        if (allTopics[i].isActive) { activeTopic = allTopics[i]; break; }
+      }
+      if (!activeTopic) {
+        cards = [];
+        cardIndex = 0;
+        setText('main-text', 'Tiada topik aktif.\nTick SATU topik di phone.');
+        setText('play-mode', 'FAKTA');
+        setText('play-status', 'Tiada topik aktif');
+        setText('play-progress', '');
+        setText('play-meta', '');
+        setCardImage('');
+        return false;
+      }
+
+      var activeDrawers = allDrawers
+        .filter(function(d) { return d.topicId === activeTopic.id; })
+        .sort(function(a, b) {
+          return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+        });
+
+      cards = [];
+      for (var j = 0; j < activeDrawers.length; j++) {
+        var d = activeDrawers[j];
+        var has = (d.items && d.items.length) || (d.notes || '').trim();
+        if (has) cards = cards.concat(cardsFromFaktaDrawer(d, false));
+      }
+
+      var saved = activeTopic.lastIndex || 0;
+      if (saved >= cards.length) saved = 0;
+      cardIndex = saved;
+      srModeAktif = false;
+      srLaciSemasa = null;
+      return cards.length > 0;
+    }
+
+    function loadSRIntoCards(srData, modeName) {
+      var drawer;
+      if (modeName === 'bahasa') {
+        drawer = allBahasaDrawers.filter(function(d) { return d.id === (srData.drawerId || srData.id); })[0];
+        if (!drawer) return false;
+        cards = cardsFromBahasaDrawer(drawer, true);
+      } else {
+        drawer = allDrawers.filter(function(d) { return d.id === (srData.drawerId || srData.id); })[0];
+        if (!drawer) return false;
+        cards = cardsFromFaktaDrawer(drawer, true);
+      }
+      cardIndex = 0;
+      srModeAktif = true;
+      srLaciSemasa = srData;
+      return true;
+    }
+
+    // ── START MODE ──
+    function startBahasa() {
+      mode = 'bahasa';
+      isFlipped = false;
+      showTips = false;
+      setText('play-status', 'Memuat Bahasa + SR...');
+      setText('play-err', '');
+      showScreen('screen-play');
+
+      loadCollections(function() {
+        loadSROverdue('bahasa_sr_queue').then(function(overdue) {
+          srQueue = overdue;
+          if (srQueue.length) {
+            srLaciSemasa = srQueue.shift();
+            if (loadSRIntoCards(srLaciSemasa, 'bahasa')) {
+              setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+              renderCard();
+              return;
+            }
+          }
+          if (rebuildBahasaCards()) {
+            setText('play-status', 'BAHASA · ' + (activePerkataan.name || ''));
+            renderCard();
+          }
+        }).catch(function(e) {
+          setText('play-err', e.message);
+          rebuildBahasaCards();
+          renderCard();
+        });
+      });
+    }
+
+    function startFakta() {
+      mode = 'fakta';
+      isFlipped = false;
+      showTips = false;
+      setText('play-status', 'Memuat Fakta + SR...');
+      setText('play-err', '');
+      showScreen('screen-play');
+
+      loadCollections(function() {
+        loadSROverdue('fakta_sr_queue').then(function(overdue) {
+          srQueue = overdue;
+          if (srQueue.length) {
+            srLaciSemasa = srQueue.shift();
+            if (loadSRIntoCards(srLaciSemasa, 'fakta')) {
+              setText('play-status', 'SR FAKTA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+              renderCard();
+              return;
+            }
+          }
+          if (rebuildFaktaCards()) {
+            setText('play-status', 'FAKTA · ' + (activeTopic.name || ''));
+            renderCard();
+          }
+        }).catch(function(e) {
+          setText('play-err', e.message);
+          rebuildFaktaCards();
+          renderCard();
+        });
+      });
+    }
+
+    // ── RENDER ──
     function setCardImage(url) {
       var img = document.getElementById('card-img');
       if (!img) return;
@@ -432,26 +551,31 @@
     }
 
     function renderCard() {
-      if (!cards.length || cardIndex >= cards.length) {
-        setText('main-text', 'Selesai');
-        setText('side-label', '');
-        setText('play-progress', '');
-        setText('play-mode', currentMode);
-        setText('play-status', 'Tamat');
+      if (!cards.length) {
+        setText('main-text', 'Tiada kad');
         setCardImage('');
         return;
       }
+      if (cardIndex >= cards.length) {
+        setText('main-text', 'Selesai');
+        setText('side-label', '');
+        setText('play-progress', '');
+        setCardImage('');
+        return;
+      }
+
       var c = cards[cardIndex];
-      setText('play-mode', (c.isF0 ? 'F0 · ' : '') + (c.title || currentMode));
-      setText('play-status', currentMode.toUpperCase());
+      var label = (srModeAktif ? 'SR · ' : '') + (c.isF0 ? 'F0 · ' : c.isTamat ? 'TAMAT · ' : '') + (c.title || '');
+      setText('play-mode', label);
       setText('play-progress', (cardIndex + 1) + ' / ' + cards.length);
 
-      // Gambar: tunjuk bila muka depan (bukan tips)
-      if (!showTips && c.imageUrl) {
-        setCardImage(c.imageUrl);
-      } else {
-        setCardImage('');
-      }
+      var meta = '';
+      if (mode === 'bahasa' && activePerkataan) meta = 'Perkataan: ' + (activePerkataan.name || '');
+      if (mode === 'fakta' && activeTopic) meta = 'Topik: ' + (activeTopic.name || '');
+      setText('play-meta', meta);
+
+      if (!showTips && c.imageUrl) setCardImage(c.imageUrl);
+      else setCardImage('');
 
       if (showTips) {
         setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
@@ -471,18 +595,171 @@
       }
     }
 
+    // ── NEXT (mirror phone completion flow) ──
+    function findNextDrawerStart(fromIdx) {
+      var i = fromIdx + 1;
+      while (i < cards.length && !cards[i].isF0 && !cards[i].isTamat) i++;
+      if (i < cards.length && cards[i].isTamat) i++;
+      return i;
+    }
+
+    function lompatPerkataanSeterusnya() {
+      if (!activePerkataan) return Promise.resolve(false);
+      var sorted = allBahasaPerkataan
+        .filter(function(p) { return p.jenisId === activePerkataan.jenisId; })
+        .sort(function(a, b) {
+          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+        });
+      var idx = -1;
+      for (var i = 0; i < sorted.length; i++) {
+        if (sorted[i].id === activePerkataan.id) { idx = i; break; }
+      }
+      if (idx < 0 || idx >= sorted.length - 1) return Promise.resolve(false);
+
+      var next = sorted[idx + 1];
+      var batch = db.batch();
+      var uid = currentUser.uid;
+      for (var j = 0; j < allBahasaPerkataan.length; j++) {
+        if (allBahasaPerkataan[j].isActive) {
+          batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
+          allBahasaPerkataan[j].isActive = false;
+        }
+      }
+      batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0 });
+      next.isActive = true;
+      next.lastIndex = 0;
+
+      return batch.commit().then(function() {
+        activePerkataan = next;
+        rebuildBahasaCards();
+        setText('play-status', 'BAHASA · ' + (next.name || ''));
+        renderCard();
+        return true;
+      }).catch(function() { return false; });
+    }
+
+    function afterTamat(c) {
+      isBusy = true;
+      setText('play-err', 'Menyimpan...');
+      var drawerId = c.drawerId;
+      var isSR = c.isSR || srModeAktif;
+
+      var done = function() {
+        // Cuba SR seterusnya dulu
+        if (srQueue.length) {
+          srLaciSemasa = srQueue.shift();
+          if (loadSRIntoCards(srLaciSemasa, mode)) {
+            setText('play-status', (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+            isFlipped = false;
+            showTips = false;
+            isBusy = false;
+            setText('play-err', '');
+            renderCard();
+            return;
+          }
+        }
+
+        // Kembali ke countdown biasa
+        var ok;
+        if (mode === 'bahasa') ok = rebuildBahasaCards();
+        else ok = rebuildFaktaCards();
+
+        if (!ok) {
+          isBusy = false;
+          setText('play-err', '');
+          return;
+        }
+
+        // Jump to next drawer start after finished one — use saved index or next F0
+        // After SR, restore lastIndex from perkataan/topic
+        isFlipped = false;
+        showTips = false;
+        setText('play-status', mode === 'bahasa'
+          ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+          : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
+        isBusy = false;
+        setText('play-err', '');
+        renderCard();
+      };
+
+      var p = isSR
+        ? selesaiSRUlangan(drawerId, mode)
+        : daftarSRBaru(drawerId, mode);
+
+      // Advance index past this tamat card
+      var nextIdx = findNextDrawerStart(cardIndex);
+      var isLast = nextIdx >= cards.length;
+
+      p.then(function() {
+        if (isSR) {
+          // After SR, just done() which rebuilds normal queue from lastIndex
+          done();
+          return;
+        }
+
+        if (isLast && mode === 'bahasa') {
+          // All drawers in perkataan done → next perkataan
+          lompatPerkataanSeterusnya().then(function(ok) {
+            isBusy = false;
+            setText('play-err', '');
+            if (!ok) {
+              setText('main-text', 'Habis semua perkataan dalam jenis kata ini.');
+              setText('side-label', '');
+              setCardImage('');
+            }
+          });
+          return;
+        }
+
+        if (isLast && mode === 'fakta') {
+          cardIndex = 0;
+          syncIndex(0);
+          isBusy = false;
+          setText('play-err', '');
+          setText('main-text', 'Habis semua laci topik ini. (Kitar semula dari awal)');
+          setText('side-label', '');
+          setCardImage('');
+          return;
+        }
+
+        cardIndex = nextIdx;
+        syncIndex(cardIndex);
+        isFlipped = false;
+        showTips = false;
+        isBusy = false;
+        setText('play-err', '');
+        renderCard();
+      }).catch(function(e) {
+        isBusy = false;
+        setText('play-err', e.message || 'Gagal simpan');
+      });
+    }
+
     function nextCard() {
+      if (isBusy) return;
+      if (!cards.length || cardIndex >= cards.length) return;
+
+      var c = cards[cardIndex];
+
+      // If on tamat card → handle completion
+      if (c.isTamat) {
+        afterTamat(c);
+        return;
+      }
+
       isFlipped = false;
       showTips = false;
-      if (cardIndex < cards.length - 1) {
-        cardIndex++;
+      cardIndex++;
+      if (cardIndex < cards.length) {
+        syncIndex(cardIndex);
         renderCard();
       } else {
-        cardIndex = cards.length;
+        // Shouldn't happen if every drawer ends with isTamat
         renderCard();
       }
     }
 
+    // ── AUTH ──
     function cubaLoginPin() {
       var pin = document.getElementById('pin-input').value.trim();
       if (!pin || !/^\d{4,6}$/.test(pin)) {
@@ -513,23 +790,24 @@
       if (e.key === 'Enter') cubaLoginPin();
     };
     document.getElementById('btn-logout').onclick = function() { auth.signOut(); };
-    document.getElementById('btn-go-bahasa').onclick = loadBahasaList;
-    document.getElementById('btn-go-fakta').onclick = loadFaktaList;
-    document.getElementById('btn-go-sr-bahasa').onclick = function() { loadSR('bahasa'); };
-    document.getElementById('btn-go-sr-fakta').onclick = function() { loadSR('fakta'); };
+    document.getElementById('btn-go-bahasa').onclick = startBahasa;
+    document.getElementById('btn-go-fakta').onclick = startFakta;
     document.getElementById('btn-back-menu').onclick = function() { showScreen('screen-menu'); };
-    document.getElementById('btn-back-menu2').onclick = function() { showScreen('screen-menu'); };
-    document.getElementById('btn-back-list').onclick = function() { showScreen('screen-list'); };
-    document.getElementById('btn-mula-semua').onclick = startAll;
+    document.getElementById('btn-reload').onclick = function() {
+      if (mode === 'bahasa') startBahasa();
+      else if (mode === 'fakta') startFakta();
+    };
     document.getElementById('btn-next').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
       if (!cards.length || cardIndex >= cards.length) return;
+      if (cards[cardIndex].isTamat) return;
       showTips = false;
       isFlipped = !isFlipped;
       renderCard();
     };
     document.getElementById('btn-tips').onclick = function() {
       if (!cards.length || cardIndex >= cards.length) return;
+      if (cards[cardIndex].isTamat) return;
       isFlipped = false;
       showTips = !showTips;
       renderCard();
@@ -539,7 +817,7 @@
       currentUser = user;
       document.getElementById('btn-login').disabled = false;
       if (user) {
-        setText('menu-user', 'Login OK');
+        setText('menu-user', 'Linked · Login OK');
         showScreen('screen-menu');
       } else {
         showScreen('screen-login');
