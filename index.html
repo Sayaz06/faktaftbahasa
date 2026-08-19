@@ -13,187 +13,120 @@
       font-family: Georgia, "Times New Roman", serif;
       -webkit-text-size-adjust: 100%;
     }
-    body {
-      padding: 10px;
-      max-width: 480px;
-      margin: 0 auto;
-    }
+    body { padding: 10px; max-width: 480px; margin: 0 auto; }
     .screen { display: none; }
     .screen.active { display: block; }
 
-    h1 {
-      font-size: 1.35rem;
-      text-align: center;
-      margin: 8px 0 12px;
-      letter-spacing: 0.04em;
-    }
-    .sub {
-      text-align: center;
-      font-size: 0.85rem;
-      color: #333;
-      margin-bottom: 16px;
-    }
+    h1 { font-size: 1.3rem; text-align: center; margin: 8px 0 10px; }
+    .sub { text-align: center; font-size: 0.85rem; color: #333; margin-bottom: 14px; }
 
     .btn {
-      display: block;
-      width: 100%;
-      padding: 16px 12px;
-      margin: 10px 0;
-      font-size: 1.15rem;
-      font-weight: bold;
-      text-align: center;
-      border: 2px solid #000;
-      background: #fff;
-      color: #000;
-      cursor: pointer;
-      border-radius: 6px;
+      display: block; width: 100%; padding: 14px 12px; margin: 8px 0;
+      font-size: 1.1rem; font-weight: bold; text-align: center;
+      border: 2px solid #000; background: #fff; color: #000;
+      cursor: pointer; border-radius: 6px;
     }
     .btn:active { background: #000; color: #fff; }
     .btn-primary { background: #000; color: #fff; }
     .btn-primary:active { background: #333; }
     .btn-sm {
-      padding: 10px 8px;
-      font-size: 0.95rem;
-      width: auto;
-      display: inline-block;
-      margin: 4px;
+      padding: 10px 8px; font-size: 0.9rem; width: auto;
+      display: inline-block; margin: 4px;
     }
-    .btn-sm.on {
-      background: #000;
-      color: #fff;
-    }
+    .btn-sm.on { background: #000; color: #fff; }
 
     .pin-input {
-      width: 100%;
-      padding: 16px;
-      font-size: 1.6rem;
-      text-align: center;
-      letter-spacing: 0.35em;
-      border: 2px solid #000;
-      border-radius: 8px;
-      background: #fff;
-      color: #000;
-      outline: none;
-      margin: 12px 0;
+      width: 100%; padding: 14px; font-size: 1.5rem; text-align: center;
+      letter-spacing: 0.3em; border: 2px solid #000; border-radius: 8px;
+      background: #fff; color: #000; outline: none; margin: 10px 0;
       font-family: monospace;
     }
 
+    .list-item {
+      border: 1px solid #000; border-radius: 8px; padding: 12px;
+      margin: 8px 0; cursor: pointer;
+    }
+    .list-item:active { background: #eee; }
+    .list-title { font-size: 1rem; font-weight: bold; }
+    .list-sub { font-size: 0.8rem; color: #444; margin-top: 4px; }
+
     .counter-box {
-      border: 3px solid #000;
-      border-radius: 12px;
-      padding: 18px 12px;
-      text-align: center;
-      margin: 14px 0;
-      min-height: 160px;
+      border: 3px solid #000; border-radius: 12px; padding: 16px 12px;
+      text-align: center; margin: 12px 0; min-height: 150px;
     }
-    .mode-label {
-      font-size: 0.8rem;
-      font-weight: bold;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .phase {
-      font-size: 0.95rem;
-      margin-bottom: 8px;
-      font-weight: bold;
-    }
+    .mode-label { font-size: 0.75rem; font-weight: bold; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+    .side-label { font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; }
     .big-text {
-      font-size: 1.5rem;
-      line-height: 1.4;
-      font-weight: bold;
-      word-break: break-word;
-      margin: 10px 0;
-      white-space: pre-wrap;
+      font-size: 1.45rem; line-height: 1.4; font-weight: bold;
+      word-break: break-word; margin: 8px 0; white-space: pre-wrap;
     }
-    .progress {
-      font-size: 0.9rem;
-      margin-top: 8px;
-    }
-    .meta {
-      font-size: 0.8rem;
-      color: #444;
-      margin-top: 6px;
-    }
-    .side-label {
-      font-size: 0.75rem;
-      font-weight: bold;
-      margin-bottom: 4px;
-      letter-spacing: 0.05em;
-    }
+    .progress { font-size: 0.85rem; margin-top: 6px; }
 
     .status-bar {
-      border: 1px solid #000;
-      padding: 8px;
-      font-size: 0.8rem;
-      text-align: center;
-      margin-bottom: 12px;
-      background: #f5f5f5;
+      border: 1px solid #000; padding: 8px; font-size: 0.8rem;
+      text-align: center; margin-bottom: 10px; background: #f5f5f5;
     }
-    .row {
-      text-align: center;
-      margin: 8px 0;
-    }
-
-    #login-msg, #err-msg {
-      text-align: center;
-      font-size: 0.9rem;
-      margin: 12px 0;
-      min-height: 1.2em;
-    }
+    .row { text-align: center; margin: 6px 0; }
+    .msg { text-align: center; font-size: 0.9rem; margin: 10px 0; min-height: 1.2em; }
     .error { color: #800; font-weight: bold; }
-
-    .footer {
-      text-align: center;
-      font-size: 0.7rem;
-      color: #666;
-      margin-top: 16px;
-    }
+    .footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 14px; }
+    .scroll-list { max-height: 55vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   </style>
 </head>
 <body>
 
+  <!-- LOGIN -->
   <div id="screen-login" class="screen active">
     <h1>Istigfar Kindle</h1>
-    <div class="sub">Countdown Bahasa & Fakta<br>Login dengan PIN Admin</div>
+    <div class="sub">Berdiri sendiri · Tiada perlu phone buka</div>
     <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
     <button id="btn-login" class="btn btn-primary">Masuk</button>
-    <div id="login-msg"></div>
-    <div class="footer">Guna PIN yang sama seperti app phone</div>
+    <div id="login-msg" class="msg"></div>
+    <div class="footer">PIN sama seperti app phone</div>
   </div>
 
-  <div id="screen-main" class="screen">
-    <div class="status-bar" id="status-bar">Menyambung...</div>
+  <!-- MENU -->
+  <div id="screen-menu" class="screen">
+    <h1>Istigfar Kindle</h1>
+    <div class="sub" id="menu-user">—</div>
+    <button id="btn-go-bahasa" class="btn btn-primary">📝 Laci Bahasa</button>
+    <button id="btn-go-fakta" class="btn">📚 Laci Fakta</button>
+    <button id="btn-go-sr-bahasa" class="btn">⏰ SR Bahasa</button>
+    <button id="btn-go-sr-fakta" class="btn">⏰ SR Fakta</button>
+    <button id="btn-logout" class="btn btn-sm" style="margin-top:16px;width:auto;display:block;margin-left:auto;margin-right:auto;">Logout</button>
+    <div class="footer">Pilih mode untuk mula</div>
+  </div>
 
-    <div class="counter-box">
-      <div class="mode-label" id="mode-label">—</div>
-      <div class="phase" id="phase-label">—</div>
-      <div class="side-label" id="side-label">MUKA DEPAN</div>
-      <div class="big-text" id="main-text">Belum ada sesi aktif</div>
-      <div class="progress" id="progress-label"></div>
-      <div class="meta" id="meta-label"></div>
+  <!-- LIST LACI -->
+  <div id="screen-list" class="screen">
+    <div class="status-bar" id="list-title">Senarai Laci</div>
+    <div class="row">
+      <button id="btn-back-menu" class="btn btn-sm">← Menu</button>
+      <button id="btn-mula-semua" class="btn btn-sm">Mula Semua</button>
     </div>
+    <div id="list-status" class="msg">Memuat...</div>
+    <div id="list-body" class="scroll-list"></div>
+  </div>
 
+  <!-- COUNTDOWN -->
+  <div id="screen-play" class="screen">
+    <div class="status-bar" id="play-status">—</div>
+    <div class="counter-box">
+      <div class="mode-label" id="play-mode">—</div>
+      <div class="side-label" id="side-label">MUKA DEPAN</div>
+      <div class="big-text" id="main-text">—</div>
+      <div class="progress" id="play-progress"></div>
+    </div>
     <button id="btn-next" class="btn btn-primary">SETERUSNYA →</button>
-
     <div class="row">
       <button id="btn-flip" class="btn btn-sm">Flip</button>
       <button id="btn-tips" class="btn btn-sm">Tips</button>
     </div>
-
     <div class="row">
-      <button id="btn-mode-bahasa" class="btn btn-sm">Bahasa</button>
-      <button id="btn-mode-fakta" class="btn btn-sm">Fakta</button>
+      <button id="btn-back-list" class="btn btn-sm">← Senarai</button>
+      <button id="btn-back-menu2" class="btn btn-sm">Menu</button>
     </div>
-
-    <div class="row">
-      <button id="btn-enter-sr" class="btn btn-sm">Masuk SR</button>
-      <button id="btn-refresh" class="btn btn-sm">Refresh</button>
-      <button id="btn-logout" class="btn btn-sm">Logout</button>
-    </div>
-
-    <div id="err-msg" class="error"></div>
-    <div class="footer">Flip = muka / maksud · Tips = tips sebutan</div>
+    <div id="play-err" class="msg error"></div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -213,140 +146,310 @@
     firebase.initializeApp(firebaseConfig);
     var auth = firebase.auth();
     var db = firebase.firestore();
-
-    // Email admin yang diguna untuk PIN (sama seperti phone)
     var ADMIN_EMAIL = 'adha86614@gmail.com';
 
     var currentUser = null;
-    var unsubSession = null;
-    var sessionData = null;
+    var cards = [];       // { front, back, tips, title, drawerId }
+    var cardIndex = 0;
     var isFlipped = false;
     var showTips = false;
+    var currentMode = ''; // bahasa | fakta | sr-bahasa | sr-fakta
+    var listItems = [];   // for list screen
 
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
-      for (var i = 0; i < screens.length; i++) {
-        screens[i].className = 'screen';
-      }
+      for (var i = 0; i < screens.length; i++) screens[i].className = 'screen';
       var el = document.getElementById(id);
       if (el) el.className = 'screen active';
     }
-
-    function setText(id, txt) {
+    function setText(id, t) {
       var el = document.getElementById(id);
-      if (el) el.textContent = txt || '';
+      if (el) el.textContent = t || '';
     }
 
-    function showErr(msg) {
-      setText('err-msg', msg || '');
+    // ── BUILD CARDS FROM DRAWER ──
+    function cardsFromBahasaDrawer(d) {
+      var out = [];
+      var tips = d.tipsSebutan || d.tips || '';
+      var title = d.title || 'Laci';
+      // F0 — tajuk
+      out.push({ front: title, back: '', tips: tips, title: title, drawerId: d.id, isF0: true });
+      var notes = (d.notes || '').trim();
+      if (!notes) return out;
+      var lines = notes.split('\n');
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+        var parts = line.split('=');
+        var front = parts[0].trim();
+        var back = parts.length > 1 ? parts.slice(1).join('=').trim() : '';
+        out.push({ front: front, back: back, tips: tips, title: title, drawerId: d.id });
+      }
+      return out;
     }
 
-    function updateDisplay() {
-      if (!sessionData) {
-        setText('main-text', 'Belum ada sesi aktif');
-        setText('side-label', '');
+    function cardsFromFaktaDrawer(d) {
+      var out = [];
+      var tips = d.tipsFakta || d.tips || '';
+      var title = d.title || 'Laci';
+      if (d.items && d.items.length) {
+        for (var i = 0; i < d.items.length; i++) {
+          var it = d.items[i];
+          var ayat = (it.ayat || it.text || '').trim();
+          if (!ayat) continue;
+          var parts = ayat.split('=');
+          out.push({
+            front: parts[0].trim(),
+            back: parts.length > 1 ? parts.slice(1).join('=').trim() : (it.maksud || it.translation || ''),
+            tips: tips,
+            title: title,
+            drawerId: d.id
+          });
+        }
+      } else if (d.notes) {
+        var lines = d.notes.split('\n');
+        for (var j = 0; j < lines.length; j++) {
+          var line = lines[j].trim();
+          if (!line) continue;
+          var p = line.split('=');
+          out.push({
+            front: p[0].trim(),
+            back: p.length > 1 ? p.slice(1).join('=').trim() : '',
+            tips: tips,
+            title: title,
+            drawerId: d.id
+          });
+        }
+      }
+      return out;
+    }
+
+    // ── LOAD DATA ──
+    function loadBahasaList() {
+      currentMode = 'bahasa';
+      setText('list-title', 'Laci Bahasa');
+      setText('list-status', 'Memuat...');
+      document.getElementById('list-body').innerHTML = '';
+      showScreen('screen-list');
+
+      db.collection('users').doc(currentUser.uid).collection('bahasa_drawers')
+        .get()
+        .then(function(snap) {
+          listItems = [];
+          snap.forEach(function(doc) {
+            var d = doc.data();
+            d.id = doc.id;
+            if ((d.notes || '').trim()) listItems.push(d);
+          });
+          listItems.sort(function(a, b) {
+            return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+          });
+          renderList();
+        })
+        .catch(function(e) {
+          setText('list-status', 'Ralat: ' + e.message);
+        });
+    }
+
+    function loadFaktaList() {
+      currentMode = 'fakta';
+      setText('list-title', 'Laci Fakta');
+      setText('list-status', 'Memuat...');
+      document.getElementById('list-body').innerHTML = '';
+      showScreen('screen-list');
+
+      db.collection('users').doc(currentUser.uid).collection('drawer')
+        .get()
+        .then(function(snap) {
+          listItems = [];
+          snap.forEach(function(doc) {
+            var d = doc.data();
+            d.id = doc.id;
+            var ada = (d.items && d.items.length) || (d.notes || '').trim();
+            if (ada) listItems.push(d);
+          });
+          listItems.sort(function(a, b) {
+            return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+          });
+          renderList();
+        })
+        .catch(function(e) {
+          setText('list-status', 'Ralat: ' + e.message);
+        });
+    }
+
+    function loadSR(type) {
+      currentMode = type === 'bahasa' ? 'sr-bahasa' : 'sr-fakta';
+      var col = type === 'bahasa' ? 'bahasa_sr_queue' : 'fakta_sr_queue';
+      var drawerCol = type === 'bahasa' ? 'bahasa_drawers' : 'drawer';
+      setText('list-title', type === 'bahasa' ? 'SR Bahasa' : 'SR Fakta');
+      setText('list-status', 'Memuat SR...');
+      document.getElementById('list-body').innerHTML = '';
+      showScreen('screen-list');
+
+      var now = Date.now();
+      db.collection('users').doc(currentUser.uid).collection(col).get()
+        .then(function(snap) {
+          var due = [];
+          snap.forEach(function(doc) {
+            var d = doc.data();
+            d.id = doc.id;
+            if (!d.nextDueAt || d.nextDueAt <= now) due.push(d);
+          });
+          due.sort(function(a, b) { return (a.nextDueAt || 0) - (b.nextDueAt || 0); });
+
+          if (!due.length) {
+            setText('list-status', 'Tiada SR due sekarang');
+            listItems = [];
+            return;
+          }
+
+          // Load drawer content for each
+          var promises = due.map(function(sr) {
+            return db.collection('users').doc(currentUser.uid).collection(drawerCol).doc(sr.drawerId || sr.id).get()
+              .then(function(ds) {
+                if (!ds.exists) return null;
+                var data = ds.data();
+                data.id = ds.id;
+                data._sr = sr;
+                return data;
+              });
+          });
+
+          return Promise.all(promises).then(function(arr) {
+            listItems = arr.filter(function(x) { return x; });
+            renderList();
+          });
+        })
+        .catch(function(e) {
+          setText('list-status', 'Ralat: ' + e.message);
+        });
+    }
+
+    function renderList() {
+      var body = document.getElementById('list-body');
+      body.innerHTML = '';
+      if (!listItems.length) {
+        setText('list-status', 'Tiada laci');
         return;
       }
+      setText('list-status', listItems.length + ' laci');
+      for (var i = 0; i < listItems.length; i++) {
+        (function(idx) {
+          var d = listItems[idx];
+          var div = document.createElement('div');
+          div.className = 'list-item';
+          var title = d.title || d.id;
+          var sub = '';
+          if (currentMode.indexOf('bahasa') !== -1) {
+            var n = (d.notes || '').split('\n').filter(function(l) { return l.trim(); }).length;
+            sub = n + ' baris';
+          } else {
+            var n2 = (d.items && d.items.length) ? d.items.length : (d.notes || '').split('\n').filter(function(l) { return l.trim(); }).length;
+            sub = n2 + ' item';
+          }
+          div.innerHTML = '<div class="list-title">' + escapeHtml(title) + '</div><div class="list-sub">' + sub + '</div>';
+          div.onclick = function() { startFromDrawer(d); };
+          body.appendChild(div);
+        })(i);
+      }
+    }
 
-      var front = sessionData.text || sessionData.title || '(kosong)';
-      var back = sessionData.translation || '';
-      var tips = sessionData.tips || '';
+    function escapeHtml(s) {
+      return String(s || '').replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');
+    }
+
+    function startFromDrawer(d) {
+      if (currentMode.indexOf('bahasa') !== -1) {
+        cards = cardsFromBahasaDrawer(d);
+      } else {
+        cards = cardsFromFaktaDrawer(d);
+      }
+      if (!cards.length) {
+        setText('list-status', 'Laci kosong');
+        return;
+      }
+      cardIndex = 0;
+      isFlipped = false;
+      showTips = false;
+      showScreen('screen-play');
+      renderCard();
+    }
+
+    function startAll() {
+      cards = [];
+      for (var i = 0; i < listItems.length; i++) {
+        var d = listItems[i];
+        if (currentMode.indexOf('bahasa') !== -1) {
+          cards = cards.concat(cardsFromBahasaDrawer(d));
+        } else {
+          cards = cards.concat(cardsFromFaktaDrawer(d));
+        }
+      }
+      if (!cards.length) {
+        setText('list-status', 'Tiada kad');
+        return;
+      }
+      cardIndex = 0;
+      isFlipped = false;
+      showTips = false;
+      showScreen('screen-play');
+      renderCard();
+    }
+
+    function renderCard() {
+      if (!cards.length || cardIndex >= cards.length) {
+        setText('main-text', '✅ Selesai');
+        setText('side-label', '');
+        setText('play-progress', '');
+        setText('play-mode', currentMode);
+        setText('play-status', 'Tamat');
+        return;
+      }
+      var c = cards[cardIndex];
+      setText('play-mode', (c.isF0 ? 'F0 · ' : '') + (c.title || currentMode));
+      setText('play-status', currentMode.toUpperCase());
+      setText('play-progress', (cardIndex + 1) + ' / ' + cards.length);
 
       if (showTips) {
-        setText('side-label', 'TIPS SEBUTAN');
-        setText('main-text', tips ? tips : '(Tiada tips untuk kad ini)');
+        setText('side-label', 'TIPS');
+        setText('main-text', c.tips || '(Tiada tips)');
         document.getElementById('btn-tips').className = 'btn btn-sm on';
         document.getElementById('btn-flip').className = 'btn btn-sm';
       } else if (isFlipped) {
         setText('side-label', 'MUKA BELAKANG');
-        setText('main-text', back ? back : '(Tiada terjemahan)');
+        setText('main-text', c.back || '(Tiada terjemahan)');
         document.getElementById('btn-flip').className = 'btn btn-sm on';
         document.getElementById('btn-tips').className = 'btn btn-sm';
       } else {
         setText('side-label', 'MUKA DEPAN');
-        setText('main-text', front);
+        setText('main-text', c.front || '(kosong)');
         document.getElementById('btn-flip').className = 'btn btn-sm';
         document.getElementById('btn-tips').className = 'btn btn-sm';
       }
     }
 
-    function renderSession(data) {
-      sessionData = data || null;
+    function nextCard() {
       isFlipped = false;
       showTips = false;
-
-      if (!data) {
-        setText('status-bar', 'Tiada sesi aktif — buka countdown di phone');
-        setText('mode-label', '—');
-        setText('phase-label', '—');
-        setText('main-text', 'Belum ada sesi aktif');
-        setText('side-label', '');
-        setText('progress-label', '');
-        setText('meta-label', '');
-        return;
+      if (cardIndex < cards.length - 1) {
+        cardIndex++;
+        renderCard();
+      } else {
+        cardIndex = cards.length;
+        renderCard();
       }
-
-      var mode = data.mode || '—';
-      var isSR = !!data.isSR;
-      var phase = data.phase || '';
-      var progress = data.progress || '';
-      var meta = data.meta || '';
-
-      setText('status-bar', 'Sync OK · ' + (data.updatedAt ? new Date(data.updatedAt).toLocaleTimeString() : ''));
-      setText('mode-label', (isSR ? 'SR · ' : '') + (mode === 'bahasa' ? 'LACI BAHASA' : mode === 'fakta' ? 'LACI FAKTA' : String(mode).toUpperCase()));
-      setText('phase-label', phase);
-      setText('progress-label', progress);
-      setText('meta-label', meta);
-      updateDisplay();
     }
 
-    function startSessionListener(uid) {
-      if (unsubSession) unsubSession();
-      unsubSession = db.collection('users').doc(uid).collection('kindle_session').doc('current')
-        .onSnapshot(function(snap) {
-          if (snap.exists) {
-            renderSession(snap.data());
-          } else {
-            renderSession(null);
-          }
-        }, function(err) {
-          setText('status-bar', 'Error sync: ' + err.message);
-          showErr(err.message);
-        });
-    }
-
-    function sendCommand(cmd, extra) {
-      if (!currentUser) return;
-      var payload = {
-        command: cmd,
-        ts: Date.now(),
-        from: 'kindle'
-      };
-      if (extra) {
-        for (var k in extra) {
-          if (Object.prototype.hasOwnProperty.call(extra, k)) payload[k] = extra[k];
-        }
-      }
-      db.collection('users').doc(currentUser.uid).collection('kindle_session').doc('command')
-        .set(payload)
-        .then(function() {
-          showErr('');
-          setText('status-bar', 'Command dihantar: ' + cmd);
-        })
-        .catch(function(e) {
-          showErr('Gagal hantar: ' + e.message);
-        });
-    }
-
+    // ── AUTH ──
     function cubaLoginPin() {
       var pin = document.getElementById('pin-input').value.trim();
       if (!pin || !/^\d{4,6}$/.test(pin)) {
-        setText('login-msg', 'PIN mesti 4-6 digit angka');
+        setText('login-msg', 'PIN mesti 4-6 digit');
         return;
       }
       setText('login-msg', 'Mengesahkan...');
       document.getElementById('btn-login').disabled = true;
-
       auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
         .then(function() {
           document.getElementById('pin-input').value = '';
@@ -355,11 +458,11 @@
         .catch(function(e) {
           document.getElementById('btn-login').disabled = false;
           if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') {
-            setText('login-msg', 'PIN salah. Cuba lagi.');
+            setText('login-msg', 'PIN salah');
           } else if (e.code === 'auth/user-not-found') {
-            setText('login-msg', 'PIN belum ditetapkan. Setup di phone dulu.');
+            setText('login-msg', 'PIN belum setup di phone');
           } else {
-            setText('login-msg', 'Ralat: ' + (e.message || e.code));
+            setText('login-msg', e.message || e.code);
           }
         });
     }
@@ -370,54 +473,39 @@
     };
 
     document.getElementById('btn-logout').onclick = function() {
-      if (unsubSession) unsubSession();
       auth.signOut();
     };
 
-    document.getElementById('btn-next').onclick = function() {
-      isFlipped = false;
-      showTips = false;
-      sendCommand('next');
-    };
+    document.getElementById('btn-go-bahasa').onclick = loadBahasaList;
+    document.getElementById('btn-go-fakta').onclick = loadFaktaList;
+    document.getElementById('btn-go-sr-bahasa').onclick = function() { loadSR('bahasa'); };
+    document.getElementById('btn-go-sr-fakta').onclick = function() { loadSR('fakta'); };
 
+    document.getElementById('btn-back-menu').onclick = function() { showScreen('screen-menu'); };
+    document.getElementById('btn-back-menu2').onclick = function() { showScreen('screen-menu'); };
+    document.getElementById('btn-back-list').onclick = function() { showScreen('screen-list'); };
+    document.getElementById('btn-mula-semua').onclick = startAll;
+
+    document.getElementById('btn-next').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
-      if (!sessionData) return;
+      if (!cards.length || cardIndex >= cards.length) return;
       showTips = false;
       isFlipped = !isFlipped;
-      updateDisplay();
+      renderCard();
     };
-
     document.getElementById('btn-tips').onclick = function() {
-      if (!sessionData) return;
+      if (!cards.length || cardIndex >= cards.length) return;
       isFlipped = false;
       showTips = !showTips;
-      updateDisplay();
-    };
-
-    document.getElementById('btn-enter-sr').onclick = function() {
-      sendCommand('enterSR');
-    };
-
-    document.getElementById('btn-mode-bahasa').onclick = function() {
-      sendCommand('switchMode', { mode: 'bahasa' });
-    };
-
-    document.getElementById('btn-mode-fakta').onclick = function() {
-      sendCommand('switchMode', { mode: 'fakta' });
-    };
-
-    document.getElementById('btn-refresh').onclick = function() {
-      if (currentUser) startSessionListener(currentUser.uid);
-      setText('status-bar', 'Refresh...');
+      renderCard();
     };
 
     auth.onAuthStateChanged(function(user) {
       currentUser = user;
       document.getElementById('btn-login').disabled = false;
       if (user) {
-        showScreen('screen-main');
-        setText('status-bar', 'Logged in');
-        startSessionListener(user.uid);
+        setText('menu-user', 'Login OK');
+        showScreen('screen-menu');
       } else {
         showScreen('screen-login');
         setText('login-msg', '');
