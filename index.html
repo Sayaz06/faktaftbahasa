@@ -122,6 +122,10 @@
     <div class="sub" id="menu-user">—</div>
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
+    <button id="btn-go-quran" class="btn">Laci Quran</button>
+    <button id="btn-go-rutin" class="btn">Laci Rutin</button>
+    <button id="btn-go-doa" class="btn">Laci Doa</button>
+    <button id="btn-go-hadis" class="btn">Laci Hadis</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
   </div>
@@ -1718,7 +1722,15 @@
     document.getElementById('btn-logout').onclick = function() { auth.signOut(); };
     document.getElementById('btn-go-bahasa').onclick = startBahasa;
     document.getElementById('btn-go-fakta').onclick = startFakta;
-    document.getElementById('btn-back-menu').onclick = function() { showScreen('screen-menu'); };
+    document.getElementById('btn-go-quran').onclick = startQuran;
+    document.getElementById('btn-go-rutin').onclick = startRutin;
+    document.getElementById('btn-go-doa').onclick = startDoa;
+    document.getElementById('btn-go-hadis').onclick = startHadis;
+        document.getElementById('btn-back-menu').onclick = function() {
+      terskipCards = []; terskipIdx = 0;
+      isFlipped = false; showTips = false;
+      showScreen('screen-menu');
+    };
     document.getElementById('btn-reload').onclick = function() {
       isLoading = false;
       if (mode === 'bahasa') startBahasa();
