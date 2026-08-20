@@ -672,9 +672,25 @@
       } else {
         fasaLabel = c.title || '';
       }
+
       var label = (srModeAktif ? 'SR · ' : '') + fasaLabel;
-      setText('play-mode', label);     
-      setText('play-progress', (cardIndex + 1) + ' / ' + cards.length);
+      setText('play-mode', label);
+
+      // Kira progress dalam fasa semasa sahaja
+      var fasaSemasa = c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1);
+      var fasaStart = cardIndex, fasaEnd = cardIndex;
+      for (var pi = 0; pi < cards.length; pi++) {
+        if (cards[pi].isTamat) continue;
+        var pf = cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1);
+        var sameLaci = (mode === 'fakta') ? (cards[pi].drawerId === c.drawerId) : true;
+        if (pf === fasaSemasa && sameLaci) {
+          if (pi < fasaStart) fasaStart = pi;
+          if (pi > fasaEnd) fasaEnd = pi;
+        }
+      }
+      var fasaPos = cardIndex - fasaStart + 1;
+      var fasaTotal = fasaEnd - fasaStart + 1;
+      setText('play-progress', c.isTamat ? '' : (fasaPos + ' / ' + fasaTotal));      
 
       setText('play-meta', '');
 
@@ -855,7 +871,12 @@
         return;
       }
 
-      isFlipped = false; showTips = false;
+      // Reset flip hanya bila tukar fasa, kekal flip dalam fasa yang sama
+      var fasaSebelum = c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1);
+      var nextC = cards[cardIndex + 1];
+      var fasaSelepas = nextC ? (nextC.isF0 ? 0 : (nextC.fasa !== undefined ? nextC.fasa : -1)) : -1;
+      if (fasaSelepas !== fasaSebelum) { isFlipped = false; showTips = false; }
+
       cardIndex++;
       if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
       else renderCard();
