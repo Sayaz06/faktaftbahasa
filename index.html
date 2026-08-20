@@ -1429,6 +1429,14 @@
       });
     }  
 
+    function syncLastIndexRutin(modeName, timesId, newIndex) {
+      if (!currentUser || !timesId) return;
+      var collName = modeName === 'rutin' ? 'routine_times' : modeName === 'doa' ? 'doa_times' : 'hadis_times';
+      db.collection('users').doc(currentUser.uid)
+        .collection(collName).doc(timesId)
+        .update({ lastIndex: newIndex }).catch(function() {});
+    }
+
     function nextCard() {
       if (isBusy) return;
 
@@ -1455,6 +1463,83 @@
 
       if (!cards.length || cardIndex >= cards.length) return;
       var c = cards[cardIndex];
+
+      // ── MOD QURAN ──
+      if (mode === 'quran') {
+        if (c.isTamat && c.isTamatSurah) {
+          // Habis surah — maju ke surah seterusnya
+          isBusy = true;
+          setText('play-err', 'Menyimpan...');
+          var surahBaru = quranSurahSemasa + 1;
+          if (surahBaru > 114) {
+            // Habis semua surah
+            isBusy = false;
+            setText('play-err', '');
+            setText('main-text', 'Tahniah! Al-Quran selesai.');
+            setText('side-label', ''); setCardImage('');
+            return;
+          }
+          simpanProgressQuran(surahBaru, 1, true).then(function() {
+            quranAyatCounter = 0;
+            isBusy = false;
+            setText('play-err', '');
+            var ok = rebuildQuranCards();
+            if (ok) {
+              setText('play-status', 'QURAN · ' + quranSurahSemasa + '. ' + QURAN_SURAH_NAMES[quranSurahSemasa - 1]);
+            }
+            isFlipped = false; showTips = false;
+            renderCard();
+          }).catch(function() {
+            isBusy = false;
+            setText('play-err', 'Gagal simpan. Cuba reload.');
+          });
+          return;
+        }
+
+        // Kad biasa — maju dan kira ayat
+        isFlipped = false; showTips = false;
+        cardIndex++;
+        if (cardIndex < cards.length) {
+          var cBaru = cards[cardIndex];
+          // Kira ayat yang baru selesai (kad sebelum)
+          if (c.ayatNum && c.ayatNum > 0) {
+            quranAyatCounter++;
+            var jumlahAyatSurah = QURAN_SURAH_AYAT[quranSurahSemasa - 1] || 0;
+            var patutSave = (c.ayatNum % 5 === 0) || (c.ayatNum === jumlahAyatSurah);
+            if (patutSave) {
+              // Simpan kemajuan setiap gandaan 5 atau ayat terakhir surah
+              simpanProgressQuran(quranSurahSemasa, c.ayatNum, false);
+              quranAyatCounter = 0;
+            }
+          }
+          renderCard();
+        } else {
+          renderCard();
+        }
+        return;
+      }
+
+      // ── MOD RUTIN / DOA / HADIS ──
+      if (mode === 'rutin' || mode === 'doa' || mode === 'hadis') {
+        if (c.isTamat && c.isTamatRutin) {
+          // Habis — ulang semula dari awal
+          cardIndex = 0;
+          isFlipped = false; showTips = false;
+          var aktifIdRutin = mode === 'rutin' ? activeRutinTimeId : mode === 'doa' ? activeDoaTimeId : activeHadisTimeId;
+          syncLastIndexRutin(mode, aktifIdRutin, 0);
+          renderCard();
+          return;
+        }
+        // Kad biasa — maju
+        isFlipped = false; showTips = false;
+        cardIndex++;
+        if (cardIndex >= cards.length) cardIndex = 0;
+        var aktifId = mode === 'rutin' ? activeRutinTimeId : mode === 'doa' ? activeDoaTimeId : activeHadisTimeId;
+        syncLastIndexRutin(mode, aktifId, cardIndex);
+        renderCard();
+        return;
+      }
+
       if (c.isTamat) { afterTamat(c); return; }
 
       // Fakta F1 habis (isEndF1) → tunjuk motivasi JQ, kemudian sambung ke F2
