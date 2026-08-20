@@ -1797,7 +1797,7 @@
       // Mod Quran — butang ini jadi Terskip
       if (mode === 'quran') {
         // Kalau sedang dalam terskip — flip atau maju
-        if (document.getElementById('btn-tips').className.indexOf('on') !== -1) {
+        if (terskipCards.length > 0) {
           if (!isFlipped && terskipCards[terskipIdx] && terskipCards[terskipIdx].back) {
             // Tunjuk maksud
             isFlipped = true;
@@ -1862,6 +1862,7 @@
         activeRutinTimeId = null;
         activeDoaTimeId = null;
         activeHadisTimeId = null;
+        terskipCards = []; terskipIdx = 0;
         updateJQButton();
         showScreen('screen-login');
         setText('login-msg', '');
