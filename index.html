@@ -208,8 +208,7 @@
     var jqMotivasiIdx = 0;
     var jqModeSemasa = ''; // 'motivasi' atau ''
     var jqPendingCardIndex = -1; // index kad F2 yang menunggu selepas motivasi (fakta)
-    var jqKadSemasa = null; // kad motivasi semasa — cards asal TIDAK ditimpa
-    var jqCardIndexSimpan = -1; // simpan cardIndex asal sebelum motivasi
+    var _jqMotivasiUnsubscribe = null; // untuk cleanup onSnapshot
     var isLoading = false; // guard untuk elak double-trigger button
     
     function showScreen(id) {
@@ -474,10 +473,13 @@
       }
     }
 
-    function loadMotivasiJQ() {
-      if (!currentUser) return Promise.resolve();
-      return db.collection('users').doc(currentUser.uid).collection('jogging_motivasi').get()
-        .then(function(snap) {
+    var _jqMotivasiUnsubscribe = null;
+    function subscribeJoggingMotivasi() {
+      if (!currentUser) return;
+      if (_jqMotivasiUnsubscribe) _jqMotivasiUnsubscribe();
+      _jqMotivasiUnsubscribe = db.collection('users').doc(currentUser.uid)
+        .collection('jogging_motivasi')
+        .onSnapshot(function(snap) {
           jqMotivasiList = [];
           snap.forEach(function(d) {
             var x = d.data(); x.id = d.id;
@@ -486,30 +488,24 @@
           jqMotivasiList.sort(function(a, b) {
             return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
           });
-        }).catch(function() { jqMotivasiList = []; });
+        }, function() { jqMotivasiList = []; });
     }
 
-    function tunjukMotivasiJQ() {
+    function tunjukMotivasiJQ(cbSelepas) {
       if (!jqMotivasiList.length) {
-        // tiada motivasi — terus sambung
-        sambungSelepasMotivasi();
+        cbSelepas && cbSelepas();
         return;
       }
       var m = jqMotivasiList[jqMotivasiIdx];
       jqMotivasiIdx = (jqMotivasiIdx + 1) % jqMotivasiList.length;
-      jqModeSemasa = 'motivasi';
 
       var adaFlip = m.text && m.text.includes('=');
       var depan = adaFlip ? m.text.split('=')[0].trim() : (m.text || m.title || '');
-      var belakang = adaFlip ? m.text.split('=').slice(1).join('=').trim() : '';
-
-      // Simpan kad motivasi berasingan — JANGAN timpa cards asal
-      jqKadSemasa = { front: depan, back: belakang, tips: '', imageUrl: '', title: m.title || 'Motivasi', isMotivasi: true };
-      jqCardIndexSimpan = cardIndex; // simpan kedudukan asal
+      var motivasiFlipped = false;
 
       isFlipped = false; showTips = false;
       setText('play-status', 'MOTIVASI JQ · ' + (m.title || ''));
-      setText('play-mode', 'MOTIVASI · ' + (jqMotivasiIdx) + '/' + jqMotivasiList.length);
+      setText('play-mode', 'MOTIVASI · ' + jqMotivasiIdx + '/' + jqMotivasiList.length);
       setText('side-label', 'MUKA DEPAN');
       setText('main-text', depan);
       setText('play-progress', adaFlip ? '(Flip untuk penerangan)' : '(Tekan SETERUSNYA untuk teruskan)');
@@ -518,40 +514,23 @@
       setCardImage('');
       var mainEl = document.getElementById('main-text');
       if (mainEl) mainEl.className = depan.length > 80 ? 'big-text long-text' : 'big-text';
-      // cards dan cardIndex TIDAK diubah
+
+      // Bekukan aliran — tunggu user tekan SETERUSNYA (atau Flip)
+      // Simpan callback dalam window._jqMotivasiHandler seperti app pertama
+      window._jqMotivasiHandler = {
+        adaFlip: adaFlip,
+        depan: depan,
+        belakang: adaFlip ? m.text.split('=').slice(1).join('=').trim() : '',
+        flipped: false,
+        title: m.title || '',
+        cb: cbSelepas
+      };
     }
 
-    function sambungSelepasMotivasi() {
-      jqModeSemasa = '';
-      jqKadSemasa = null;
+    function _selesaiMotivasi() {
+      window._jqMotivasiHandler = null;
       isFlipped = false; showTips = false;
-
-      // Fakta: ada F2 yang menunggu — cards asal masih ada, terus render
-      if (mode === 'fakta' && jqPendingCardIndex >= 0) {
-        cardIndex = jqPendingCardIndex;
-        jqPendingCardIndex = -1;
-        jqCardIndexSimpan = -1;
-        isBusy = false;
-        setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
-        renderCard();
-        return;
-      }
-
-      // Bahasa: cards asal masih ada, terus render dari kedudukan yang disimpan
-      if (mode === 'bahasa' && jqCardIndexSimpan >= 0) {
-        cardIndex = jqCardIndexSimpan;
-        jqCardIndexSimpan = -1;
-        jqPendingCardIndex = -1;
-        isBusy = false;
-        setText('play-status', 'BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''));
-        renderCard();
-        return;
-      }
-
-      jqPendingCardIndex = -1;
-      jqCardIndexSimpan = -1;
-      isBusy = false;
-      renderCard();
+      setText('play-err', '');
     }
 
     function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {    
@@ -937,7 +916,7 @@
         rebuildBahasaCards();
         setText('play-status', 'BAHASA · ' + (next.name || ''));
         if (jqAktif && jqMotivasiList.length) {
-          tunjukMotivasiJQ();
+          tunjukMotivasiJQ(function() { renderCard(); });
         } else {
           renderCard();
         }
@@ -1001,7 +980,12 @@
           setText('play-err', '');
           // JQ: tunjuk motivasi dulu sebelum laci seterusnya
           if (jqAktif && jqMotivasiList.length) {
-            tunjukMotivasiJQ();
+            tunjukMotivasiJQ(function() {
+              setText('play-status', mode === 'bahasa'
+                ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+                : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
+              renderCard();
+            });
             return;
           }
           setText('play-status', mode === 'bahasa'
@@ -1029,21 +1013,24 @@
     function nextCard() {
       if (isBusy) return;
 
-      // Mode motivasi JQ — tekan SETERUSNYA → sambung countdown
-      if (jqModeSemasa === 'motivasi') {
-        if (!isFlipped && jqKadSemasa && jqKadSemasa.back) {
-          // Belum flip — tunjuk belakang dulu
-          isFlipped = true;
+      // Mode motivasi JQ — tekan SETERUSNYA → ikut cara app pertama
+      if (window._jqMotivasiHandler) {
+        var h = window._jqMotivasiHandler;
+        if (h.adaFlip && !h.flipped) {
+          // Tap pertama — tunjuk belakang
+          h.flipped = true;
           setText('side-label', 'MUKA BELAKANG');
-          setText('main-text', jqKadSemasa.back);
+          setText('main-text', h.belakang);
           setText('play-progress', '(Tekan SETERUSNYA untuk teruskan)');
-          var mainEl = document.getElementById('main-text');
-          if (mainEl) mainEl.className = jqKadSemasa.back.length > 80 ? 'big-text long-text' : 'big-text';
+          var mainElM = document.getElementById('main-text');
+          if (mainElM) mainElM.className = h.belakang.length > 80 ? 'big-text long-text' : 'big-text';
           document.getElementById('btn-flip').className = 'btn-sm on';
           return;
         }
-        // Dah flip atau tiada belakang — sambung
-        sambungSelepasMotivasi();
+        // Tap terakhir — selesai motivasi, sambung
+        var cbM = h.cb;
+        _selesaiMotivasi();
+        if (cbM) cbM();
         return;
       }
 
@@ -1057,9 +1044,12 @@
         cardIndex++;
         syncIndex(cardIndex);
         if (jqAktif && jqMotivasiList.length) {
-          // Simpan kedudukan F2 dalam jqPendingCardIndex
-          jqPendingCardIndex = cardIndex;
-          tunjukMotivasiJQ();
+          var f2Index = cardIndex;
+          tunjukMotivasiJQ(function() {
+            cardIndex = f2Index;
+            setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            renderCard();
+          });
         } else {
           renderCard();
         }
@@ -1186,16 +1176,17 @@
     };
     document.getElementById('btn-next').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
-      // Masa motivasi JQ — flip guna jqKadSemasa, bukan cards
-      if (jqModeSemasa === 'motivasi' && jqKadSemasa) {
-        if (!jqKadSemasa.back) return;
-        isFlipped = !isFlipped;
-        setText('side-label', isFlipped ? 'MUKA BELAKANG' : 'MUKA DEPAN');
-        setText('main-text', isFlipped ? jqKadSemasa.back : jqKadSemasa.front);
+      if (window._jqMotivasiHandler) {
+        var h = window._jqMotivasiHandler;
+        if (!h.adaFlip) return;
+        h.flipped = !h.flipped;
+        setText('side-label', h.flipped ? 'MUKA BELAKANG' : 'MUKA DEPAN');
+        var txt = h.flipped ? h.belakang : h.depan;
+        setText('main-text', txt);
+        setText('play-progress', h.flipped ? '(Tekan SETERUSNYA untuk teruskan)' : '(Flip untuk penerangan)');
         var mainEl = document.getElementById('main-text');
-        var txt = isFlipped ? jqKadSemasa.back : jqKadSemasa.front;
         if (mainEl) mainEl.className = txt.length > 80 ? 'big-text long-text' : 'big-text';
-        document.getElementById('btn-flip').className = isFlipped ? 'btn-sm on' : 'btn-sm';
+        document.getElementById('btn-flip').className = h.flipped ? 'btn-sm on' : 'btn-sm';
         return;
       }
       if (!cards.length || cardIndex >= cards.length) return;
@@ -1219,15 +1210,14 @@
       if (user) {
         setText('menu-user', 'Linked · Login OK');
         loadJQStatus();
-        loadMotivasiJQ();
+        subscribeJoggingMotivasi();
         showScreen('screen-menu');
       } else {
+        if (_jqMotivasiUnsubscribe) { _jqMotivasiUnsubscribe(); _jqMotivasiUnsubscribe = null; }
+        window._jqMotivasiHandler = null;
         jqAktif = false;
         jqMotivasiList = [];
-        jqKadSemasa = null;
-        jqCardIndexSimpan = -1;
         jqPendingCardIndex = -1;
-        jqModeSemasa = '';
         updateJQButton();
         showScreen('screen-login');
         setText('login-msg', '');
