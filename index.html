@@ -733,8 +733,8 @@
       isLoading = true;
       mode = 'bahasa';
       isFlipped = false; showTips = false;
-      jqModeSemasa = '';
-      jqPendingCardIndex = -1;
+      jqModeSemasa = ''; jqKadSemasa = null;
+      jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
       setText('play-status', 'Memuat Bahasa + SR...');
       setText('play-err', '');
       showScreen('screen-play');
@@ -766,8 +766,8 @@
       isLoading = true;
       mode = 'fakta';
       isFlipped = false; showTips = false;
-      jqModeSemasa = '';
-      jqPendingCardIndex = -1;
+      jqModeSemasa = ''; jqKadSemasa = null;
+      jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
       setText('play-status', 'Memuat Fakta + SR...');
       setText('play-err', '');
       showScreen('screen-play');
@@ -1031,12 +1031,18 @@
 
       // Mode motivasi JQ — tekan SETERUSNYA → sambung countdown
       if (jqModeSemasa === 'motivasi') {
-        if (isFlipped && jqKadSemasa && jqKadSemasa.back) {
-          // Tunjuk belakang dulu, baru sambung bila tekan lagi
-          isFlipped = false;
-          sambungSelepasMotivasi();
+        if (!isFlipped && jqKadSemasa && jqKadSemasa.back) {
+          // Belum flip — tunjuk belakang dulu
+          isFlipped = true;
+          setText('side-label', 'MUKA BELAKANG');
+          setText('main-text', jqKadSemasa.back);
+          setText('play-progress', '(Tekan SETERUSNYA untuk teruskan)');
+          var mainEl = document.getElementById('main-text');
+          if (mainEl) mainEl.className = jqKadSemasa.back.length > 80 ? 'big-text long-text' : 'big-text';
+          document.getElementById('btn-flip').className = 'btn-sm on';
           return;
         }
+        // Dah flip atau tiada belakang — sambung
         sambungSelepasMotivasi();
         return;
       }
@@ -1218,6 +1224,10 @@
       } else {
         jqAktif = false;
         jqMotivasiList = [];
+        jqKadSemasa = null;
+        jqCardIndexSimpan = -1;
+        jqPendingCardIndex = -1;
+        jqModeSemasa = '';
         updateJQButton();
         showScreen('screen-login');
         setText('login-msg', '');
