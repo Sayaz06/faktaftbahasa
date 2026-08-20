@@ -1109,7 +1109,90 @@
       });
     }
 
-    function setCardImage(url) {
+    function startQuran() {
+      if (isLoading) return;
+      isLoading = true;
+      mode = 'quran';
+      isFlipped = false; showTips = false;
+      jqModeSemasa = ''; jqKadSemasa = null;
+      jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
+      quranAyatCounter = 0;
+      setText('play-status', 'Memuat Quran...');
+      setText('play-err', '');
+      showScreen('screen-play');
+
+      function terusStartQuran() {
+        var ok = rebuildQuranCards();
+        if (ok) {
+          setText('play-status', 'QURAN · ' + quranSurahSemasa + '. ' + QURAN_SURAH_NAMES[quranSurahSemasa - 1]);
+        }
+        isLoading = false;
+        renderCard();
+      }
+
+      loadQuranProgress().then(function() {
+        if (!allQuranDrawers.length) {
+          setText('main-text', 'Sedang memuat data...');
+          setTimeout(terusStartQuran, 2000);
+          return;
+        }
+        terusStartQuran();
+      }).catch(function() {
+        isLoading = false;
+        setText('play-err', 'Gagal muat kemajuan Quran');
+        renderCard();
+      });
+    }
+
+    function startRutinMod(modeName) {
+      if (isLoading) return;
+      isLoading = true;
+      mode = modeName;
+      isFlipped = false; showTips = false;
+      jqModeSemasa = ''; jqKadSemasa = null;
+      jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
+      var labelMod = modeName === 'rutin' ? 'Rutin' : modeName === 'doa' ? 'Doa' : 'Hadis';
+      setText('play-status', 'Memuat ' + labelMod + '...');
+      setText('play-err', '');
+      showScreen('screen-play');
+
+      function terusStartRutin() {
+        var ok = rebuildRutinLaciCards(modeName);
+        var aktifId = modeName === 'rutin' ? activeRutinTimeId : modeName === 'doa' ? activeDoaTimeId : activeHadisTimeId;
+        if (ok && aktifId) {
+          setText('play-status', labelMod + ' · ' + getNamaTimes(modeName, aktifId));
+        }
+        isLoading = false;
+        renderCard();
+      }
+
+      // Semak sama ada mana-mana array belum siap
+      var timesArr = modeName === 'rutin' ? allRutinTimes : modeName === 'doa' ? allDoaTimes : allHadisTimes;
+      var drawersArr = modeName === 'rutin' ? allRutinDrawers : modeName === 'doa' ? allDoaDrawers : allHadisDrawers;
+
+      if (!timesArr.length || !drawersArr.length) {
+        setText('main-text', 'Sedang memuat data...');
+        setTimeout(terusStartRutin, 2000);
+        return;
+      }
+
+      terusStartRutin();
+    }
+
+    // Helper — ambil nama times aktif
+    function getNamaTimes(modeName, aktifId) {
+      var timesArr = modeName === 'rutin' ? allRutinTimes : modeName === 'doa' ? allDoaTimes : allHadisTimes;
+      for (var i = 0; i < timesArr.length; i++) {
+        if (timesArr[i].id === aktifId) return timesArr[i].name || '';
+      }
+      return '';
+    }
+
+    function startRutin() { startRutinMod('rutin'); }
+    function startDoa()   { startRutinMod('doa'); }
+    function startHadis() { startRutinMod('hadis'); }
+
+    function setCardImage(url) {    
       var img = document.getElementById('card-img');
       if (!img) return;
       if (url) {
