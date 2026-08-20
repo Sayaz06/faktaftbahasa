@@ -1497,25 +1497,26 @@
         }
 
         // Kad biasa — maju dan kira ayat
+        var ayatSelesai = c.ayatNum || 0;
         isFlipped = false; showTips = false;
         cardIndex++;
-        if (cardIndex < cards.length) {
-          var cBaru = cards[cardIndex];
-          // Kira ayat yang baru selesai (kad sebelum)
-          if (c.ayatNum && c.ayatNum > 0) {
-            quranAyatCounter++;
-            var jumlahAyatSurah = QURAN_SURAH_AYAT[quranSurahSemasa - 1] || 0;
-            var patutSave = (c.ayatNum % 5 === 0) || (c.ayatNum === jumlahAyatSurah);
-            if (patutSave) {
-              // Simpan kemajuan setiap gandaan 5 atau ayat terakhir surah
-              simpanProgressQuran(quranSurahSemasa, c.ayatNum, false);
+        if (ayatSelesai > 0) {
+          var jumlahAyatSurah = QURAN_SURAH_AYAT[quranSurahSemasa - 1] || 0;
+          var patutSave = (ayatSelesai % 5 === 0) || (ayatSelesai === jumlahAyatSurah);
+          if (patutSave) {
+            isBusy = true;
+            simpanProgressQuran(quranSurahSemasa, ayatSelesai, false).then(function() {
               quranAyatCounter = 0;
-            }
+              isBusy = false;
+              renderCard();
+            }).catch(function() {
+              isBusy = false;
+              renderCard();
+            });
+            return;
           }
-          renderCard();
-        } else {
-          renderCard();
         }
+        renderCard();
         return;
       }
 
