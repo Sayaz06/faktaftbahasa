@@ -208,6 +208,7 @@
     var jqMotivasiIdx = 0;
     var jqModeSemasa = ''; // 'motivasi' atau ''
     var jqPendingCardIndex = -1; // index kad F2 yang menunggu selepas motivasi (fakta)
+    var isLoading = false; // guard untuk elak double-trigger button
     
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
@@ -730,6 +731,8 @@
     }
 
     function startBahasa() {
+      if (isLoading) return;
+      isLoading = true;
       mode = 'bahasa';
       isFlipped = false; showTips = false;
       jqModeSemasa = '';
@@ -745,14 +748,15 @@
             srLaciSemasa = srQueue.shift();
             if (loadSRIntoCards(srLaciSemasa, 'bahasa')) {
               setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-              renderCard(); return;
+              isLoading = false; renderCard(); return;
             }
           }
           if (rebuildBahasaCards()) {
             setText('play-status', 'BAHASA · ' + (activePerkataan.name || ''));
-            renderCard();
           }
+          isLoading = false; renderCard();
         }).catch(function(e) {
+          isLoading = false;
           setText('play-err', e.message);
           rebuildBahasaCards(); renderCard();
         });
@@ -760,6 +764,8 @@
     }
 
     function startFakta() {
+      if (isLoading) return;
+      isLoading = true;
       mode = 'fakta';
       isFlipped = false; showTips = false;
       jqModeSemasa = '';
@@ -775,14 +781,15 @@
             srLaciSemasa = srQueue.shift();
             if (loadSRIntoCards(srLaciSemasa, 'fakta')) {
               setText('play-status', 'SR FAKTA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-              renderCard(); return;
+              isLoading = false; renderCard(); return;
             }
           }
           if (rebuildFaktaCards()) {
             setText('play-status', 'FAKTA · ' + (activeTopic.name || ''));
-            renderCard();
           }
+          isLoading = false; renderCard();
         }).catch(function(e) {
+          isLoading = false;
           setText('play-err', e.message);
           rebuildFaktaCards(); renderCard();
         });
@@ -1105,6 +1112,7 @@
 
     // ── JQ BUTTON HANDLER ──
     document.getElementById('btn-jq').onclick = function() {
+      if (isLoading) return;
       if (jqAktif) {
         // Terus OFF tanpa PIN
         jqAktif = false;
@@ -1115,7 +1123,8 @@
         document.getElementById('jq-pin-input').value = '';
         setText('jq-pin-msg', '');
         var overlay = document.getElementById('jq-overlay');
-        overlay.style.display = 'flex';
+        overlay.style.display = 'none';
+        overlay.style.display = 'block';
         setTimeout(function() { document.getElementById('jq-pin-input').focus(); }, 100);
       }
     };
@@ -1162,6 +1171,7 @@
     document.getElementById('btn-go-fakta').onclick = startFakta;
     document.getElementById('btn-back-menu').onclick = function() { showScreen('screen-menu'); };
     document.getElementById('btn-reload').onclick = function() {
+      isLoading = false;
       if (mode === 'bahasa') startBahasa();
       else if (mode === 'fakta') startFakta();
     };
