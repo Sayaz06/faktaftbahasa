@@ -940,9 +940,18 @@
           if (srQueue.length) {
             srLaciSemasa = srQueue.shift();
             if (loadSRIntoCards(srLaciSemasa, mode)) {
-              setText('play-status', (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+              var srStatusLabel = (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0);
+              setText('play-status', srStatusLabel);
               isFlipped = false; showTips = false; isBusy = false;
-              setText('play-err', ''); renderCard();
+              setText('play-err', '');
+              if (mode === 'bahasa' && jqAktif && jqMotivasiList.length) {
+                tunjukMotivasiJQ(function() {
+                  setText('play-status', srStatusLabel);
+                  renderCard();
+                });
+              } else {
+                renderCard();
+              }
               return;
             }
           }
@@ -1039,7 +1048,7 @@
       if (c.isTamat) { afterTamat(c); return; }
 
       // Fakta F1 habis (isEndF1) → tunjuk motivasi JQ, kemudian sambung ke F2
-      if (mode === 'fakta' && !srModeAktif && c.isEndF1) {
+      if (mode === 'fakta' && c.isEndF1) {
         isFlipped = false; showTips = false;
         cardIndex++;
         syncIndex(cardIndex);
@@ -1047,7 +1056,10 @@
           var f2Index = cardIndex;
           tunjukMotivasiJQ(function() {
             cardIndex = f2Index;
-            setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            var statusLabel = srModeAktif
+              ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
+              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            setText('play-status', statusLabel);
             renderCard();
           });
         } else {
