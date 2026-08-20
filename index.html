@@ -207,6 +207,7 @@
     var jqMotivasiList = [];
     var jqMotivasiIdx = 0;
     var jqModeSemasa = ''; // 'motivasi' atau ''
+    var jqPendingCardIndex = -1; // index kad F2 yang menunggu selepas motivasi (fakta)
     
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
@@ -364,14 +365,28 @@
         }
       }
 
-      // Setiap baris × 5 (F1+F2 digabung sebagai 5 countdown per baris di Kindle)
+      // Fakta: setiap baris ada F1×5 dan F2×5 berasingan
+      // Aliran: F1(1/5→5/5) → [JQ Motivasi] → F2(1/5→5/5) → daftar SR → baris seterusnya
       for (i = 0; i < itemCards.length; i++) {
+        // F1 × 5
         for (r = 0; r < 5; r++) {
-          var c = {};
-          for (var k in itemCards[i]) c[k] = itemCards[i][k];
-          c.itemIndex = i;
-          c.isLastOfBaris = (r === 4);
-          out.push(c);
+          var cf1 = {};
+          for (var kf1 in itemCards[i]) cf1[kf1] = itemCards[i][kf1];
+          cf1.itemIndex = i;
+          cf1.fasa = 1;
+          cf1.isLastOfBaris = false;
+          cf1.isEndF1 = (r === 4); // habis F1 → trigger motivasi JQ
+          out.push(cf1);
+        }
+        // F2 × 5
+        for (r = 0; r < 5; r++) {
+          var cf2 = {};
+          for (var kf2 in itemCards[i]) cf2[kf2] = itemCards[i][kf2];
+          cf2.itemIndex = i;
+          cf2.fasa = 2;
+          cf2.isLastOfBaris = (r === 4); // habis F2 → daftar SR
+          cf2.isEndF1 = false;
+          out.push(cf2);
         }
       }
 
@@ -504,7 +519,19 @@
     function sambungSelepasMotivasi() {
       jqModeSemasa = '';
       isFlipped = false; showTips = false;
-      // Reload collections dan teruskan countdown biasa
+
+      // Fakta: ada F2 yang menunggu — terus render tanpa reload
+      if (mode === 'fakta' && jqPendingCardIndex >= 0) {
+        cardIndex = jqPendingCardIndex;
+        jqPendingCardIndex = -1;
+        isBusy = false;
+        setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+        renderCard();
+        return;
+      }
+
+      jqPendingCardIndex = -1;
+      // Bahasa: reload collections dan teruskan countdown biasa
       loadCollections(function() {
         var srCol = mode === 'fakta' ? 'fakta_sr_queue' : 'bahasa_sr_queue';
         loadSROverdue(srCol).then(function(overdue) {
@@ -800,16 +827,22 @@
         fasaLabel = c.title || '';
       }
 
+      // Fakta: tunjuk F1/F2 dalam label
+      if (mode === 'fakta' && !c.isTamat && !c.isF0) {
+        fasaLabel = (c.fasa === 1 ? 'F1' : 'F2') + ' · ' + (c.title || '');
+      }
       var label = (srModeAktif ? 'SR · ' : '') + fasaLabel;
       setText('play-mode', label);
 
-      // Kira progress dalam fasa semasa sahaja
+      // Kira progress dalam fasa + baris semasa sahaja (fakta: F1 atau F2 per baris)
       var fasaSemasa = c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1);
       var fasaStart = cardIndex, fasaEnd = cardIndex;
       for (var pi = 0; pi < cards.length; pi++) {
         if (cards[pi].isTamat) continue;
         var pf = cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1);
-        var sameLaci = (mode === 'fakta') ? (cards[pi].drawerId === c.drawerId) : true;
+        var sameLaci = (mode === 'fakta')
+          ? (cards[pi].drawerId === c.drawerId && cards[pi].itemIndex === c.itemIndex)
+          : true;
         if (pf === fasaSemasa && sameLaci) {
           if (pi < fasaStart) fasaStart = pi;
           if (pi > fasaEnd) fasaEnd = pi;
@@ -817,7 +850,7 @@
       }
       var fasaPos = cardIndex - fasaStart + 1;
       var fasaTotal = fasaEnd - fasaStart + 1;
-      setText('play-progress', c.isTamat ? '' : (fasaPos + ' / ' + fasaTotal));      
+      setText('play-progress', c.isTamat ? '' : (fasaPos + ' / ' + fasaTotal));
 
       setText('play-meta', '');
 
@@ -993,7 +1026,22 @@
       var c = cards[cardIndex];
       if (c.isTamat) { afterTamat(c); return; }
 
-      // Fakta: habis 5× satu baris → daftar SR untuk baris itu
+      // Fakta F1 habis (isEndF1) → tunjuk motivasi JQ, kemudian sambung ke F2
+      if (mode === 'fakta' && !srModeAktif && c.isEndF1) {
+        isFlipped = false; showTips = false;
+        cardIndex++;
+        syncIndex(cardIndex);
+        if (jqAktif && jqMotivasiList.length) {
+          // Simpan kedudukan F2 dalam jqPendingCardIndex
+          jqPendingCardIndex = cardIndex;
+          tunjukMotivasiJQ();
+        } else {
+          renderCard();
+        }
+        return;
+      }
+
+      // Fakta F2 habis (isLastOfBaris) → daftar SR untuk baris ini
       if (mode === 'fakta' && !srModeAktif && c.isLastOfBaris && c.drawerId != null && c.itemIndex != null) {
         isBusy = true;
         setText('play-err', 'Daftar SR baris...');
