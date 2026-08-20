@@ -208,8 +208,152 @@
     var jqMotivasiIdx = 0;
     var jqModeSemasa = ''; // 'motivasi' atau ''
     var jqPendingCardIndex = -1; // index kad F2 yang menunggu selepas motivasi (fakta)
-    var _jqMotivasiUnsubscribe = null; // untuk cleanup onSnapshot
+    var jqKadSemasa = null; // kad motivasi semasa — cards asal TIDAK ditimpa
+    var jqCardIndexSimpan = -1; // simpan cardIndex asal sebelum motivasi
     var isLoading = false; // guard untuk elak double-trigger button
+
+    // ── MOD TAMBAHAN (Quran / Rutin / Doa / Hadis) ──
+    var QURAN_SURAH_AYAT = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+    var QURAN_SURAH_NAMES = ['Al-Fatihah','Al-Baqarah','Ali-\'Imran','An-Nisaa\'','Al-Ma\'idah','Al-An\'aam','Al-A\'raaf','Al-Anfaal','At-Taubah','Yunus','Hud','Yusuf','Ar-Ra\'d','Ibrahim','Al-Hijr','An-Nahl','Al-Israa\'','Al-Kahfi','Maryam','Taha','Al-Anbiyaa\'','Al-Hajj','Al-Mu\'minuun','An-Nur','Al-Furqaan','Asy-Syu\'araa\'','An-Naml','Al-Qasas','Al-\'Ankabuut','Ar-Ruum','Luqman','As-Sajdah','Al-Ahzaab','Saba\'','Faatir','Yaa siin','As-Saaffaat','Saad','Az-Zumar','Ghaafir','Fussilat','Asy-Syura','Az-Zukhruf','Ad-Dukhaan','Al-Jaathiyah','Al-Ahqaaf','Muhammad','Al-Fat-h','Al-Hujuraat','Qaaf','Adz-Dzaariyaat','At-Tuur','An-Najm','Al-Qamar','Ar-Rahmaan','Al-Waaqi\'ah','Al-Hadiid','Al-Mujaadalah','Al-Hasyr','Al-Mumtahanah','As-Saff','Al-Jumu\'ah','Al-Munaafiquun','At-Taghaabun','At-Talaaq','At-Tahriim','Al-Mulk','Al-Qalam','Al-Haaqqah','Al-Ma\'aarij','Nuh','Al-Jinn','Al-Muzzammil','Al-Muddaththir','Al-Qiyamah','Al-Insaan','Al-Mursalaat','An-Naba\'','An-Naazi\'aat','\'Abasa','At-Takwiir','Al-Infitaar','Al-Mutaffifiin','Al-Insyiqaaq','Al-Buruuj','At-Taariq','Al-A\'laa','Al-Ghaasyiyah','Al-Fajr','Al-Balad','Asy-Syams','Al-Lail','Adh-Dhuha','Al-Insyiraah','At-Tiin','Al-\'Alaq','Al-Qadr','Al-Bayyinah','Az-Zalzalah','Al-\'Aadiyaat','Al-Qaari\'ah','At-Takaathur','Al-\'Asr','Al-Humazah','Al-Fiil','Quraisy','Al-Maa\'uun','Al-Kauthar','Al-Kaafiruun','An-Nasr','Al-Masad','Al-Ikhlaas','Al-Falaq','An-Naas'];
+
+    // Data koleksi mod tambahan
+    var allQuranDrawers = [];
+    var allRutinTimes = [], allRutinDrawers = [];
+    var allDoaTimes = [], allDoaDrawers = [];
+    var allHadisTimes = [], allHadisDrawers = [];
+
+    // State mod tambahan
+    var quranSurahSemasa = 1;   // nombor surah aktif
+    var quranAyatSemasa = 0;    // ayat terakhir yang disimpan
+    var quranAyatCounter = 0;   // kira ayat sejak simpan terakhir (reset bila save)
+    var activeRutinTimeId = null;  // id times aktif semasa — diset oleh rebuildRutinLaciCards
+    var activeDoaTimeId = null;
+    var activeHadisTimeId = null;
+
+    // Unsubscribe untuk onSnapshot mod tambahan
+    var _unsubQuran = null;
+    var _unsubRutinTimes = null, _unsubRutinDrawers = null;
+    var _unsubDoaTimes = null, _unsubDoaDrawers = null;
+    var _unsubHadisTimes = null, _unsubHadisDrawers = null;
+
+    function subscribeModTambahan() {
+      if (!currentUser) return;
+
+      // ── Quran ──
+      if (_unsubQuran) _unsubQuran();
+      _unsubQuran = db.collection('users').doc(currentUser.uid)
+        .collection('quran_drawers')
+        .onSnapshot(function(snap) {
+          allQuranDrawers = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allQuranDrawers.push(x); });
+        }, function() { allQuranDrawers = []; });
+
+      // ── Rutin ──
+      if (_unsubRutinTimes) _unsubRutinTimes();
+      _unsubRutinTimes = db.collection('users').doc(currentUser.uid)
+        .collection('routine_times')
+        .onSnapshot(function(snap) {
+          allRutinTimes = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allRutinTimes.push(x); });
+          // activeRutinTimeId dikira semasa rebuild — bukan di sini
+        }, function() { allRutinTimes = []; });
+
+      if (_unsubRutinDrawers) _unsubRutinDrawers();
+      _unsubRutinDrawers = db.collection('users').doc(currentUser.uid)
+        .collection('routine_drawers')
+        .onSnapshot(function(snap) {
+          allRutinDrawers = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allRutinDrawers.push(x); });
+        }, function() { allRutinDrawers = []; });
+
+      // ── Doa ──
+      if (_unsubDoaTimes) _unsubDoaTimes();
+      _unsubDoaTimes = db.collection('users').doc(currentUser.uid)
+        .collection('doa_times')
+        .onSnapshot(function(snap) {
+          allDoaTimes = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allDoaTimes.push(x); });
+        }, function() { allDoaTimes = []; });
+
+      if (_unsubDoaDrawers) _unsubDoaDrawers();
+      _unsubDoaDrawers = db.collection('users').doc(currentUser.uid)
+        .collection('doa_drawers')
+        .onSnapshot(function(snap) {
+          allDoaDrawers = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allDoaDrawers.push(x); });
+        }, function() { allDoaDrawers = []; });
+
+      // ── Hadis ──
+      if (_unsubHadisTimes) _unsubHadisTimes();
+      _unsubHadisTimes = db.collection('users').doc(currentUser.uid)
+        .collection('hadis_times')
+        .onSnapshot(function(snap) {
+          allHadisTimes = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allHadisTimes.push(x); });
+        }, function() { allHadisTimes = []; });
+
+      if (_unsubHadisDrawers) _unsubHadisDrawers();
+      _unsubHadisDrawers = db.collection('users').doc(currentUser.uid)
+        .collection('hadis_drawers')
+        .onSnapshot(function(snap) {
+          allHadisDrawers = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allHadisDrawers.push(x); });
+        }, function() { allHadisDrawers = []; });
+    }
+
+    function unsubscribeModTambahan() {
+      if (_unsubQuran) { _unsubQuran(); _unsubQuran = null; }
+      if (_unsubRutinTimes) { _unsubRutinTimes(); _unsubRutinTimes = null; }
+      if (_unsubRutinDrawers) { _unsubRutinDrawers(); _unsubRutinDrawers = null; }
+      if (_unsubDoaTimes) { _unsubDoaTimes(); _unsubDoaTimes = null; }
+      if (_unsubDoaDrawers) { _unsubDoaDrawers(); _unsubDoaDrawers = null; }
+      if (_unsubHadisTimes) { _unsubHadisTimes(); _unsubHadisTimes = null; }
+      if (_unsubHadisDrawers) { _unsubHadisDrawers(); _unsubHadisDrawers = null; }
+    }
+
+    function loadQuranProgress() {
+      if (!currentUser) return Promise.resolve();
+      // Guna get() tanpa orderBy — sort dalam JS untuk elak perlukan Firestore index
+      return db.collection('users').doc(currentUser.uid)
+        .collection('quran_progress_log')
+        .get()
+        .then(function(snap) {
+          if (snap.empty) {
+            quranSurahSemasa = 1;
+            quranAyatSemasa = 0;
+            return;
+          }
+          // Sort ikut savedAt descending dalam JS
+          var docs = [];
+          snap.forEach(function(d) { var x = d.data(); docs.push(x); });
+          docs.sort(function(a, b) { return (b.savedAt || 0) - (a.savedAt || 0); });
+          var terkini = docs[0];
+          quranSurahSemasa = terkini.surah || 1;
+          quranAyatSemasa = terkini.ayat || 0;
+        })
+        .catch(function() {
+          quranSurahSemasa = 1;
+          quranAyatSemasa = 0;
+        });
+    }
+
+    function simpanProgressQuran(surah, ayat, isNextSurah) {
+      if (!currentUser) return Promise.resolve();
+      var data = {
+        surah: surah,
+        ayat: ayat,
+        savedAt: Date.now()
+      };
+      if (isNextSurah) data.isNextSurah = true;
+      return db.collection('users').doc(currentUser.uid)
+        .collection('quran_progress_log')
+        .add(data)
+        .then(function() {
+          quranSurahSemasa = surah;
+          quranAyatSemasa = ayat;
+        })
+        .catch(function() {});
+    }
     
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
@@ -690,7 +834,199 @@
       return cards.length > 0;
     }
 
-    function loadSRIntoCards(srData, modeName) {
+    function parseLaciQuran(title) {
+      // Format title: "2. Al-Baqarah Ayat 1"
+      var match = (title || '').match(/^(\d+)\.\s+(.+?)\s+Ayat\s+(\d+)$/i);
+      if (!match) return null;
+      return {
+        surahNum: parseInt(match[1]),
+        surahName: match[2].trim(),
+        ayatNum: parseInt(match[3])
+      };
+    }
+
+    function rebuildQuranCards() {
+      var surahIdx = quranSurahSemasa - 1;
+      if (surahIdx < 0) surahIdx = 0;
+      if (surahIdx > 113) surahIdx = 113;
+      var surahNum = surahIdx + 1;
+      var surahName = QURAN_SURAH_NAMES[surahIdx];
+
+      // Ambil semua drawer untuk surah ini, susun ikut title
+      var activeDrawers = allQuranDrawers
+        .filter(function(d) { return d.timeId === surahNum; })
+        .sort(function(a, b) {
+          return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+        });
+
+      if (!activeDrawers.length) {
+        cards = []; cardIndex = 0;
+        setText('main-text', 'Tiada ayat untuk Surah ' + surahNum + '. ' + surahName + '.\nSila semak data di phone.');
+        setText('play-mode', 'QURAN');
+        setText('play-status', 'Tiada data');
+        setText('play-progress', ''); setText('play-meta', '');
+        setCardImage('');
+        return false;
+      }
+
+      cards = [];
+      for (var i = 0; i < activeDrawers.length; i++) {
+        var d = activeDrawers[i];
+        var parsed = parseLaciQuran(d.title);
+        cards.push({
+          front: (d.zikir || '').trim() || '(Kosong)',
+          back: (d.maksud || '').trim(),
+          tips: '',
+          imageUrl: '',
+          title: d.title || '',
+          drawerId: d.id,
+          surahNum: parsed ? parsed.surahNum : surahNum,
+          ayatNum: parsed ? parsed.ayatNum : 0,
+          isF0: false, isTamat: false, isSR: false,
+          isQuran: true
+        });
+      }
+
+      // Kad tamat surah
+      cards.push({
+        front: 'Surah ' + surahNum + '. ' + surahName + ' selesai.\nTekan SETERUSNYA untuk surah seterusnya.',
+        back: '', tips: '', imageUrl: '',
+        title: 'Tamat', drawerId: null,
+        surahNum: surahNum, ayatNum: 0,
+        isF0: false, isTamat: true, isSR: false,
+        isQuran: true, isTamatSurah: true
+      });
+
+      // Cari kedudukan berdasarkan ayat terakhir yang disimpan
+      var savedIdx = 0;
+      if (quranAyatSemasa > 0) {
+        for (var j = 0; j < cards.length; j++) {
+          if (cards[j].ayatNum && cards[j].ayatNum <= quranAyatSemasa) {
+            savedIdx = j;
+          }
+        }
+        // Maju satu hanya kalau kad seterusnya bukan isTamat
+        var nextIdx = savedIdx + 1;
+        if (nextIdx < cards.length && !cards[nextIdx].isTamat) {
+          savedIdx = nextIdx;
+        }
+      }
+      cardIndex = savedIdx;
+      return true;
+    }
+
+    // Fungsi yang sama untuk Rutin, Doa, Hadis
+    function rebuildRutinLaciCards(modeName) {
+      var timesArr, drawersArr;
+      if (modeName === 'rutin') {
+        timesArr = allRutinTimes; drawersArr = allRutinDrawers;
+      } else if (modeName === 'doa') {
+        timesArr = allDoaTimes; drawersArr = allDoaDrawers;
+      } else {
+        timesArr = allHadisTimes; drawersArr = allHadisDrawers;
+      }
+
+      // Cari times yang aktif
+      var aktif = null;
+      for (var i = 0; i < timesArr.length; i++) {
+        if (timesArr[i].isActive) { aktif = timesArr[i]; break; }
+      }
+
+      var labelMod = modeName === 'rutin' ? 'Rutin' : modeName === 'doa' ? 'Doa' : 'Hadis';
+
+      if (!aktif) {
+        cards = []; cardIndex = 0;
+        setText('main-text', 'Tiada ' + labelMod + ' aktif.\nTick SATU ' + labelMod + ' di phone.');
+        setText('play-mode', labelMod.toUpperCase());
+        setText('play-status', 'Tiada ' + labelMod + ' aktif');
+        setText('play-progress', ''); setText('play-meta', '');
+        setCardImage('');
+        return false;
+      }
+
+      // Ambil drawers untuk times ini
+      var activeDrawers = drawersArr
+        .filter(function(d) { return d.timeId === aktif.id; })
+        .sort(function(a, b) {
+          return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+        });
+
+      cards = [];
+      for (var j = 0; j < activeDrawers.length; j++) {
+        var d = activeDrawers[j];
+
+        // Format notes: "zikir=bilangan=maksud" per baris
+        if (d.notes && !d.zikir) {
+          var lines = d.notes.split('\n');
+          for (var k = 0; k < lines.length; k++) {
+            var line = lines[k].trim();
+            if (!line) continue;
+            var parts = line.split('=');
+            var zikirText = (parts[0] || '').trim() || 'Kosong';
+            // Format 3 bahagian: zikir=bilangan=maksud → ambil bahagian ke-3
+            // Format 2 bahagian: zikir=maksud → ambil bahagian ke-2
+            var maksudText = parts.length >= 3 ? parts[2].trim() : (parts[1] ? parts[1].trim() : '');
+            cards.push({
+              front: zikirText,
+              back: maksudText,
+              tips: '',
+              imageUrl: '',
+              title: d.title || labelMod,
+              drawerId: d.id,
+              timesId: aktif.id,
+              isF0: false, isTamat: false, isSR: false,
+              isRutin: true, modeName: modeName
+            });
+          }
+        } else if (d.zikir || d.maksud) {
+          cards.push({
+            front: (d.zikir || '').trim() || (d.maksud || '').trim() || 'Kosong',
+            back: d.zikir ? (d.maksud || '').trim() : '',
+            tips: '',
+            imageUrl: '',
+            title: d.title || labelMod,
+            drawerId: d.id,
+            timesId: aktif.id,
+            isF0: false, isTamat: false, isSR: false,
+            isRutin: true, modeName: modeName
+          });
+        }
+      }
+
+      if (!cards.length) {
+        setText('main-text', 'Tiada kandungan dalam ' + labelMod + ' ini.\nSila tambah di phone.');
+        setText('play-mode', labelMod.toUpperCase());
+        setText('play-status', 'Tiada kandungan');
+        setText('play-progress', ''); setText('play-meta', '');
+        setCardImage('');
+        return false;
+      }
+
+      // Kad tamat
+      cards.push({
+        front: labelMod + ' selesai. Tekan SETERUSNYA untuk ulang semula.',
+        back: '', tips: '', imageUrl: '',
+        title: 'Tamat', drawerId: null,
+        timesId: aktif.id,
+        isF0: false, isTamat: true, isSR: false,
+        isRutin: true, modeName: modeName,
+        isTamatRutin: true
+      });
+
+      // Restore lastIndex
+      var saved = aktif.lastIndex || 0;
+      if (saved >= cards.length) saved = 0;
+      cardIndex = saved;
+
+      // Simpan aktifId dalam variable global mengikut mod
+      if (modeName === 'rutin') activeRutinTimeId = aktif.id;
+      else if (modeName === 'doa') activeDoaTimeId = aktif.id;
+      else activeHadisTimeId = aktif.id;
+
+      return true;
+    }
+
+    function loadSRIntoCards(srData, modeName) {    
       var drawer;
       if (modeName === 'bahasa') {
         drawer = allBahasaDrawers.filter(function(d) { return d.id === (srData.drawerId || srData.id); })[0];
