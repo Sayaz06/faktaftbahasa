@@ -732,6 +732,8 @@
     function startBahasa() {
       mode = 'bahasa';
       isFlipped = false; showTips = false;
+      jqModeSemasa = '';
+      jqPendingCardIndex = -1;
       setText('play-status', 'Memuat Bahasa + SR...');
       setText('play-err', '');
       showScreen('screen-play');
@@ -760,6 +762,8 @@
     function startFakta() {
       mode = 'fakta';
       isFlipped = false; showTips = false;
+      jqModeSemasa = '';
+      jqPendingCardIndex = -1;
       setText('play-status', 'Memuat Fakta + SR...');
       setText('play-err', '');
       showScreen('screen-play');
@@ -927,7 +931,11 @@
         activePerkataan = next;
         rebuildBahasaCards();
         setText('play-status', 'BAHASA · ' + (next.name || ''));
-        renderCard();
+        if (jqAktif && jqMotivasiList.length) {
+          tunjukMotivasiJQ();
+        } else {
+          renderCard();
+        }
         return true;
       }).catch(function() { return false; });
     }
@@ -1180,9 +1188,11 @@
       if (user) {
         setText('menu-user', 'Linked · Login OK');
         loadJQStatus();
+        loadMotivasiJQ();
         showScreen('screen-menu');
       } else {
         jqAktif = false;
+        jqMotivasiList = [];
         updateJQButton();
         showScreen('screen-login');
         setText('login-msg', '');
