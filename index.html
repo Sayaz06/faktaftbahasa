@@ -1226,8 +1226,13 @@
 
       var c = cards[cardIndex];
       var fasaLabel = '';
-      if (c.isTamat) fasaLabel = 'TAMAT';
-      else if (mode === 'bahasa') {
+      if (c.isTamat) {
+        fasaLabel = 'TAMAT';
+      } else if (mode === 'quran') {
+        fasaLabel = c.title || 'QURAN';
+      } else if (mode === 'rutin' || mode === 'doa' || mode === 'hadis') {
+        fasaLabel = c.title || mode.toUpperCase();
+      } else if (mode === 'bahasa') {
         if (c.isF0 || c.fasa === 0) fasaLabel = 'F0 · Pengenalan';
         else if (c.fasa === 1) fasaLabel = 'F1 · Latihan';
         else if (c.fasa === 2) fasaLabel = 'F2 · Ulangan';
@@ -1235,35 +1240,49 @@
         fasaLabel = c.title || '';
       }
 
-      // Fakta: tunjuk F1/F2 dalam label
       if (mode === 'fakta' && !c.isTamat && !c.isF0) {
         fasaLabel = (c.fasa === 1 ? 'F1' : 'F2') + ' · ' + (c.title || '');
       }
       var label = (srModeAktif ? 'SR · ' : '') + fasaLabel;
       setText('play-mode', label);
 
-      // Kira progress dalam fasa + baris semasa sahaja (fakta: F1 atau F2 per baris)
-      var fasaSemasa = c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1);
-      var fasaStart = cardIndex, fasaEnd = cardIndex;
-      for (var pi = 0; pi < cards.length; pi++) {
-        if (cards[pi].isTamat) continue;
-        var pf = cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1);
-        var sameLaci = (mode === 'fakta')
-          ? (cards[pi].drawerId === c.drawerId && cards[pi].itemIndex === c.itemIndex)
-          : true;
-        if (pf === fasaSemasa && sameLaci) {
-          if (pi < fasaStart) fasaStart = pi;
-          if (pi > fasaEnd) fasaEnd = pi;
+      // Progress — Quran tunjuk nombor ayat, Rutin/Doa/Hadis tunjuk kedudukan biasa
+      if (mode === 'quran') {
+        setText('play-progress', c.isTamat ? '' : (c.ayatNum ? 'Ayat ' + c.ayatNum : ''));
+      } else if (mode === 'rutin' || mode === 'doa' || mode === 'hadis') {
+        var totalBukan = cards.filter(function(x) { return !x.isTamat; }).length;
+        setText('play-progress', c.isTamat ? '' : ((cardIndex + 1) + ' / ' + totalBukan));
+      } else {
+        // Bahasa / Fakta — progress asal
+        var fasaSemasa = c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1);
+        var fasaStart = cardIndex, fasaEnd = cardIndex;
+        for (var pi = 0; pi < cards.length; pi++) {
+          if (cards[pi].isTamat) continue;
+          var pf = cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1);
+          var sameLaci = (mode === 'fakta')
+            ? (cards[pi].drawerId === c.drawerId && cards[pi].itemIndex === c.itemIndex)
+            : true;
+          if (pf === fasaSemasa && sameLaci) {
+            if (pi < fasaStart) fasaStart = pi;
+            if (pi > fasaEnd) fasaEnd = pi;
+          }
         }
+        var fasaPos = cardIndex - fasaStart + 1;
+        var fasaTotal = fasaEnd - fasaStart + 1;
+        setText('play-progress', c.isTamat ? '' : (fasaPos + ' / ' + fasaTotal));
       }
-      var fasaPos = cardIndex - fasaStart + 1;
-      var fasaTotal = fasaEnd - fasaStart + 1;
-      setText('play-progress', c.isTamat ? '' : (fasaPos + ' / ' + fasaTotal));
 
       setText('play-meta', '');
 
+      // Tunjuk/sembunyi butang Terskip vs Tips ikut mod
+      var btnTips = document.getElementById('btn-tips');
+      if (btnTips) {
+        btnTips.textContent = mode === 'quran' ? 'Terskip' : 'Tips';
+      }
+
       var displayText = '';
-      if (showTips) {
+      if (showTips && mode !== 'quran') {
+        // Tips mod (bukan Quran)
         setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
         displayText = c.tips ? c.tips : '(Tiada tips)';
         setText('main-text', displayText);
@@ -1273,7 +1292,7 @@
         setCardImage('');
       } else if (isFlipped) {
         setText('side-label', 'MUKA BELAKANG');
-        displayText = c.back || '(Tiada terjemahan)';
+        displayText = c.back || '(Tiada maksud)';
         setText('main-text', displayText);
         mainEl.className = displayText.length > 80 ? 'big-text long-text' : 'big-text';
         document.getElementById('btn-flip').className = 'btn-sm on';
@@ -1291,7 +1310,6 @@
         else setCardImage('');
       }
 
-      // Auto-fit selepas render (image mungkin belum load)
       setTimeout(function() {
         autoFitImage(displayText.length);
       }, 50);
@@ -1685,6 +1703,9 @@
     };
     document.getElementById('btn-next').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
+      // Terskip aktif — flip dihandle dalam btn-tips
+      if (mode === 'quran' && terskipCards.length > 0) return;
+
       if (window._jqMotivasiHandler) {
         var h = window._jqMotivasiHandler;
         if (!h.adaFlip) return;
@@ -1702,8 +1723,87 @@
       if (cards[cardIndex].isTamat) return;
       showTips = false; isFlipped = !isFlipped; renderCard();
     };
+    // ── TERSKIP (Quran sahaja) ──
+    var terskipCards = [];
+    var terskipIdx = 0;
+
+    function bukaTerskip() {
+      if (!cards.length || cardIndex <= 0) {
+        setText('play-err', 'Tiada ayat sebelum ini.');
+        setTimeout(function() { setText('play-err', ''); }, 2000);
+        return;
+      }
+      // Ambil sehingga 5 kad sebelum cardIndex, skip kad isTamat
+      var mula = Math.max(0, cardIndex - 5);
+      terskipCards = cards.slice(mula, cardIndex).filter(function(x) { return !x.isTamat; });
+      if (!terskipCards.length) {
+        setText('play-err', 'Tiada ayat untuk disemak.');
+        setTimeout(function() { setText('play-err', ''); }, 2000);
+        return;
+      }
+      terskipIdx = 0;
+      renderTerskip();
+    }
+
+    function renderTerskip() {
+      if (!terskipCards.length) return;
+      var t = terskipCards[terskipIdx];
+      var total = terskipCards.length;
+      isFlipped = false;
+      setText('play-status', 'TERSKIP · ' + (terskipIdx + 1) + '/' + total);
+      setText('play-mode', t.title || 'QURAN');
+      setText('side-label', 'MUKA DEPAN');
+      setText('play-progress', t.ayatNum ? 'Ayat ' + t.ayatNum : '');
+      setText('play-meta', '');
+      setText('play-err', '');
+      setText('main-text', t.front || '');
+      var mainEl = document.getElementById('main-text');
+      if (mainEl) mainEl.className = (t.front || '').length > 80 ? 'big-text long-text' : 'big-text';
+      document.getElementById('btn-flip').className = 'btn-sm';
+      document.getElementById('btn-tips').className = 'btn-sm on'; // tanda terskip aktif
+      setCardImage('');
+    }
+
     document.getElementById('btn-tips').onclick = function() {
       if (!cards.length || cardIndex >= cards.length) return;
+
+      // Mod Quran — butang ini jadi Terskip
+      if (mode === 'quran') {
+        // Kalau sedang dalam terskip — flip atau maju
+        if (document.getElementById('btn-tips').className.indexOf('on') !== -1) {
+          if (!isFlipped && terskipCards[terskipIdx] && terskipCards[terskipIdx].back) {
+            // Tunjuk maksud
+            isFlipped = true;
+            setText('side-label', 'MUKA BELAKANG');
+            setText('main-text', terskipCards[terskipIdx].back);
+            var mainElT = document.getElementById('main-text');
+            if (mainElT) mainElT.className = terskipCards[terskipIdx].back.length > 80 ? 'big-text long-text' : 'big-text';
+            document.getElementById('btn-flip').className = 'btn-sm on';
+            return;
+          }
+          // Maju atau keluar terskip
+          terskipIdx++;
+          if (terskipIdx >= terskipCards.length) {
+            // Habis terskip — kembali ke kad semasa
+            terskipCards = [];
+            terskipIdx = 0;
+            setText('play-err', '');
+            var aktifSurahLabel = 'QURAN · ' + quranSurahSemasa + '. ' + QURAN_SURAH_NAMES[quranSurahSemasa - 1];
+            setText('play-status', aktifSurahLabel);
+            isFlipped = false; showTips = false;
+            renderCard();
+            return;
+          }
+          isFlipped = false;
+          renderTerskip();
+          return;
+        }
+        // Mula terskip
+        bukaTerskip();
+        return;
+      }
+
+      // Mod lain — Tips biasa
       if (cards[cardIndex].isTamat) return;
       isFlipped = false; showTips = !showTips; renderCard();
     };
