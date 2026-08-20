@@ -1592,6 +1592,10 @@
       isLoading = false;
       if (mode === 'bahasa') startBahasa();
       else if (mode === 'fakta') startFakta();
+      else if (mode === 'quran') startQuran();
+      else if (mode === 'rutin') startRutin();
+      else if (mode === 'doa') startDoa();
+      else if (mode === 'hadis') startHadis();
     };
     document.getElementById('btn-next').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
@@ -1630,13 +1634,21 @@
         setText('menu-user', 'Linked · Login OK');
         loadJQStatus();
         subscribeJoggingMotivasi();
+        subscribeModTambahan();
         showScreen('screen-menu');
       } else {
         if (_jqMotivasiUnsubscribe) { _jqMotivasiUnsubscribe(); _jqMotivasiUnsubscribe = null; }
+        unsubscribeModTambahan();
         window._jqMotivasiHandler = null;
         jqAktif = false;
         jqMotivasiList = [];
         jqPendingCardIndex = -1;
+        quranSurahSemasa = 1;
+        quranAyatSemasa = 0;
+        quranAyatCounter = 0;
+        activeRutinTimeId = null;
+        activeDoaTimeId = null;
+        activeHadisTimeId = null;
         updateJQButton();
         showScreen('screen-login');
         setText('login-msg', '');
