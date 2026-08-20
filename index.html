@@ -139,19 +139,19 @@
     <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
     <div class="btn-row">
       <button id="btn-back-menu" class="btn-sm btn-menu">Menu</button>
-      <button id="btn-flip" class="btn-sm">🔄 Flip</button>
-      <button id="btn-tips" class="btn-sm">💡 Tips</button>
+      <button id="btn-flip" class="btn-sm">Flip</button>
+      <button id="btn-tips" class="btn-sm">Tips</button>
       <button id="btn-reload" class="btn-sm">Reload</button>
     </div>
     <div class="btn-row" style="margin-top:4px;">
-      <button id="btn-jq" class="btn-sm" style="width:100%;font-size:0.75rem;">🏃 JQ: OFF</button>
+      <button id="btn-jq" class="btn-sm" style="width:100%;font-size:0.75rem;">JQ: OFF</button>
     </div>
     <div id="play-err" class="msg error"></div>
   </div>
 
   <!-- Popup PIN untuk ON JQ -->
-  <div id="jq-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;">
-    <div style="background:#fff;border:2px solid #000;border-radius:10px;padding:16px;max-width:300px;width:90%;text-align:center;">
+  <div id="jq-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;">
+    <div style="margin:60px auto 0;background:#fff;border:2px solid #000;border-radius:10px;padding:16px;max-width:300px;width:90%;text-align:center;">
       <div style="font-weight:bold;margin-bottom:8px;">Masukkan PIN untuk ON JQ</div>
       <input id="jq-pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
       <button id="jq-pin-ok" class="btn btn-primary" style="margin-top:4px;">Sahkan</button>
@@ -463,10 +463,10 @@
       var btn = document.getElementById('btn-jq');
       if (!btn) return;
       if (jqAktif) {
-        btn.textContent = '🏃 JQ: ON';
+        btn.textContent = 'JQ: ON';
         btn.className = 'btn-sm on';
       } else {
-        btn.textContent = '🏃 JQ: OFF';
+        btn.textContent = 'JQ: OFF';
         btn.className = 'btn-sm';
       }
     }
@@ -500,7 +500,7 @@
       var depan = adaFlip ? m.text.split('=')[0].trim() : (m.text || m.title || '');
 
       isFlipped = false; showTips = false;
-      setText('play-status', '🏃 MOTIVASI JQ · ' + (m.title || ''));
+      setText('play-status', 'MOTIVASI JQ · ' + (m.title || ''));
       setText('play-mode', 'MOTIVASI · ' + (jqMotivasiIdx) + '/' + jqMotivasiList.length);
       setText('side-label', 'MUKA DEPAN');
       setText('main-text', depan);
@@ -531,6 +531,7 @@
       }
 
       jqPendingCardIndex = -1;
+      isBusy = true;
       // Bahasa: reload collections dan teruskan countdown biasa
       loadCollections(function() {
         var srCol = mode === 'fakta' ? 'fakta_sr_queue' : 'bahasa_sr_queue';
