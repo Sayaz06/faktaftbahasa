@@ -1312,7 +1312,7 @@
         document.getElementById('btn-flip').className = 'btn-sm';
         setCardImage('');
       } else if (isFlipped) {
-        setText('side-label', 'MUKA BELAKANG');
+        setText('side-label', mode === 'quran' ? 'TERJEMAHAN' : 'MUKA BELAKANG');
         displayText = c.back || '(Tiada maksud)';
         setText('main-text', displayText);
         mainEl.className = displayText.length > 80 ? 'big-text long-text' : 'big-text';
@@ -1565,7 +1565,19 @@
           return;
         }
 
-        // Kad biasa — maju dan kira ayat
+        // Kad biasa — dua langkah: Arab dulu, pastu terjemahan, baru maju
+        if (!isFlipped && c.back) {
+          // Langkah 1 — tunjuk terjemahan
+          isFlipped = true;
+          var mainElQ = document.getElementById('main-text');
+          setText('side-label', 'TERJEMAHAN');
+          setText('main-text', c.back);
+          if (mainElQ) mainElQ.className = c.back.length > 80 ? 'big-text long-text' : 'big-text';
+          document.getElementById('btn-flip').className = 'btn-sm on';
+          return;
+        }
+
+        // Langkah 2 — maju ke ayat seterusnya
         var ayatSelesai = c.ayatNum || 0;
         isFlipped = false; showTips = false;
         cardIndex++;
@@ -1812,7 +1824,7 @@
       isFlipped = false;
       setText('play-status', 'TERSKIP · ' + (terskipIdx + 1) + '/' + total);
       setText('play-mode', t.title || 'QURAN');
-      setText('side-label', 'MUKA DEPAN');
+      setText('side-label', 'ARAB');
       setText('play-progress', t.ayatNum ? 'Ayat ' + t.ayatNum : '');
       setText('play-meta', '');
       setText('play-err', '');
@@ -1832,9 +1844,9 @@
         // Kalau sedang dalam terskip — flip atau maju
         if (terskipCards.length > 0) {
           if (!isFlipped && terskipCards[terskipIdx] && terskipCards[terskipIdx].back) {
-            // Tunjuk maksud
+            // Tunjuk terjemahan
             isFlipped = true;
-            setText('side-label', 'MUKA BELAKANG');
+            setText('side-label', 'TERJEMAHAN');
             setText('main-text', terskipCards[terskipIdx].back);
             var mainElT = document.getElementById('main-text');
             if (mainElT) mainElT.className = terskipCards[terskipIdx].back.length > 80 ? 'big-text long-text' : 'big-text';
