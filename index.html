@@ -142,8 +142,22 @@
       <button id="btn-flip" class="btn-sm">🔄 Flip</button>
       <button id="btn-tips" class="btn-sm">💡 Tips</button>
       <button id="btn-reload" class="btn-sm">Reload</button>
-    </div>    
+    </div>
+    <div class="btn-row" style="margin-top:4px;">
+      <button id="btn-jq" class="btn-sm" style="width:100%;font-size:0.75rem;">🏃 JQ: OFF</button>
+    </div>
     <div id="play-err" class="msg error"></div>
+  </div>
+
+  <!-- Popup PIN untuk ON JQ -->
+  <div id="jq-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border:2px solid #000;border-radius:10px;padding:16px;max-width:300px;width:90%;text-align:center;">
+      <div style="font-weight:bold;margin-bottom:8px;">Masukkan PIN untuk ON JQ</div>
+      <input id="jq-pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
+      <button id="jq-pin-ok" class="btn btn-primary" style="margin-top:4px;">Sahkan</button>
+      <button id="jq-pin-batal" class="btn" style="margin-top:4px;">Batal</button>
+      <div id="jq-pin-msg" class="msg error"></div>
+    </div>
   </div>
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
@@ -188,6 +202,12 @@
     var srLaciSemasa = null;
     var srQueue = [];
 
+    // ── JQ (Jogging Queue) ──
+    var jqAktif = false;
+    var jqMotivasiList = [];
+    var jqMotivasiIdx = 0;
+    var jqModeSemasa = ''; // 'motivasi' atau ''
+    
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
       for (var i = 0; i < screens.length; i++) screens[i].className = 'screen';
@@ -369,8 +389,12 @@
         db.collection('users').doc(uid).collection('bahasa_drawers').get(),
         db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
         db.collection('users').doc(uid).collection('drawer').get(),
-        db.collection('users').doc(uid).collection('topics').get()
+        db.collection('users').doc(uid).collection('topics').get(),
+        db.collection('users').doc(uid).collection('jogging_motivasi').get()
       ]).then(function(res) {
+        jqMotivasiList = [];
+        res[4].forEach(function(d) { var x = d.data(); x.id = d.id; if (x.text || x.title) jqMotivasiList.push(x); });
+        jqMotivasiList.sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
         allBahasaDrawers = [];
         res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaDrawers.push(x); });
         allBahasaPerkataan = [];
@@ -400,7 +424,110 @@
         });
     }
 
-    function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {
+    // ── LOAD STATUS JQ DARI FIRESTORE ──
+    function loadJQStatus() {
+      if (!currentUser) return Promise.resolve();
+      return db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('jq')
+        .get().then(function(snap) {
+          if (snap.exists) {
+            jqAktif = snap.data().aktif === true;
+          } else {
+            jqAktif = false;
+          }
+          updateJQButton();
+        }).catch(function() { jqAktif = false; updateJQButton(); });
+    }
+
+    function simpanJQStatus(aktif) {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('jq')
+        .set({ aktif: aktif, updatedAt: Date.now() }).catch(function() {});
+    }
+
+    function updateJQButton() {
+      var btn = document.getElementById('btn-jq');
+      if (!btn) return;
+      if (jqAktif) {
+        btn.textContent = '🏃 JQ: ON';
+        btn.className = 'btn-sm on';
+      } else {
+        btn.textContent = '🏃 JQ: OFF';
+        btn.className = 'btn-sm';
+      }
+    }
+
+    function loadMotivasiJQ() {
+      if (!currentUser) return Promise.resolve();
+      return db.collection('users').doc(currentUser.uid).collection('jogging_motivasi').get()
+        .then(function(snap) {
+          jqMotivasiList = [];
+          snap.forEach(function(d) {
+            var x = d.data(); x.id = d.id;
+            if (x.text || x.title) jqMotivasiList.push(x);
+          });
+          jqMotivasiList.sort(function(a, b) {
+            return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+          });
+        }).catch(function() { jqMotivasiList = []; });
+    }
+
+    function tunjukMotivasiJQ() {
+      if (!jqMotivasiList.length) {
+        // tiada motivasi — terus sambung
+        sambungSelepasMotivasi();
+        return;
+      }
+      var m = jqMotivasiList[jqMotivasiIdx];
+      jqMotivasiIdx = (jqMotivasiIdx + 1) % jqMotivasiList.length;
+      jqModeSemasa = 'motivasi';
+
+      var adaFlip = m.text && m.text.includes('=');
+      var depan = adaFlip ? m.text.split('=')[0].trim() : (m.text || m.title || '');
+
+      isFlipped = false; showTips = false;
+      setText('play-status', '🏃 MOTIVASI JQ · ' + (m.title || ''));
+      setText('play-mode', 'MOTIVASI · ' + (jqMotivasiIdx) + '/' + jqMotivasiList.length);
+      setText('side-label', 'MUKA DEPAN');
+      setText('main-text', depan);
+      setText('play-progress', adaFlip ? '(Flip untuk penerangan)' : '(Tekan SETERUSNYA untuk teruskan)');
+      setText('play-meta', '');
+      setText('play-err', '');
+      setCardImage('');
+      var mainEl = document.getElementById('main-text');
+      if (mainEl) mainEl.className = depan.length > 80 ? 'big-text long-text' : 'big-text';
+
+      // Simpan data motivasi semasa untuk flip
+      cards = [{ front: depan, back: adaFlip ? m.text.split('=').slice(1).join('=').trim() : '', tips: '', imageUrl: '', title: m.title || 'Motivasi', drawerId: null, isF0: false, isTamat: false, isMotivasi: true }];
+      cardIndex = 0;
+    }
+
+    function sambungSelepasMotivasi() {
+      jqModeSemasa = '';
+      isFlipped = false; showTips = false;
+      // Reload collections dan teruskan countdown biasa
+      loadCollections(function() {
+        var srCol = mode === 'fakta' ? 'fakta_sr_queue' : 'bahasa_sr_queue';
+        loadSROverdue(srCol).then(function(overdue) {
+          srQueue = overdue || [];
+          if (srQueue.length) {
+            srLaciSemasa = srQueue.shift();
+            if (loadSRIntoCards(srLaciSemasa, mode)) {
+              setText('play-status', (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+              isBusy = false; renderCard(); return;
+            }
+          }
+          var ok = mode === 'bahasa' ? rebuildBahasaCards() : rebuildFaktaCards();
+          if (ok) {
+            setText('play-status', mode === 'bahasa'
+              ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
+          }
+          isBusy = false; renderCard();
+        }).catch(function() { isBusy = false; renderCard(); });
+      });
+    }
+
+    function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {    
       var drawer, srColl;
       if (modeName === 'fakta') {
         drawer = allDrawers.filter(function(d) { return d.id === drawerId; })[0];
@@ -825,6 +952,11 @@
           cardIndex = nextIdx; syncIndex(cardIndex);
           isFlipped = false; showTips = false; isBusy = false;
           setText('play-err', '');
+          // JQ: tunjuk motivasi dulu sebelum laci seterusnya
+          if (jqAktif && jqMotivasiList.length) {
+            tunjukMotivasiJQ();
+            return;
+          }
           setText('play-status', mode === 'bahasa'
             ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
             : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
@@ -849,6 +981,14 @@
 
     function nextCard() {
       if (isBusy) return;
+
+      // Mode motivasi JQ — tekan SETERUSNYA → sambung countdown
+      if (jqModeSemasa === 'motivasi') {
+        isBusy = true;
+        sambungSelepasMotivasi();
+        return;
+      }
+
       if (!cards.length || cardIndex >= cards.length) return;
       var c = cards[cardIndex];
       if (c.isTamat) { afterTamat(c); return; }
@@ -906,7 +1046,57 @@
         });
     }
 
-    document.getElementById('btn-login').onclick = cubaLoginPin;
+    // ── JQ BUTTON HANDLER ──
+    document.getElementById('btn-jq').onclick = function() {
+      if (jqAktif) {
+        // Terus OFF tanpa PIN
+        jqAktif = false;
+        simpanJQStatus(false);
+        updateJQButton();
+      } else {
+        // Perlukan PIN untuk ON
+        document.getElementById('jq-pin-input').value = '';
+        setText('jq-pin-msg', '');
+        var overlay = document.getElementById('jq-overlay');
+        overlay.style.display = 'flex';
+        setTimeout(function() { document.getElementById('jq-pin-input').focus(); }, 100);
+      }
+    };
+
+    document.getElementById('jq-pin-ok').onclick = function() {
+      var pin = document.getElementById('jq-pin-input').value.trim();
+      if (!pin || !/^\d{4,6}$/.test(pin)) {
+        setText('jq-pin-msg', 'PIN mesti 4-6 digit'); return;
+      }
+      setText('jq-pin-msg', 'Mengesahkan...');
+      document.getElementById('jq-pin-ok').disabled = true;
+      auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
+        .then(function() {
+          document.getElementById('jq-overlay').style.display = 'none';
+          document.getElementById('jq-pin-ok').disabled = false;
+          jqAktif = true;
+          simpanJQStatus(true);
+          updateJQButton();
+        })
+        .catch(function(e) {
+          document.getElementById('jq-pin-ok').disabled = false;
+          if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') {
+            setText('jq-pin-msg', 'PIN salah');
+          } else {
+            setText('jq-pin-msg', e.message || e.code);
+          }
+        });
+    };
+
+    document.getElementById('jq-pin-batal').onclick = function() {
+      document.getElementById('jq-overlay').style.display = 'none';
+    };
+
+    document.getElementById('jq-pin-input').onkeydown = function(e) {
+      if (e.key === 'Enter') document.getElementById('jq-pin-ok').click();
+    };
+
+    document.getElementById('btn-login').onclick = cubaLoginPin;    
     document.getElementById('pin-input').onkeydown = function(e) {
       if (e.key === 'Enter') cubaLoginPin();
     };
@@ -940,8 +1130,11 @@
       document.getElementById('btn-login').disabled = false;
       if (user) {
         setText('menu-user', 'Linked · Login OK');
+        loadJQStatus();
         showScreen('screen-menu');
       } else {
+        jqAktif = false;
+        updateJQButton();
         showScreen('screen-login');
         setText('login-msg', '');
       }
