@@ -4,7 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Istigfar Kindle</title>
+  <link rel="preload" href="https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2" as="font" type="font/woff2" crossorigin>
   <style>
+    @font-face {
+      font-family: 'UthmanicHafs';
+      src: url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2') format('woff2');
+      font-display: swap;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
       height: 100%;
@@ -104,7 +110,14 @@
 
     .msg { text-align: center; font-size: 0.75rem; margin: 2px 0; min-height: 0.9em; }
     .error { color: #800; font-weight: bold; }
-    .footer { text-align: center; font-size: 0.65rem; color: #666; margin-top: 8px; }
+        .footer { text-align: center; font-size: 0.65rem; color: #666; margin-top: 8px; }
+    .quran-text {
+      font-family: 'UthmanicHafs', 'Traditional Arabic', serif;
+      font-size: 1.6rem;
+      line-height: 2;
+      direction: rtl;
+      text-align: right;
+    }
   </style>
 </head>
 <body>
@@ -1311,7 +1324,12 @@
         setText('side-label', 'MUKA DEPAN');
         displayText = c.front || '(kosong)';
         setText('main-text', displayText);
-        mainEl.className = displayText.length > 80 ? 'big-text long-text' : 'big-text';
+        // Mod Quran — guna font Arab, teks muka depan
+        if (mode === 'quran' && !c.isTamat) {
+          mainEl.className = 'big-text quran-text';
+        } else {
+          mainEl.className = displayText.length > 80 ? 'big-text long-text' : 'big-text';
+        }
         document.getElementById('btn-flip').className = 'btn-sm';
         document.getElementById('btn-tips').className = 'btn-sm';
         if (c.imageUrl) setCardImage(c.imageUrl);
@@ -1800,7 +1818,7 @@
       setText('play-err', '');
       setText('main-text', t.front || '');
       var mainEl = document.getElementById('main-text');
-      if (mainEl) mainEl.className = (t.front || '').length > 80 ? 'big-text long-text' : 'big-text';
+      if (mainEl) mainEl.className = 'big-text quran-text';
       document.getElementById('btn-flip').className = 'btn-sm';
       document.getElementById('btn-tips').className = 'btn-sm on'; // tanda terskip aktif
       setCardImage('');
