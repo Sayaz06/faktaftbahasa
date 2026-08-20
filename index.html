@@ -1117,6 +1117,7 @@
       jqModeSemasa = ''; jqKadSemasa = null;
       jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
       quranAyatCounter = 0;
+      terskipCards = []; terskipIdx = 0;
       setText('play-status', 'Memuat Quran...');
       setText('play-err', '');
       showScreen('screen-play');
@@ -1151,6 +1152,7 @@
       isFlipped = false; showTips = false;
       jqModeSemasa = ''; jqKadSemasa = null;
       jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
+      terskipCards = []; terskipIdx = 0;
       var labelMod = modeName === 'rutin' ? 'Rutin' : modeName === 'doa' ? 'Doa' : 'Hadis';
       setText('play-status', 'Memuat ' + labelMod + '...');
       setText('play-err', '');
@@ -1484,6 +1486,31 @@
 
       // ── MOD QURAN ──
       if (mode === 'quran') {
+        // Kalau terskip aktif — SETERUSNYA maju dalam terskip, bukan kad utama
+        if (terskipCards.length > 0) {
+          if (!isFlipped && terskipCards[terskipIdx] && terskipCards[terskipIdx].back) {
+            isFlipped = true;
+            setText('side-label', 'MUKA BELAKANG');
+            setText('main-text', terskipCards[terskipIdx].back);
+            var mainElN = document.getElementById('main-text');
+            if (mainElN) mainElN.className = terskipCards[terskipIdx].back.length > 80 ? 'big-text long-text' : 'big-text';
+            document.getElementById('btn-flip').className = 'btn-sm on';
+            return;
+          }
+          terskipIdx++;
+          if (terskipIdx >= terskipCards.length) {
+            terskipCards = []; terskipIdx = 0;
+            setText('play-err', '');
+            setText('play-status', 'QURAN · ' + quranSurahSemasa + '. ' + QURAN_SURAH_NAMES[quranSurahSemasa - 1]);
+            isFlipped = false; showTips = false;
+            renderCard();
+            return;
+          }
+          isFlipped = false;
+          renderTerskip();
+          return;
+        }
+
         if (c.isTamat && c.isTamatSurah) {
           // Habis surah — maju ke surah seterusnya
           isBusy = true;
