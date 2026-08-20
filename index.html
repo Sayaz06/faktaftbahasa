@@ -1054,6 +1054,7 @@
       isFlipped = false; showTips = false;
       jqModeSemasa = ''; jqKadSemasa = null;
       jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
+      terskipCards = []; terskipIdx = 0;
       setText('play-status', 'Memuat Bahasa + SR...');
       setText('play-err', '');
       showScreen('screen-play');
@@ -1087,6 +1088,7 @@
       isFlipped = false; showTips = false;
       jqModeSemasa = ''; jqKadSemasa = null;
       jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
+      terskipCards = []; terskipIdx = 0;
       setText('play-status', 'Memuat Fakta + SR...');
       setText('play-err', '');
       showScreen('screen-play');
@@ -1726,8 +1728,8 @@
     document.getElementById('btn-go-rutin').onclick = startRutin;
     document.getElementById('btn-go-doa').onclick = startDoa;
     document.getElementById('btn-go-hadis').onclick = startHadis;
-        document.getElementById('btn-back-menu').onclick = function() {
-      terskipCards = []; terskipIdx = 0;
+    document.getElementById('btn-back-menu').onclick = function() {
+    terskipCards = []; terskipIdx = 0;
       isFlipped = false; showTips = false;
       showScreen('screen-menu');
     };
@@ -1762,11 +1764,12 @@
       if (cards[cardIndex].isTamat) return;
       showTips = false; isFlipped = !isFlipped; renderCard();
     };
-    // ── TERSKIP (Quran sahaja) ──
-    var terskipCards = [];
-    var terskipIdx = 0;
 
-    function bukaTerskip() {
+    var isLoading = false; // guard untuk elak double-trigger button
+    var terskipCards = []; // kad terskip Quran semasa
+    var terskipIdx = 0;
+    
+        function bukaTerskip() {
       if (!cards.length || cardIndex <= 0) {
         setText('play-err', 'Tiada ayat sebelum ini.');
         setTimeout(function() { setText('play-err', ''); }, 2000);
