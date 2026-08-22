@@ -806,6 +806,8 @@
       }
 
       var c = cards[cardIndex];
+      // F1 bahasa: tukar makna "depan/belakang" — maksud jadi default, perkataan jadi flip
+      var isF1Bahasa = (mode === 'bahasa' && !c.isF0 && c.fasa === 1 && !c.isTamat);
       var fasaLabel = '';
       if (c.isTamat) fasaLabel = 'TAMAT';
       else if (mode === 'bahasa') {
@@ -853,8 +855,11 @@
         document.getElementById('btn-flip').className = 'btn-sm';
         setCardImage('');
       } else if (isFlipped) {
-        setText('side-label', 'MUKA BELAKANG');
-        displayText = c.back || '(Tiada terjemahan)';
+        // F1 bahasa: flip → tunjuk perkataan (depan)
+        var flipText = isF1Bahasa ? (c.front || '(kosong)') : (c.back || '(Tiada terjemahan)');
+        var flipLabel = isF1Bahasa ? 'PERKATAAN' : 'MUKA BELAKANG';
+        setText('side-label', flipLabel);
+        displayText = flipText;
         setText('main-text', displayText);
         mainEl.className = displayText.length > 80 ? 'big-text long-text' : 'big-text';
         document.getElementById('btn-flip').className = 'btn-sm on';
@@ -862,8 +867,11 @@
         if (c.imageUrl) setCardImage(c.imageUrl);
         else setCardImage('');
       } else {
-        setText('side-label', 'MUKA DEPAN');
-        displayText = c.front || '(kosong)';
+        // F1 bahasa: default → tunjuk maksud (belakang)
+        var defaultText = isF1Bahasa ? (c.back || '(Tiada maksud)') : (c.front || '(kosong)');
+        var defaultLabel = isF1Bahasa ? 'MAKSUD' : 'MUKA DEPAN';
+        setText('side-label', defaultLabel);
+        displayText = defaultText;
         setText('main-text', displayText);
         mainEl.className = displayText.length > 80 ? 'big-text long-text' : 'big-text';
         document.getElementById('btn-flip').className = 'btn-sm';
@@ -871,7 +879,6 @@
         if (c.imageUrl) setCardImage(c.imageUrl);
         else setCardImage('');
       }
-
       // Auto-fit selepas render (image mungkin belum load)
       setTimeout(function() {
         autoFitImage(displayText.length);
