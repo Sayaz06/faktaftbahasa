@@ -855,15 +855,14 @@
       var label = (srModeAktif ? 'SR · ' : '') + fasaLabel;
       setText('play-mode', label);
 
-      // Kira progress dalam fasa + baris semasa sahaja (fakta: F1 atau F2 per baris)
+      // Kira progress dalam fasa + laci semasa sahaja
       var fasaSemasa = c.isGambar ? -1 : (c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1));
       var fasaStart = cardIndex, fasaEnd = cardIndex;
       for (var pi = 0; pi < cards.length; pi++) {
         if (cards[pi].isTamat) continue;
         var pf = cards[pi].isGambar ? -1 : (cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1));
-        var sameLaci = (mode === 'fakta')
-          ? (cards[pi].drawerId === c.drawerId && cards[pi].itemIndex === c.itemIndex)
-          : true;
+        var sameLaci = (cards[pi].drawerId === c.drawerId)
+          && (mode !== 'fakta' || cards[pi].itemIndex === c.itemIndex);
         if (pf === fasaSemasa && sameLaci) {
           if (pi < fasaStart) fasaStart = pi;
           if (pi > fasaEnd) fasaEnd = pi;
