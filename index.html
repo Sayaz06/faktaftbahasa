@@ -562,7 +562,7 @@
       setText('play-err', '');
     }
 
-    function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {    
+    function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {
       var drawer, srColl;
       if (modeName === 'fakta') {
         drawer = allDrawers.filter(function(d) { return d.id === drawerId; })[0];
@@ -602,6 +602,32 @@
           if (itemIndex !== undefined && itemIndex !== null) {
             srData.itemIndex = itemIndex;
             srData.barisText = (barisText || '').slice(0, 200);
+          }
+          // Bina pdfKod sama seperti app backup
+          var barisNo = (itemIndex !== null && itemIndex !== undefined) ? (itemIndex + 1) : 1;
+          var pdfKod = null;
+          var isSementara = false;
+          var topic = allTopics.filter(function(t) { return t.id === drawer.topicId; })[0];
+          var topicNama = (topic && topic.name) || 'Topik';
+          var tajukSlide = drawer.title || 'Slide';
+          if (drawer.pdfNombor && drawer.pdfTopik && drawer.pdfSubjek) {
+            pdfKod = drawer.pdfSubjek + '/' + drawer.pdfTopik + '/' + tajukSlide + '-' + drawer.pdfNombor + '-B' + barisNo;
+            isSementara = false;
+          } else {
+            var laciDalamTopik = allDrawers
+              .filter(function(d) { return d.topicId === drawer.topicId; })
+              .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+            var idxSementara = -1;
+            for (var si = 0; si < laciDalamTopik.length; si++) {
+              if (laciDalamTopik[si].id === drawerId) { idxSementara = si; break; }
+            }
+            // subjekNama — kindle tak ada allSubjects, guna topicNama sahaja
+            pdfKod = topicNama + '/' + tajukSlide + '-T' + (idxSementara + 1) + '-B' + barisNo;
+            isSementara = true;
+          }
+          if (pdfKod) {
+            srData.pdfKod = pdfKod;
+            srData.isSementara = isSementara;
           }
         }
         return ref.set(srData);
