@@ -670,9 +670,9 @@
 
       var saved = activePerkataan.lastIndex || 0;
       if (saved >= cards.length) saved = 0;
-      if (cards[saved] && !cards[saved].isF0 && !cards[saved].isTamat) {
+      if (cards[saved] && !cards[saved].isF0 && !cards[saved].isGambar && !cards[saved].isTamat) {
         for (var k = saved; k >= 0; k--) {
-          if (cards[k].isF0 && cards[k].drawerId === cards[saved].drawerId) {
+          if ((cards[k].isF0 || cards[k].isGambar) && cards[k].drawerId === cards[saved].drawerId) {
             saved = k; break;
           }
         }
@@ -926,7 +926,7 @@
 
     function findNextDrawerStart(fromIdx) {
       var i = fromIdx + 1;
-      while (i < cards.length && !cards[i].isF0 && !cards[i].isTamat) i++;
+      while (i < cards.length && !cards[i].isF0 && !cards[i].isGambar && !cards[i].isTamat) i++;
       if (i < cards.length && cards[i].isTamat) i++;
       return i;
     }
