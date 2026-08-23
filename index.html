@@ -262,6 +262,17 @@
       var img = d.imageUrl || '';
       var r, i;
 
+      // Fasa Gambar × 5 (hanya jika ada gambar)
+      if (img) {
+        for (r = 0; r < 5; r++) {
+          out.push({
+            front: 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.',
+            back: '', tips: '', imageUrl: img,
+            title: title, drawerId: d.id, isF0: false, isGambar: true, isTamat: false, isSR: !!isSR, fasa: -1
+          });
+        }
+      }
+
       // F0 × 5
       for (r = 0; r < 5; r++) {
         out.push({
@@ -367,9 +378,27 @@
         }
       }
 
-      // Fakta: setiap baris ada F1×5 dan F2×5 berasingan
-      // Aliran: F1(1/5→5/5) → [JQ Motivasi] → F2(1/5→5/5) → daftar SR → baris seterusnya
+      // Fakta: setiap baris ada Fasa Gambar + F1×5 dan F2×5 berasingan
+      // Aliran: [Gambar×5] → F1(1/5→5/5) → [JQ Motivasi] → F2(1/5→5/5) → daftar SR → baris seterusnya
       for (i = 0; i < itemCards.length; i++) {
+        // Fasa Gambar × 5 (hanya jika ada gambar pada baris ini)
+        var barisImg = itemCards[i].imageUrl || '';
+        if (barisImg) {
+          for (r = 0; r < 5; r++) {
+            var cg = {};
+            for (var kg in itemCards[i]) cg[kg] = itemCards[i][kg];
+            cg.itemIndex = i;
+            cg.fasa = -1;
+            cg.isGambar = true;
+            cg.isLastOfBaris = false;
+            cg.isEndF1 = false;
+            cg.front = 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
+            cg.back = '';
+            cg.tips = '';
+            out.push(cg);
+          }
+        }
+
         // F1 × 5
         for (r = 0; r < 5; r++) {
           var cf1 = {};
@@ -810,6 +839,7 @@
       var isF1Bahasa = (mode === 'bahasa' && !c.isF0 && c.fasa === 1 && !c.isTamat);
       var fasaLabel = '';
       if (c.isTamat) fasaLabel = 'TAMAT';
+      else if (c.isGambar) fasaLabel = 'GAMBAR · ' + (c.title || '');
       else if (mode === 'bahasa') {
         if (c.isF0 || c.fasa === 0) fasaLabel = 'F0 · Pengenalan';
         else if (c.fasa === 1) fasaLabel = 'F1 · Latihan';
@@ -819,18 +849,18 @@
       }
 
       // Fakta: tunjuk F1/F2 dalam label
-      if (mode === 'fakta' && !c.isTamat && !c.isF0) {
+      if (mode === 'fakta' && !c.isTamat && !c.isF0 && !c.isGambar) {
         fasaLabel = (c.fasa === 1 ? 'F1' : 'F2') + ' · ' + (c.title || '');
       }
       var label = (srModeAktif ? 'SR · ' : '') + fasaLabel;
       setText('play-mode', label);
 
       // Kira progress dalam fasa + baris semasa sahaja (fakta: F1 atau F2 per baris)
-      var fasaSemasa = c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1);
+      var fasaSemasa = c.isGambar ? -1 : (c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1));
       var fasaStart = cardIndex, fasaEnd = cardIndex;
       for (var pi = 0; pi < cards.length; pi++) {
         if (cards[pi].isTamat) continue;
-        var pf = cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1);
+        var pf = cards[pi].isGambar ? -1 : (cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1));
         var sameLaci = (mode === 'fakta')
           ? (cards[pi].drawerId === c.drawerId && cards[pi].itemIndex === c.itemIndex)
           : true;
@@ -846,7 +876,16 @@
       setText('play-meta', '');
 
       var displayText = '';
-      if (showTips) {
+      if (c.isGambar) {
+        setText('side-label', 'HAFAL GAMBAR');
+        displayText = c.front;
+        setText('main-text', displayText);
+        mainEl.className = 'big-text tips-mode';
+        document.getElementById('btn-flip').className = 'btn-sm';
+        document.getElementById('btn-tips').className = 'btn-sm';
+        if (c.imageUrl) setCardImage(c.imageUrl);
+        else setCardImage('');
+      } else if (showTips) {
         setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
         displayText = c.tips ? c.tips : '(Tiada tips)';
         setText('main-text', displayText);
@@ -1054,6 +1093,15 @@
       var c = cards[cardIndex];
       if (c.isTamat) { afterTamat(c); return; }
 
+      // Fasa Gambar — terus ke kad seterusnya sahaja
+      if (c.isGambar) {
+        isFlipped = false; showTips = false;
+        cardIndex++;
+        if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
+        else renderCard();
+        return;
+      }
+
       // Fakta F1 habis (isEndF1) → tunjuk motivasi JQ, kemudian sambung ke F2
       if (mode === 'fakta' && c.isEndF1) {
         isFlipped = false; showTips = false;
@@ -1210,11 +1258,16 @@
       }
       if (!cards.length || cardIndex >= cards.length) return;
       if (cards[cardIndex].isTamat) return;
+      if (cards[cardIndex].isGambar) {
+        alert('Fasa gambar tidak boleh dibalik.\nSila hafal gambar dan tekan SETERUSNYA.');
+        return;
+      }
       showTips = false; isFlipped = !isFlipped; renderCard();
     };
     document.getElementById('btn-tips').onclick = function() {
       if (!cards.length || cardIndex >= cards.length) return;
       if (cards[cardIndex].isTamat) return;
+      if (cards[cardIndex].isGambar) return;
       isFlipped = false; showTips = !showTips; renderCard();
     };
 
