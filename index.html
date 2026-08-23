@@ -865,7 +865,10 @@
       var isF1Bahasa = (mode === 'bahasa' && !c.isF0 && c.fasa === 1 && !c.isTamat);
       var fasaLabel = '';
       if (c.isTamat) fasaLabel = 'TAMAT';
-      else if (c.isGambar) fasaLabel = 'GAMBAR · ' + (c.title || '');
+      else if (c.isGambar) {
+        var gambarBarisLabel = (mode === 'fakta' && c.itemIndex !== undefined && c.itemIndex !== null) ? ' · Baris ' + (c.itemIndex + 1) : '';
+        fasaLabel = 'GAMBAR · ' + (c.title || '') + gambarBarisLabel;
+      }        
       else if (mode === 'bahasa') {
         if (c.isF0 || c.fasa === 0) fasaLabel = 'F0 · Pengenalan';
         else if (c.fasa === 1) fasaLabel = 'F1 · Latihan';
