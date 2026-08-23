@@ -429,6 +429,10 @@
       return out;
     }
 
+    var allSubjects = [];
+
+    var allSubjects = [];
+
     function loadCollections(cb) {
       var uid = currentUser.uid;
       Promise.all([
@@ -436,7 +440,8 @@
         db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
         db.collection('users').doc(uid).collection('drawer').get(),
         db.collection('users').doc(uid).collection('topics').get(),
-        db.collection('users').doc(uid).collection('jogging_motivasi').get()
+        db.collection('users').doc(uid).collection('jogging_motivasi').get(),
+        db.collection('users').doc(uid).collection('subjects').get()
       ]).then(function(res) {
         jqMotivasiList = [];
         res[4].forEach(function(d) { var x = d.data(); x.id = d.id; if (x.text || x.title) jqMotivasiList.push(x); });
@@ -449,6 +454,8 @@
         res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allDrawers.push(x); });
         allTopics = [];
         res[3].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
+        allSubjects = [];
+        res[5].forEach(function(d) { var x = d.data(); x.id = d.id; allSubjects.push(x); });
         cb && cb();
       }).catch(function(e) {
         setText('play-err', 'Gagal load: ' + e.message);
@@ -621,8 +628,9 @@
             for (var si = 0; si < laciDalamTopik.length; si++) {
               if (laciDalamTopik[si].id === drawerId) { idxSementara = si; break; }
             }
-            // subjekNama — kindle tak ada allSubjects, guna topicNama sahaja
-            pdfKod = topicNama + '/' + tajukSlide + '-T' + (idxSementara + 1) + '-B' + barisNo;
+            // subjekNama — kindle tak ada allSubjects, fallback guna topicNama dua kali
+            // supaya format konsisten dengan app pertama: subjek/topik/laci-T{n}-B{n}
+            pdfKod = topicNama + '/' + topicNama + '/' + tajukSlide + '-T' + (idxSementara + 1) + '-B' + barisNo;
             isSementara = true;
           }
           if (pdfKod) {
