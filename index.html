@@ -876,7 +876,8 @@
 
       // Fakta: tunjuk F1/F2 dalam label
       if (mode === 'fakta' && !c.isTamat && !c.isF0 && !c.isGambar) {
-        fasaLabel = (c.fasa === 1 ? 'F1' : 'F2') + ' · ' + (c.title || '');
+        var barisLabel = (c.itemIndex !== undefined && c.itemIndex !== null) ? ' · Baris ' + (c.itemIndex + 1) : '';
+        fasaLabel = (c.fasa === 1 ? 'F1' : 'F2') + ' · ' + (c.title || '') + barisLabel;
       }
       var label = (srModeAktif ? 'SR · ' : '') + fasaLabel;
       setText('play-mode', label);
