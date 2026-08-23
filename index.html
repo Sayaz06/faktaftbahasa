@@ -5,5 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Istigfar Kindle</title>
 </head>
-<body>PLACEHOLDER_WILL_REPLACE</body>
+<body>
+  <p style="font-family:Georgia,serif;text-align:center;margin-top:2em;">Memuat aplikasi…</p>
+  <script src="p0.js"></script>
+  <script src="p1.js"></script>
+  <script src="p2.js"></script>
+  <script src="p3.js"></script>
+  <script src="p4.js"></script>
+  <script>
+    (function() {
+      var parts = window.__P || [];
+      var html = parts.join('');
+      if (!html || html.indexOf('FASA_GAMBAR') === -1) {
+        document.body.innerHTML = '<p style="font-family:Georgia,serif;text-align:center;color:#800;">Gagal muat (data tidak lengkap).</p>';
+        return;
+      }
+      document.open();
+      document.write(html);
+      document.close();
+    })();
+  </script>
+</body>
 </html>
