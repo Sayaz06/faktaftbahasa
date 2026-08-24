@@ -177,6 +177,7 @@
     firebase.initializeApp(firebaseConfig);
     var auth = firebase.auth();
     var db = firebase.firestore();
+    document.body.classList.add('auth-checking');
     var ADMIN_EMAIL = 'adha86614@gmail.com';
 
     var SR_INTERVALS = [
@@ -1310,6 +1311,7 @@
     });
 
     auth.onAuthStateChanged(function(user) {
+      document.body.classList.remove('auth-checking');
       currentUser = user;
       document.getElementById('btn-login').disabled = false;
       if (user) {
