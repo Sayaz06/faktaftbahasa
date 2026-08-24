@@ -700,16 +700,7 @@
         if ((d.notes || '').trim()) cards = cards.concat(cardsFromBahasaDrawer(d, false));
       }
 
-      var saved = activePerkataan.lastIndex || 0;
-      if (saved >= cards.length) saved = 0;
-      if (cards[saved] && !cards[saved].isF0 && !cards[saved].isGambar && !cards[saved].isTamat) {
-        for (var k = saved; k >= 0; k--) {
-          if ((cards[k].isF0 || cards[k].isGambar) && cards[k].drawerId === cards[saved].drawerId) {
-            saved = k; break;
-          }
-        }
-      }
-      cardIndex = saved;
+      cardIndex = 0;
       srModeAktif = false;
       srLaciSemasa = null;
       return cards.length > 0;
@@ -743,9 +734,7 @@
         if (has) cards = cards.concat(cardsFromFaktaDrawer(d, false));
       }
 
-      var saved = activeTopic.lastIndex || 0;
-      if (saved >= cards.length) saved = 0;
-      cardIndex = saved;
+      cardIndex = 0;
       srModeAktif = false;
       srLaciSemasa = null;
       return cards.length > 0;
