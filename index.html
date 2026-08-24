@@ -1054,7 +1054,16 @@
             return;
           }
           if (isSR) {
-            // Lepas SR: rebuild countdown normal dari lastIndex
+            // Lepas SR: reset lastIndex ke 0 supaya start dari gambar
+            if (mode === 'bahasa' && activePerkataan) {
+              activePerkataan.lastIndex = 0;
+              db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
+                .update({ lastIndex: 0 }).catch(function() {});
+            } else if (mode === 'fakta' && activeTopic) {
+              activeTopic.lastIndex = 0;
+              db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
+                .update({ lastIndex: 0 }).catch(function() {});
+            }
             var ok = mode === 'bahasa' ? rebuildBahasaCards() : rebuildFaktaCards();
             if (!ok) { isBusy = false; setText('play-err', ''); return; }
             isFlipped = false; showTips = false;
