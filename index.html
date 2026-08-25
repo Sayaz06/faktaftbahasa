@@ -264,12 +264,19 @@
       var r, i;
 
       // Fasa Gambar × 5 (hanya jika ada gambar)
+      var img2 = d.imageUrl11 || '';
       if (img) {
         for (r = 0; r < 5; r++) {
+          var isGanjil = (r % 2 === 0); // 0,2,4 = G1 | 1,3 = G2
+          var imgFasa = isGanjil ? img : (img2 || null);
+          var frontFasa = imgFasa
+            ? 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.'
+            : '📷 Gambar 2 belum ditambah.\nLady tekan SETERUSNYA untuk sambung.';
           out.push({
-            front: 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.',
-            back: '', tips: '', imageUrl: img,
-            title: title, drawerId: d.id, isF0: false, isGambar: true, isTamat: false, isSR: !!isSR, fasa: -1
+            front: frontFasa,
+            back: '', tips: '', imageUrl: imgFasa || '',
+            title: title, drawerId: d.id, isF0: false, isGambar: true, isTamat: false, isSR: !!isSR, fasa: -1,
+            gambarSlot: isGanjil ? 1 : 2
           });
         }
       }
@@ -384,8 +391,11 @@
       for (i = 0; i < itemCards.length; i++) {
         // Fasa Gambar × 5 (hanya jika ada gambar pada baris ini)
         var barisImg = itemCards[i].imageUrl || '';
+        var barisImg2 = (d.items && d.items[i] && d.items[i].imageUrl11) ? d.items[i].imageUrl11 : '';
         if (barisImg) {
           for (r = 0; r < 5; r++) {
+            var cgIsGanjil = (r % 2 === 0); // 0,2,4 = G1 | 1,3 = G2
+            var cgImg = cgIsGanjil ? barisImg : (barisImg2 || null);
             var cg = {};
             for (var kg in itemCards[i]) cg[kg] = itemCards[i][kg];
             cg.itemIndex = i;
@@ -393,9 +403,13 @@
             cg.isGambar = true;
             cg.isLastOfBaris = false;
             cg.isEndF1 = false;
-            cg.front = 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
+            cg.imageUrl = cgImg || '';
+            cg.front = cgImg
+              ? 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.'
+              : '📷 Gambar 2 belum ditambah.\nTekan SETERUSNYA untuk sambung.';
             cg.back = '';
             cg.tips = '';
+            cg.gambarSlot = cgIsGanjil ? 1 : 2;
             out.push(cg);
           }
         }
@@ -902,7 +916,8 @@
 
       var displayText = '';
       if (c.isGambar) {
-        setText('side-label', 'HAFAL GAMBAR');
+        var slotLabel = c.gambarSlot === 2 ? 'HAFAL GAMBAR · G2' : 'HAFAL GAMBAR · G1';
+        setText('side-label', c.imageUrl ? slotLabel : 'HAFAL GAMBAR · ' + (c.gambarSlot === 2 ? 'G2 Tiada' : 'G1'));
         displayText = c.front;
         setText('main-text', displayText);
         mainEl.className = 'big-text tips-mode';
