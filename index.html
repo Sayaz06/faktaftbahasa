@@ -105,6 +105,14 @@
       margin: 2px auto; border: 1px solid #000;
       /* max-height dikawal JS autoFit */
     }
+    .card-img-placeholder {
+      display: none;
+      width: 100%;
+      margin: 2px auto;
+      border: 1px dashed #aaa;
+      background: #f5f5f5;
+      box-sizing: border-box;
+    }
     .progress { font-size: 0.72rem; margin-top: 1px; }
     .meta { font-size: 0.65rem; color: #444; margin-top: 1px; }
 
@@ -137,7 +145,8 @@
     <div class="counter-box" id="counter-box">
       <div class="mode-label" id="play-mode">—</div>
       <div class="side-label" id="side-label">MUKA DEPAN</div>
-      <img id="card-img" class="card-img" alt="" style="display:none;">
+            <img id="card-img" class="card-img" alt="" style="display:none;">
+      <div id="card-img-placeholder" class="card-img-placeholder"></div>
       <div class="big-text" id="main-text">—</div>
       <div class="progress" id="play-progress"></div>
       <div class="meta" id="play-meta"></div>
@@ -207,7 +216,8 @@
     var activeTopic = null;
     var srModeAktif = false;
     var srLaciSemasa = null;
-    var srQueue = [];
+        var srQueue = [];
+    var lastGambarHeight = 180; // simpan tinggi G1 untuk placeholder G2
 
     // ── JQ (Jogging Queue) ──
     var jqAktif = false;
@@ -244,7 +254,7 @@
     /** Auto-saiz gambar: ambil saki-baki skrin, kecilkan bila ayat panjang */
     function autoFitImage(textLen) {
       var img = document.getElementById('card-img');
-      if (!img || img.style.display === 'none') return;
+      if (!img || img.style.display === 'none') return null;
 
       var vh = window.innerHeight || 600;
       // Rizab: status(~28) + labels(~36) + progress/meta(~36) + SETERUSNYA(~48) + btn-row(~44) + padding(~24)
@@ -259,6 +269,7 @@
       if (maxImg > 320) maxImg = 320;
 
       img.style.maxHeight = maxImg + 'px';
+      return maxImg;
     }
 
     function cardsFromBahasaDrawer(d, isSR) {
@@ -277,7 +288,7 @@
           var imgFasa = isGanjil ? img : (img2 || null);
           var frontFasa = imgFasa
             ? 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.'
-            : '📷 Gambar 2 belum ditambah.\nLady tekan SETERUSNYA untuk sambung.';
+            : '📷 Gambar 2 belum disediakan.\nSila tambah melalui telefon anda.\nTekan SETERUSNYA untuk meneruskan.\nLaci ini masih boleh digunakan.';
           out.push({
             front: frontFasa,
             back: '', tips: '', imageUrl: imgFasa || '',
@@ -412,7 +423,7 @@
             cg.imageUrl = cgImg || '';
             cg.front = cgImg
               ? 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.'
-              : '📷 Gambar 2 belum ditambah.\nTekan SETERUSNYA untuk sambung.';
+              : '📷 Gambar 2 belum disediakan.\nSila tambah melalui telefon anda.\nTekan SETERUSNYA untuk meneruskan.\nLaci ini masih boleh digunakan.';
             cg.back = '';
             cg.tips = '';
             cg.gambarSlot = cgIsGanjil ? 1 : 2;
@@ -873,18 +884,31 @@
       });
     }
 
-    function setCardImage(url) {
+    function setCardImage(url, useGambarPlaceholder) {
       var img = document.getElementById('card-img');
+      var placeholder = document.getElementById('card-img-placeholder');
       if (!img) return;
       if (url) {
         img.src = url;
         img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
         img.onerror = function() { img.style.display = 'none'; };
-        img.onload = function() { autoFitImage((document.getElementById('main-text').textContent || '').length); };
+        img.onload = function() {
+          var h = autoFitImage((document.getElementById('main-text').textContent || '').length);
+          if (h) lastGambarHeight = h;
+        };
+      } else if (useGambarPlaceholder) {
+        img.removeAttribute('src');
+        img.style.display = 'none';
+        if (placeholder) {
+          placeholder.style.display = 'block';
+          placeholder.style.height = lastGambarHeight + 'px';
+        }
       } else {
         img.removeAttribute('src');
         img.style.display = 'none';
         img.style.maxHeight = '';
+        if (placeholder) placeholder.style.display = 'none';
       }
     }
 
@@ -1019,7 +1043,7 @@
         document.getElementById('btn-flip').className = 'btn-sm';
         document.getElementById('btn-tips').className = 'btn-sm';
         if (c.imageUrl) setCardImage(c.imageUrl);
-        else setCardImage('');
+        else setCardImage('', c.gambarSlot === 2); // placeholder hanya untuk G2 tiada gambar
       } else if (showTips) {
         setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
         displayText = c.tips ? c.tips : '(Tiada tips)';
