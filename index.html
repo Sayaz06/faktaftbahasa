@@ -723,8 +723,14 @@
           if (snap.exists) {
             champSources = snap.data().sources || [];
             champLastIdx = snap.data().lastSourceIndex || 0;
+            var savedIdx = snap.data().champIdx || {};
+            champIdx.motivasi = savedIdx.motivasi || 0;
+            champIdx.perjanjian = savedIdx.perjanjian || 0;
+            champIdx.rutin = savedIdx.rutin || 0;
+            champIdx.supplement = savedIdx.supplement || 0;
+            champIdx.water = savedIdx.water || 0;
           } else {
-            champSources = ['motivasi']; // default
+            champSources = ['motivasi'];
             champLastIdx = 0;
           }
         }).catch(function() { champSources = ['motivasi']; });
@@ -781,10 +787,13 @@
       var sourceKey = activeSources[champLastIdx % activeSources.length];
       champLastIdx = (champLastIdx + 1) % activeSources.length;
 
-      // Simpan lastSourceIndex ke Firestore
+      // Simpan lastSourceIndex + champIdx ke Firestore
       db.collection('users').doc(currentUser.uid)
         .collection('kindle_settings').doc('champion')
-        .update({ lastSourceIndex: champLastIdx }).catch(function() {});
+        .update({
+          lastSourceIndex: champLastIdx,
+          champIdx: champIdx
+        }).catch(function() {});
 
       var list = champData[sourceKey];
       var idx = champIdx[sourceKey] % list.length;
@@ -1653,10 +1662,10 @@
               champIdx[src] = ((champIdx[src] || 1) - 1 + (champData[src] ? champData[src].length : 1)) % (champData[src] ? champData[src].length : 1);
               // Revert champLastIdx juga
               champLastIdx = ((champLastIdx || 1) - 1 + champSources.length) % champSources.length;
-              // Update Firestore
+              // Update Firestore — simpan kedua-dua
               db.collection('users').doc(currentUser.uid)
                 .collection('kindle_settings').doc('champion')
-                .update({ lastSourceIndex: champLastIdx }).catch(function() {});
+                .update({ lastSourceIndex: champLastIdx, champIdx: champIdx }).catch(function() {});
               _selesaiMotivasi();
               if (cbM) cbM();
             }
