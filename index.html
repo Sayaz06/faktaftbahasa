@@ -120,6 +120,39 @@
     .error { color: #800; font-weight: bold; }
     .footer { text-align: center; font-size: 0.65rem; color: #666; margin-top: 8px; }
 
+    /* ── CHAMPION CONFIRM OVERLAY ── */
+    .champ-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6); z-index: 999;
+      align-items: center; justify-content: center;
+    }
+    .champ-overlay.active { display: flex; }
+    .champ-overlay-box {
+      background: #fff; border: 3px solid #000; border-radius: 12px;
+      padding: 18px 16px; max-width: 340px; width: 90%; text-align: center;
+    }
+    .champ-overlay-title {
+      font-size: 0.72rem; font-weight: bold; letter-spacing: 0.05em;
+      text-transform: uppercase; color: #555; margin-bottom: 6px;
+    }
+    .champ-overlay-name {
+      font-size: 1.05rem; font-weight: bold; margin-bottom: 4px;
+    }
+    .champ-overlay-q {
+      font-size: 0.88rem; margin-bottom: 14px; color: #333;
+    }
+    .champ-overlay-btn-yes {
+      display: block; width: 100%; padding: 11px; margin-bottom: 8px;
+      font-size: 0.95rem; font-weight: bold; background: #000; color: #fff;
+      border: 2px solid #000; border-radius: 8px; cursor: pointer;
+    }
+    .champ-overlay-btn-skip {
+      display: block; width: 100%; padding: 11px;
+      font-size: 0.82rem; font-weight: bold; background: #fff; color: #000;
+      border: 2px solid #aaa; border-radius: 8px; cursor: pointer;
+      line-height: 1.3;
+    }    
+
     /* ── GO-TICK ── */
     .gt-screen { display: none; }
     .gt-screen.active { display: block; }
@@ -841,6 +874,36 @@
       };
     }
 
+    function champShowConfirm(h, cbYa, cbSkip) {
+      var sourceLabel = { supplement: '💊 SUPLEMEN', water: '💧 AIR' };
+      var overlay = document.getElementById('champ-overlay');
+      var elTitle = document.getElementById('champ-overlay-title');
+      var elName = document.getElementById('champ-overlay-name');
+      var elQ = document.getElementById('champ-overlay-q');
+      if (elTitle) elTitle.textContent = sourceLabel[h.source] || 'CHAMPION';
+      if (elName) elName.textContent = h.title || '';
+      if (elQ) elQ.textContent = h.source === 'water' ? 'Sudah minum air?' : 'Sudah ambil suplemen ini?';
+      if (overlay) overlay.classList.add('active');
+
+      var btnYes = document.getElementById('champ-overlay-yes');
+      var btnSkip = document.getElementById('champ-overlay-skip');
+
+      // Clone untuk buang event lama
+      var newYes = btnYes.cloneNode(true);
+      var newSkip = btnSkip.cloneNode(true);
+      btnYes.parentNode.replaceChild(newYes, btnYes);
+      btnSkip.parentNode.replaceChild(newSkip, btnSkip);
+
+      newYes.onclick = function() {
+        overlay.classList.remove('active');
+        cbYa && cbYa();
+      };
+      newSkip.onclick = function() {
+        overlay.classList.remove('active');
+        cbSkip && cbSkip();
+      };
+    }
+
     function _selesaiMotivasi() {
       window._jqMotivasiHandler = null;
       isFlipped = false; showTips = false;
@@ -1551,30 +1614,56 @@
         }
         // Tap terakhir — selesai motivasi, sambung
         var cbM = h.cb;
-        // Kalau water tracker — catat minum (anggap user dah minum)
-        if (h.source === 'water' && h.waterItem && currentUser) {
-          var wi = h.waterItem;
-          var todayKey = (function() {
-            var d = new Date();
-            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-          })();
-          var mlMinum = (wi.kindleMl && wi.kindleMl >= 50) ? wi.kindleMl : 100; // baca dari settings phone
-          var newMinum = (wi.minum || 0) + mlMinum;
-          var newLog = [{ ml: mlMinum, ts: Date.now(), src: 'kindle' }];
-          db.collection('users').doc(currentUser.uid).collection('water_tracker').doc(todayKey)
-            .set({ minum: newMinum, log: db.FieldValue ? db.FieldValue.arrayUnion(newLog[0]) : newLog, dateKey: todayKey, updatedAt: Date.now() }, { merge: true })
-            .catch(function() {});
-          // Update champion_item
-          var goal = wi.goal || 2000;
-          var baki = Math.max(0, goal - newMinum);
-          var pct = Math.min(100, Math.round(newMinum / goal * 100));
-          db.collection('users').doc(currentUser.uid).collection('water_tracker').doc('champion_item')
-            .set({
-              title: '💧 Air: ' + newMinum + 'ml / ' + goal + 'ml (' + pct + '%)',
-              text: baki > 0 ? 'Baki ' + baki + 'ml lagi untuk capai goal hari ini.' : '✅ Goal air hari ini dah tercapai!',
-              minum: newMinum, goal: goal, baki: baki, pct: pct, updatedAt: Date.now()
-            }, { merge: true }).catch(function() {});
+
+        // Supplement atau Water — tunjuk overlay confirm dulu
+        if ((h.source === 'supplement' || h.source === 'water') && currentUser) {
+          var hSnap = h; // simpan rujukan
+          champShowConfirm(hSnap,
+            // Ya — rekod
+            function() {
+              if (hSnap.source === 'water' && hSnap.waterItem) {
+                var wi = hSnap.waterItem;
+                var todayKey = (function() {
+                  var d = new Date();
+                  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                })();
+                var mlMinum = (wi.kindleMl && wi.kindleMl >= 50) ? wi.kindleMl : 100;
+                var newMinum = (wi.minum || 0) + mlMinum;
+                db.collection('users').doc(currentUser.uid).collection('water_tracker').doc(todayKey)
+                  .set({ minum: newMinum, log: [{ ml: mlMinum, ts: Date.now(), src: 'kindle' }], dateKey: todayKey, updatedAt: Date.now() }, { merge: true })
+                  .catch(function() {});
+                var goal = wi.goal || 2000;
+                var baki = Math.max(0, goal - newMinum);
+                var pct = Math.min(100, Math.round(newMinum / goal * 100));
+                db.collection('users').doc(currentUser.uid).collection('water_tracker').doc('champion_item')
+                  .set({
+                    title: '💧 Air: ' + newMinum + 'ml / ' + goal + 'ml (' + pct + '%)',
+                    text: baki > 0 ? 'Baki ' + baki + 'ml lagi untuk capai goal hari ini.' : '✅ Goal air hari ini dah tercapai!',
+                    minum: newMinum, goal: goal, baki: baki, pct: pct, updatedAt: Date.now()
+                  }, { merge: true }).catch(function() {});
+              }
+              // Index maju (sudah dilakukan dalam champGetNextItem), teruskan
+              _selesaiMotivasi();
+              if (cbM) cbM();
+            },
+            // Skip — revert index supaya item sama muncul semula kitaran depan
+            function() {
+              // Revert champIdx untuk source ini
+              var src = hSnap.source;
+              champIdx[src] = ((champIdx[src] || 1) - 1 + (champData[src] ? champData[src].length : 1)) % (champData[src] ? champData[src].length : 1);
+              // Revert champLastIdx juga
+              champLastIdx = ((champLastIdx || 1) - 1 + champSources.length) % champSources.length;
+              // Update Firestore
+              db.collection('users').doc(currentUser.uid)
+                .collection('kindle_settings').doc('champion')
+                .update({ lastSourceIndex: champLastIdx }).catch(function() {});
+              _selesaiMotivasi();
+              if (cbM) cbM();
+            }
+          );
+          return;
         }
+
         _selesaiMotivasi();
         if (cbM) cbM();
         return;
@@ -1960,5 +2049,15 @@
       }
     });
   </script>
-</body>
+  <!-- CHAMPION CONFIRM OVERLAY -->
+  <div class="champ-overlay" id="champ-overlay">
+    <div class="champ-overlay-box">
+      <div class="champ-overlay-title" id="champ-overlay-title">—</div>
+      <div class="champ-overlay-name" id="champ-overlay-name">—</div>
+      <div class="champ-overlay-q" id="champ-overlay-q">Sudah diambil / dilaksanakan?</div>
+      <button class="champ-overlay-btn-yes" id="champ-overlay-yes">✓ Ya, rekod</button>
+      <button class="champ-overlay-btn-skip" id="champ-overlay-skip">⏭ Terlalu awal — ambil pada kitaran seterusnya</button>
+    </div>
+  </div>
+</body>  
 </html>
