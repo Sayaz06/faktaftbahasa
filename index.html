@@ -33,6 +33,12 @@
     .btn:active { background: #000; color: #fff; }
     .btn-primary { background: #000; color: #fff; }
     .btn-primary:active { background: #333; }
+    .btn-primary:disabled, .btn-primary[disabled] {
+      background: #999; border-color: #999; color: #fff; cursor: not-allowed;
+    }
+    .btn:disabled, .btn[disabled] {
+      background: #eee; border-color: #aaa; color: #aaa; cursor: not-allowed;
+    }    
 
     .btn-row {
       display: table;
@@ -853,6 +859,56 @@
       }
     }
 
+    function checkTipsBlock(drawer) {
+      // drawer = objek laci dari allBahasaDrawers
+      var tipsF0 = (drawer.tipsFasa0 || '').trim();
+      var tipsF12 = (drawer.tips || '').trim();
+      var issues = [];
+      if (!tipsF0) {
+        issues.push('F0 Introductory Tips have not been configured. Please complete this field before proceeding.');
+      }
+      if (!tipsF12) {
+        issues.push('F1 & F2 Practice Tips have not been configured. Please complete this field before proceeding.');
+      }
+      return issues; // kosong = tiada block
+    }
+
+    function renderBlockCard(drawerTitle, issues) {
+      var mainEl = document.getElementById('main-text');
+      setText('play-mode', 'TIPS VERIFICATION');
+      setText('side-label', 'ACTION REQUIRED');
+      setText('play-progress', '');
+      setText('play-meta', '');
+      setText('play-err', '');
+      setCardImage('');
+
+      var msg = '⚠️ The following issues have been detected in "' + drawerTitle + '" and must be resolved before you may proceed:\n\n';
+      for (var i = 0; i < issues.length; i++) {
+        msg += (i + 1) + '. ' + issues[i] + '\n';
+      }
+      msg += '\nThis card has been blocked until all required tips are in place.';
+      setText('main-text', msg);
+      if (mainEl) mainEl.className = 'big-text tips-mode';
+
+      // Disable button SETERUSNYA
+      var btnNext = document.getElementById('btn-next');
+      if (btnNext) {
+        btnNext.disabled = true;
+        btnNext.textContent = 'BLOCKED';
+      }
+
+      // Hint reload di play-err
+      setText('play-err', 'Once the required tips have been added via your phone, please tap Reload to continue.');
+    }
+
+    function clearBlockCard() {
+      var btnNext = document.getElementById('btn-next');
+      if (btnNext) {
+        btnNext.disabled = false;
+        btnNext.textContent = 'SETERUSNYA';
+      }
+    }
+    
     function renderCard() {
       var mainEl = document.getElementById('main-text');
       if (!cards.length) {
@@ -1069,18 +1125,58 @@
               db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
                 .update({ lastIndex: 0 }).catch(function() {});
             }
+            // Block check untuk SR bahasa → laci biasa seterusnya
+            if (mode === 'bahasa') {
+              var targetDrawerSR = null;
+              if (activePerkataan) {
+                var sortedDrawersSR = allBahasaDrawers
+                  .filter(function(d) { return d.perkataanId === activePerkataan.id; })
+                  .sort(function(a, b) {
+                    return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+                  });
+                if (sortedDrawersSR.length) targetDrawerSR = sortedDrawersSR[0];
+              }
+              if (targetDrawerSR) {
+                var blockIssuesSR = checkTipsBlock(targetDrawerSR);
+                if (blockIssuesSR.length) {
+                  isBusy = false;
+                  setText('play-status', 'BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''));
+                  renderBlockCard(targetDrawerSR.title || '', blockIssuesSR);
+                  return;
+                }
+              }
+            }
             var ok = mode === 'bahasa' ? rebuildBahasaCards() : rebuildFaktaCards();
             if (!ok) { isBusy = false; setText('play-err', ''); return; }
             isFlipped = false; showTips = false;
+            clearBlockCard();
             setText('play-status', mode === 'bahasa'
               ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
               : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
             isBusy = false; setText('play-err', ''); renderCard();
             return;
           }
-          // Laci biasa selesai, ada laci seterusnya
+          // Laci biasa selesai, ada laci seterusnya — block check
+          if (mode === 'bahasa') {
+            var nextCard0 = cards[nextIdx];
+            var nextDrawerId = nextCard0 ? nextCard0.drawerId : null;
+            var nextDrawerObj = nextDrawerId
+              ? allBahasaDrawers.filter(function(d) { return d.id === nextDrawerId; })[0]
+              : null;
+            if (nextDrawerObj) {
+              var blockIssues = checkTipsBlock(nextDrawerObj);
+              if (blockIssues.length) {
+                cardIndex = nextIdx; syncIndex(cardIndex);
+                isFlipped = false; showTips = false; isBusy = false;
+                setText('play-status', 'BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''));
+                renderBlockCard(nextDrawerObj.title || '', blockIssues);
+                return;
+              }
+            }
+          }
           cardIndex = nextIdx; syncIndex(cardIndex);
           isFlipped = false; showTips = false; isBusy = false;
+          clearBlockCard();
           setText('play-err', '');
           // JQ: tunjuk motivasi dulu sebelum laci seterusnya
           if (jqAktif && jqMotivasiList.length) {
@@ -1287,6 +1383,7 @@
     document.getElementById('btn-back-menu').onclick = function() { showScreen('screen-menu'); };
     document.getElementById('btn-reload').onclick = function() {
       isLoading = false;
+      clearBlockCard();
       if (mode === 'bahasa') startBahasa();
       else if (mode === 'fakta') startFakta();
     };
