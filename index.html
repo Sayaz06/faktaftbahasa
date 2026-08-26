@@ -449,8 +449,9 @@
       });
       return out;
     }
-    
-    var allSubjects = [];
+
+        var allSubjects = [];
+    var allJenisKata = [];
 
     function loadCollections(cb) {
       var uid = currentUser.uid;
@@ -460,7 +461,8 @@
         db.collection('users').doc(uid).collection('drawer').get(),
         db.collection('users').doc(uid).collection('topics').get(),
         db.collection('users').doc(uid).collection('jogging_motivasi').get(),
-        db.collection('users').doc(uid).collection('subjects').get()
+        db.collection('users').doc(uid).collection('subjects').get(),
+        db.collection('users').doc(uid).collection('jenis_kata').get()
       ]).then(function(res) {
         jqMotivasiList = [];
         res[4].forEach(function(d) { var x = d.data(); x.id = d.id; if (x.text || x.title) jqMotivasiList.push(x); });
@@ -475,6 +477,8 @@
         res[3].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
         allSubjects = [];
         res[5].forEach(function(d) { var x = d.data(); x.id = d.id; allSubjects.push(x); });
+        allJenisKata = [];
+        res[6].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
         cb && cb();
       }).catch(function(e) {
         setText('play-err', 'Gagal load: ' + e.message);
@@ -907,11 +911,21 @@
       setText('play-err', '');
       setCardImage('');
 
-      var msg = '⚠️ The following issues have been detected in "' + drawerTitle + '" and must be resolved before you may proceed:\n\n';
+      // Bina drawer location dari activePerkataan & allJenisKata
+      var perkataanNama = (activePerkataan && activePerkataan.name) ? activePerkataan.name : '—';
+      var jenisId = (activePerkataan && activePerkataan.jenisId) ? activePerkataan.jenisId : '';
+      var jenisObj = jenisId ? allJenisKata.filter(function(j) { return j.id === jenisId; })[0] : null;
+      var jenisNama = (jenisObj && jenisObj.name) ? jenisObj.name : '—';
+
+      var msg = '⚠️ The following issues have been detected and must be resolved before you may proceed:\n\n';
+      msg += 'Drawer  : ' + drawerTitle + '\n';
+      msg += 'Word    : ' + perkataanNama + '\n';
+      msg += 'Category: ' + jenisNama + '\n';
+      msg += '\n';
       for (var i = 0; i < issues.length; i++) {
         msg += (i + 1) + '. ' + issues[i] + '\n';
       }
-      msg += '\nThis card has been blocked until all required tips are in place.';
+      msg += '\nThis drawer has been blocked until all required tips are in place.';
       setText('main-text', msg);
       if (mainEl) mainEl.className = 'big-text tips-mode';
 
