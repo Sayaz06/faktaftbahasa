@@ -894,8 +894,11 @@
         if (placeholder) placeholder.style.display = 'none';
         img.onerror = function() { img.style.display = 'none'; };
         img.onload = function() {
-          var h = autoFitImage((document.getElementById('main-text').textContent || '').length);
-          if (h) lastGambarHeight = h;
+          autoFitImage((document.getElementById('main-text').textContent || '').length);
+          // Ambil tinggi sebenar yang dirender pada skrin
+          setTimeout(function() {
+            if (img.offsetHeight > 0) lastGambarHeight = img.offsetHeight;
+          }, 60);
         };
       } else if (useGambarPlaceholder) {
         img.removeAttribute('src');
