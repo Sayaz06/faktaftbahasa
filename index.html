@@ -300,6 +300,21 @@
     var jqPendingCardIndex = -1; // index kad F2 yang menunggu selepas motivasi (fakta)
     var _jqMotivasiUnsubscribe = null; // untuk cleanup onSnapshot
     var isLoading = false; // guard untuk elak double-trigger button
+
+    // ── CHAMPION QUEUE ──
+    var champSources = []; // sumber yang ditick: ['motivasi','perjanjian','rutin','supplement','water']
+    var champLastIdx = 0;  // giliran sumber terakhir
+    var champData = {      // cache data setiap sumber
+      motivasi: [],
+      perjanjian: [],
+      rutin: [],
+      supplement: [],
+      water: []
+    };
+    var champIdx = {       // index item semasa dalam setiap sumber
+      motivasi: 0, perjanjian: 0, rutin: 0, supplement: 0, water: 0
+    };
+    var _champUnsubs = []; // cleanup onSnapshot
     
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
@@ -631,41 +646,163 @@
           jqMotivasiList.sort(function(a, b) {
             return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
           });
-        }, function() { jqMotivasiList = []; });
+          champData.motivasi = jqMotivasiList;
+        }, function() { jqMotivasiList = []; champData.motivasi = []; });
+    }
+
+    function subscribeChampion() {
+      if (!currentUser) return;
+      // Cleanup lama
+      _champUnsubs.forEach(function(u) { try { u(); } catch(e) {} });
+      _champUnsubs = [];
+
+      // Load setting Champion
+      db.collection('users').doc(currentUser.uid)
+        .collection('kindle_settings').doc('champion')
+        .get().then(function(snap) {
+          if (snap.exists) {
+            champSources = snap.data().sources || [];
+            champLastIdx = snap.data().lastSourceIndex || 0;
+          } else {
+            champSources = ['motivasi']; // default
+            champLastIdx = 0;
+          }
+        }).catch(function() { champSources = ['motivasi']; });
+
+      // Subscribe Perjanjian
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid).collection('jogging_perjanjian')
+          .onSnapshot(function(snap) {
+            champData.perjanjian = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.text || x.title) champData.perjanjian.push(x); });
+            champData.perjanjian.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
+          }, function() { champData.perjanjian = []; })
+      );
+
+      // Subscribe Rutin
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid).collection('routine_drawers')
+          .onSnapshot(function(snap) {
+            champData.rutin = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.title || x.zikir) champData.rutin.push(x); });
+          }, function() { champData.rutin = []; })
+      );
+
+      // Subscribe Supplement
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid).collection('supplement_tracker')
+          .onSnapshot(function(snap) {
+            champData.supplement = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.title) champData.supplement.push(x); });
+            champData.supplement.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
+          }, function() { champData.supplement = []; })
+      );
+
+      // Subscribe Water
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid).collection('water_tracker')
+          .onSnapshot(function(snap) {
+            champData.water = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; champData.water.push(x); });
+          }, function() { champData.water = []; })
+      );
+    }
+
+    function champGetNextItem() {
+      // Cari sumber aktif yang ada data
+      var activeSources = champSources.filter(function(s) { return champData[s] && champData[s].length > 0; });
+      if (!activeSources.length) return null;
+
+      // Bergilir ikut lastIdx
+      var sourceKey = activeSources[champLastIdx % activeSources.length];
+      champLastIdx = (champLastIdx + 1) % activeSources.length;
+
+      // Simpan lastSourceIndex ke Firestore
+      db.collection('users').doc(currentUser.uid)
+        .collection('kindle_settings').doc('champion')
+        .update({ lastSourceIndex: champLastIdx }).catch(function() {});
+
+      var list = champData[sourceKey];
+      var idx = champIdx[sourceKey] % list.length;
+      champIdx[sourceKey] = (champIdx[sourceKey] + 1) % list.length;
+      var item = list[idx];
+
+      // Bentuk output standard { title, depan, belakang, adaFlip, source }
+      if (sourceKey === 'motivasi' || sourceKey === 'perjanjian') {
+        var adaFlip = item.text && item.text.includes('=');
+        return {
+          source: sourceKey,
+          title: item.title || '',
+          depan: adaFlip ? item.text.split('=')[0].trim() : (item.text || item.title || ''),
+          belakang: adaFlip ? item.text.split('=').slice(1).join('=').trim() : '',
+          adaFlip: !!adaFlip
+        };
+      } else if (sourceKey === 'rutin') {
+        return {
+          source: 'rutin',
+          title: item.title || '',
+          depan: item.zikir || item.title || '',
+          belakang: '',
+          adaFlip: false
+        };
+      } else if (sourceKey === 'supplement') {
+        return {
+          source: 'supplement',
+          title: item.title || '',
+          depan: (item.title || '') + (item.text ? '\n' + item.text : ''),
+          belakang: '',
+          adaFlip: false
+        };
+      } else if (sourceKey === 'water') {
+        return {
+          source: 'water',
+          title: item.title || '',
+          depan: item.title || '',
+          belakang: '',
+          adaFlip: false
+        };
+      }
+      return null;
     }
 
     function tunjukMotivasiJQ(cbSelepas) {
-      if (!jqMotivasiList.length) {
-        cbSelepas && cbSelepas();
-        return;
+      // Cuba Champion queue dulu, fallback ke jqMotivasiList lama
+      var item = (champSources.length > 0) ? champGetNextItem() : null;
+
+      if (!item) {
+        // Fallback: guna jogging_motivasi lama
+        if (!jqMotivasiList.length) { cbSelepas && cbSelepas(); return; }
+        var m = jqMotivasiList[jqMotivasiIdx];
+        jqMotivasiIdx = (jqMotivasiIdx + 1) % jqMotivasiList.length;
+        var adaFlipF = m.text && m.text.includes('=');
+        item = {
+          source: 'motivasi',
+          title: m.title || '',
+          depan: adaFlipF ? m.text.split('=')[0].trim() : (m.text || m.title || ''),
+          belakang: adaFlipF ? m.text.split('=').slice(1).join('=').trim() : '',
+          adaFlip: !!adaFlipF
+        };
       }
-      var m = jqMotivasiList[jqMotivasiIdx];
-      jqMotivasiIdx = (jqMotivasiIdx + 1) % jqMotivasiList.length;
 
-      var adaFlip = m.text && m.text.includes('=');
-      var depan = adaFlip ? m.text.split('=')[0].trim() : (m.text || m.title || '');
-      var motivasiFlipped = false;
-
+      var sourceLabel = { motivasi: 'MOTIVASI', perjanjian: 'PERJANJIAN', rutin: 'RUTIN', supplement: 'SUPLEMEN', water: 'AIR' };
       isFlipped = false; showTips = false;
-      setText('play-status', 'MOTIVASI JQ · ' + (m.title || ''));
-      setText('play-mode', 'MOTIVASI · ' + jqMotivasiIdx + '/' + jqMotivasiList.length);
+      setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + ' · ' + item.title);
+      setText('play-mode', 'CHAMPION · ' + (sourceLabel[item.source] || item.source));
       setText('side-label', 'MUKA DEPAN');
-      setText('main-text', depan);
-      setText('play-progress', adaFlip ? '(Flip untuk penerangan)' : '(Tekan SETERUSNYA untuk teruskan)');
+      setText('main-text', item.depan);
+      setText('play-progress', item.adaFlip ? '(Flip untuk penerangan)' : '(Tekan SETERUSNYA untuk teruskan)');
       setText('play-meta', '');
       setText('play-err', '');
       setCardImage('');
       var mainEl = document.getElementById('main-text');
-      if (mainEl) mainEl.className = depan.length > 80 ? 'big-text long-text' : 'big-text';
+      if (mainEl) mainEl.className = item.depan.length > 80 ? 'big-text long-text' : 'big-text';
 
-      // Bekukan aliran — tunggu user tekan SETERUSNYA (atau Flip)
-      // Simpan callback dalam window._jqMotivasiHandler seperti app pertama
       window._jqMotivasiHandler = {
-        adaFlip: adaFlip,
-        depan: depan,
-        belakang: adaFlip ? m.text.split('=').slice(1).join('=').trim() : '',
+        adaFlip: item.adaFlip,
+        depan: item.depan,
+        belakang: item.belakang,
         flipped: false,
-        title: m.title || '',
+        title: item.title,
         cb: cbSelepas
       };
     }
@@ -1730,9 +1867,13 @@
         setText('menu-user', 'Linked · Login OK');
         loadJQStatus();
         subscribeJoggingMotivasi();
+        subscribeChampion();
         showScreen('screen-menu');
       } else {
         if (_jqMotivasiUnsubscribe) { _jqMotivasiUnsubscribe(); _jqMotivasiUnsubscribe = null; }
+        _champUnsubs.forEach(function(u) { try { u(); } catch(e) {} }); _champUnsubs = [];
+        champSources = []; champLastIdx = 0;
+        champData = { motivasi: [], perjanjian: [], rutin: [], supplement: [], water: [] };
         window._jqMotivasiHandler = null;
         jqAktif = false;
         jqMotivasiList = [];
