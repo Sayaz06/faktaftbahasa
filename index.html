@@ -1530,7 +1530,7 @@
             var d = new Date();
             return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
           })();
-          var mlMinum = 250; // default sekali minum = 250ml
+          var mlMinum = (wi.kindleMl && wi.kindleMl >= 50) ? wi.kindleMl : 100; // baca dari settings phone
           var newMinum = (wi.minum || 0) + mlMinum;
           var newLog = [{ ml: mlMinum, ts: Date.now(), src: 'kindle' }];
           db.collection('users').doc(currentUser.uid).collection('water_tracker').doc(todayKey)
