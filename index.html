@@ -190,17 +190,28 @@
     <div class="footer">SR auto-check · progress sync phone</div>
   </div>
 
-  <!-- SCREEN: GO-TICK ALL-IN-ONE -->
+  <!-- SCREEN: GO-TICK SENARAI DESTINASI -->
+  <div id="screen-gotick-list" class="screen">
+    <div class="gt-status-bar" id="gt-list-status">Go-Tick</div>
+    <h1>Go-Tick</h1>
+    <div class="gt-tajuk-list" id="gt-tajuk-list">
+      <div class="msg">Memuatkan...</div>
+    </div>
+    <button id="btn-gt-back-menu" class="btn" style="margin-top:8px;font-size:0.9rem;padding:10px;">← Menu</button>
+    <div id="gt-list-err" class="msg error"></div>
+  </div>
+
+  <!-- SCREEN: GO-TICK CHECKLIST DALAM DESTINASI -->
   <div id="screen-gotick-check" class="screen">
-    <div class="gt-status-bar" id="gt-check-status">Go-Tick</div>
+    <div class="gt-status-bar" id="gt-check-status">—</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 6px;">
-      <button id="btn-gt-back-menu" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">← Menu</button>
+      <button id="btn-gt-back-list" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">← Destinasi</button>
       <button id="btn-gt-untick-all-global" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">Untick Semua</button>
     </div>
     <div class="gt-checklist" id="gt-checklist"></div>
     <div id="gt-check-err" class="msg error"></div>
   </div>
-
+  
   <div id="screen-play" class="screen">
     <div class="status-bar" id="play-status">—</div>
     <div class="counter-box" id="counter-box">
@@ -1733,6 +1744,7 @@
     // GO-TICK
     // ══════════════════════════════════════════
     var gtAllTajuk = [];
+    var gtActiveTajuk = null;
     var _gtUnsub = null;
 
     function gtSubscribe() {
@@ -1748,144 +1760,141 @@
             if (!a.isEmergency && b.isEmergency) return 1;
             return (a.order || 0) - (b.order || 0);
           });
-          gtRenderAll();
-        }, function(e) { setText('gt-check-err', 'Gagal load: ' + e.message); });
+          // Update active tajuk kalau sedang dalam checklist
+          if (gtActiveTajuk) {
+            var updated = gtAllTajuk.filter(function(t) { return t.id === gtActiveTajuk.id; })[0];
+            if (updated) { gtActiveTajuk = updated; gtRenderChecklist(); }
+          }
+          gtRenderTajukList();
+        }, function(e) { setText('gt-list-err', 'Gagal load: ' + e.message); });
     }
 
-    function gtRenderAll() {
-      var el = document.getElementById('gt-checklist');
-      if (!el) return;
-
-      var totalItems = 0, totalTicked = 0;
-      gtAllTajuk.forEach(function(t) {
-        (t.items || []).forEach(function(it) {
-          totalItems++;
-          if (it.ticked) totalTicked++;
-        });
-      });
-      setText('gt-check-status', 'Go-Tick · ' + totalTicked + '/' + totalItems + (totalItems > 0 && totalTicked === totalItems ? ' — Semua Lengkap ✓' : ''));
-
+    function gtRenderTajukList() {
+      var list = document.getElementById('gt-tajuk-list');
+      if (!list) return;
       if (!gtAllTajuk.length) {
-        el.innerHTML = '<div class="msg">Tiada tajuk. Tambah dari telefon.</div>';
+        list.innerHTML = '<div class="msg">Tiada destinasi. Tambah dari telefon.</div>';
         return;
       }
-      el.innerHTML = '';
+      list.innerHTML = '';
+      var totalItems = 0, totalTicked = 0;
+      gtAllTajuk.forEach(function(t) {
+        (t.items || []).forEach(function(it) { totalItems++; if (it.ticked) totalTicked++; });
+      });
+      setText('gt-list-status', 'Go-Tick · ' + totalTicked + '/' + totalItems);
 
       gtAllTajuk.forEach(function(t) {
         var items = t.items || [];
         var ticked = items.filter(function(it) { return it.ticked; }).length;
         var allDone = items.length > 0 && ticked === items.length;
-
-        // Header tajuk
-        var header = document.createElement('div');
-        header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin:10px 0 3px;padding:4px 2px;border-bottom:2px solid #000;';
-        var titleSpan = document.createElement('span');
-        titleSpan.style.cssText = 'font-size:0.8rem;font-weight:bold;text-transform:uppercase;letter-spacing:0.04em;' + (t.isEmergency ? 'color:#800;' : '');
-        titleSpan.textContent = (t.isEmergency ? '🚨 ' : '') + (t.title || 'Tanpa Tajuk');
-        var progSpan = document.createElement('span');
-        progSpan.style.cssText = 'font-size:0.7rem;' + (allDone ? 'color:#080;font-weight:bold;' : 'color:#555;');
-        progSpan.textContent = ticked + '/' + items.length + (allDone ? ' ✓' : '');
-
-        // Button untick tajuk ini
-        var untickBtn = document.createElement('button');
-        untickBtn.textContent = 'Untick';
-        untickBtn.style.cssText = 'font-size:0.65rem;padding:2px 7px;border:1px solid #aaa;background:#fff;border-radius:4px;cursor:pointer;margin-left:6px;';
-        untickBtn.onclick = function() { gtUntickTajuk(t); };
-
-        header.appendChild(titleSpan);
-        var rightDiv = document.createElement('div');
-        rightDiv.style.cssText = 'display:flex;align-items:center;gap:4px;';
-        rightDiv.appendChild(progSpan);
-        rightDiv.appendChild(untickBtn);
-        header.appendChild(rightDiv);
-        el.appendChild(header);
-
-        if (!items.length) {
-          var empty = document.createElement('div');
-          empty.style.cssText = 'font-size:0.75rem;color:#aaa;padding:4px 0;';
-          empty.textContent = 'Tiada item.';
-          el.appendChild(empty);
-          return;
-        }
-
-        // Kumpulkan ikut group
-        var groups = [];
-        var groupMap = {};
-        items.forEach(function(it, idx) {
-          var g = it.group || '';
-          if (!groupMap.hasOwnProperty(g)) {
-            groupMap[g] = groups.length;
-            groups.push({ name: g, items: [] });
-          }
-          groups[groupMap[g]].items.push({ item: it, idx: idx });
-        });
-
-        groups.forEach(function(grp) {
-          if (grp.name) {
-            var gl = document.createElement('div');
-            gl.className = 'gt-group-label';
-            gl.textContent = grp.name;
-            el.appendChild(gl);
-          }
-          grp.items.forEach(function(entry) {
-            var it = entry.item;
-            var idx = entry.idx;
-            var row = document.createElement('div');
-            row.className = 'gt-item-row';
-            var cb = document.createElement('div');
-            cb.className = 'gt-checkbox' + (it.ticked ? ' ticked' : '');
-            cb.textContent = it.ticked ? '✓' : '';
-            var nm = document.createElement('div');
-            nm.className = 'gt-item-name' + (it.ticked ? ' ticked' : '');
-            nm.textContent = it.name || '';
-            row.appendChild(cb);
-            row.appendChild(nm);
-            row.onclick = function() { gtToggleItem(t, idx); };
-            el.appendChild(row);
-          });
-        });
+        var btn = document.createElement('button');
+        btn.className = 'gt-tajuk-item' + (t.isEmergency ? ' emergency' : '');
+        var badge = t.isEmergency ? ' 🚨' : '';
+        var prog = ' (' + ticked + '/' + items.length + (allDone ? ' ✓' : '') + ')';
+        btn.textContent = (t.title || 'Tanpa Tajuk') + badge + prog;
+        btn.onclick = function() { gtOpenDestinasi(t); };
+        list.appendChild(btn);
       });
     }
 
-    function gtToggleItem(tajuk, idx) {
-      if (!currentUser) return;
-      var items = (tajuk.items || []).slice();
+    function gtOpenDestinasi(t) {
+      gtActiveTajuk = t;
+      var items = t.items || [];
+      var ticked = items.filter(function(it) { return it.ticked; }).length;
+      setText('gt-check-status', (t.isEmergency ? '🚨 ' : '') + (t.title || '') + ' · ' + ticked + '/' + items.length);
+      gtRenderChecklist();
+      showScreen('screen-gotick-check');
+    }
+
+    function gtRenderChecklist() {
+      var el = document.getElementById('gt-checklist');
+      if (!el || !gtActiveTajuk) return;
+      var items = gtActiveTajuk.items || [];
+
+      if (!items.length) {
+        el.innerHTML = '<div class="msg">Tiada item. Tambah dari telefon.</div>';
+        return;
+      }
+      el.innerHTML = '';
+
+      // Kumpulkan ikut group
+      var groups = [];
+      var groupMap = {};
+      items.forEach(function(it, idx) {
+        var g = it.group || '';
+        if (!groupMap.hasOwnProperty(g)) {
+          groupMap[g] = groups.length;
+          groups.push({ name: g, items: [] });
+        }
+        groups[groupMap[g]].items.push({ item: it, idx: idx });
+      });
+
+      groups.forEach(function(grp) {
+        if (grp.name) {
+          var gl = document.createElement('div');
+          gl.className = 'gt-group-label';
+          gl.textContent = grp.name;
+          el.appendChild(gl);
+        }
+        grp.items.forEach(function(entry) {
+          var it = entry.item;
+          var idx = entry.idx;
+          var row = document.createElement('div');
+          row.className = 'gt-item-row';
+          var cb = document.createElement('div');
+          cb.className = 'gt-checkbox' + (it.ticked ? ' ticked' : '');
+          cb.textContent = it.ticked ? '✓' : '';
+          var nm = document.createElement('div');
+          nm.className = 'gt-item-name' + (it.ticked ? ' ticked' : '');
+          nm.textContent = it.name || '';
+          row.appendChild(cb);
+          row.appendChild(nm);
+          row.onclick = function() { gtToggleItem(idx); };
+          el.appendChild(row);
+        });
+      });
+
+      // Update status
+      var ticked = items.filter(function(it) { return it.ticked; }).length;
+      setText('gt-check-status', (gtActiveTajuk.isEmergency ? '🚨 ' : '') + (gtActiveTajuk.title || '') + ' · ' + ticked + '/' + items.length + (ticked === items.length && items.length > 0 ? ' ✓' : ''));
+    }
+
+    function gtToggleItem(idx) {
+      if (!gtActiveTajuk || !currentUser) return;
+      var items = (gtActiveTajuk.items || []).slice();
       if (idx < 0 || idx >= items.length) return;
       items[idx] = { group: items[idx].group || '', name: items[idx].name || '', ticked: !items[idx].ticked };
-      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(tajuk.id)
+      gtActiveTajuk.items = items;
+      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
         .update({ items: items, updatedAt: Date.now() })
         .catch(function(e) { setText('gt-check-err', 'Gagal simpan: ' + e.message); });
-    }
-
-    function gtUntickTajuk(tajuk) {
-      if (!currentUser) return;
-      var items = (tajuk.items || []).map(function(it) {
-        return { group: it.group || '', name: it.name || '', ticked: false };
-      });
-      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(tajuk.id)
-        .update({ items: items, updatedAt: Date.now() })
-        .catch(function(e) { setText('gt-check-err', 'Gagal simpan: ' + e.message); });
+      gtRenderChecklist();
     }
 
     function gtUntickSemua() {
-      if (!currentUser || !gtAllTajuk.length) return;
-      if (!confirm('Untick SEMUA item dalam semua tajuk?')) return;
-      gtAllTajuk.forEach(function(t) {
-        var items = (t.items || []).map(function(it) {
-          return { group: it.group || '', name: it.name || '', ticked: false };
-        });
-        db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(t.id)
-          .update({ items: items, updatedAt: Date.now() }).catch(function() {});
+      if (!gtActiveTajuk || !currentUser) return;
+      if (!confirm('Untick semua item dalam "' + (gtActiveTajuk.title || '') + '"?')) return;
+      var items = (gtActiveTajuk.items || []).map(function(it) {
+        return { group: it.group || '', name: it.name || '', ticked: false };
       });
+      gtActiveTajuk.items = items;
+      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
+        .update({ items: items, updatedAt: Date.now() })
+        .catch(function(e) { setText('gt-check-err', 'Gagal simpan: ' + e.message); });
+      gtRenderChecklist();
     }
 
     document.getElementById('btn-go-gotick').onclick = function() {
       gtSubscribe();
-      showScreen('screen-gotick-check');
+      showScreen('screen-gotick-list');
     };
     document.getElementById('btn-gt-back-menu').onclick = function() {
       if (_gtUnsub) { _gtUnsub(); _gtUnsub = null; }
       showScreen('screen-menu');
+    };
+    document.getElementById('btn-gt-back-list').onclick = function() {
+      gtRenderTajukList();
+      showScreen('screen-gotick-list');
     };
     document.getElementById('btn-gt-untick-all-global').onclick = gtUntickSemua;
     // ══════════════════════════════════════════
