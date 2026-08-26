@@ -795,14 +795,39 @@
           if (srQueue.length) {
             srLaciSemasa = srQueue.shift();
             if (loadSRIntoCards(srLaciSemasa, 'bahasa')) {
+              // Block check untuk laci SR pertama
+              var srDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+              if (srDrawer) {
+                var srIssues = checkTipsBlock(srDrawer);
+                if (srIssues.length) {
+                  isLoading = false;
+                  setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+                  renderBlockCard(srDrawer.title || '', srIssues);
+                  return;
+                }
+              }
               setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-              isLoading = false; renderCard(); return;
+              isLoading = false; clearBlockCard(); renderCard(); return;
             }
           }
           if (rebuildBahasaCards()) {
             setText('play-status', 'BAHASA · ' + (activePerkataan.name || ''));
+            // Block check untuk laci pertama biasa
+            var firstCard = cards[0];
+            var firstDrawerId = firstCard ? firstCard.drawerId : null;
+            var firstDrawer = firstDrawerId
+              ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+              : null;
+            if (firstDrawer) {
+              var firstIssues = checkTipsBlock(firstDrawer);
+              if (firstIssues.length) {
+                isLoading = false;
+                renderBlockCard(firstDrawer.title || '', firstIssues);
+                return;
+              }
+            }
           }
-          isLoading = false; renderCard();
+          isLoading = false; clearBlockCard(); renderCard();
         }).catch(function(e) {
           isLoading = false;
           setText('play-err', e.message);
@@ -1086,6 +1111,18 @@
               setText('play-status', srStatusLabel);
               isFlipped = false; showTips = false; isBusy = false;
               setText('play-err', '');
+              // Block check untuk SR bahasa seterusnya dalam srQueue
+              if (mode === 'bahasa') {
+                var srNextDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                if (srNextDrawer) {
+                  var srNextIssues = checkTipsBlock(srNextDrawer);
+                  if (srNextIssues.length) {
+                    renderBlockCard(srNextDrawer.title || '', srNextIssues);
+                    return;
+                  }
+                }
+              }
+              clearBlockCard();
               if (mode === 'bahasa' && jqAktif && jqMotivasiList.length) {
                 tunjukMotivasiJQ(function() {
                   setText('play-status', srStatusLabel);
