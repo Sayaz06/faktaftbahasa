@@ -686,12 +686,16 @@
           }, function() { champData.supplement = []; })
       );
 
-      // Subscribe Water
+      // Subscribe Water — baca champion_item sahaja
       _champUnsubs.push(
-        db.collection('users').doc(currentUser.uid).collection('water_tracker')
+        db.collection('users').doc(currentUser.uid).collection('water_tracker').doc('champion_item')
           .onSnapshot(function(snap) {
-            champData.water = [];
-            snap.forEach(function(d) { var x = d.data(); x.id = d.id; champData.water.push(x); });
+            if (snap.exists) {
+              var x = snap.data(); x.id = snap.id;
+              champData.water = [x];
+            } else {
+              champData.water = [];
+            }
           }, function() { champData.water = []; })
       );
     }
@@ -744,10 +748,11 @@
       } else if (sourceKey === 'water') {
         return {
           source: 'water',
-          title: item.title || '',
-          depan: item.title || '',
+          title: '💧 Water Tracker',
+          depan: (item.title || '💧 Air') + '\n' + (item.text || ''),
           belakang: '',
-          adaFlip: false
+          adaFlip: false,
+          waterItem: item // simpan untuk update minum bila SETERUSNYA
         };
       }
       return null;
@@ -791,6 +796,8 @@
         belakang: item.belakang,
         flipped: false,
         title: item.title,
+        source: item.source,
+        waterItem: item.waterItem || null,
         cb: cbSelepas
       };
     }
@@ -1505,6 +1512,30 @@
         }
         // Tap terakhir — selesai motivasi, sambung
         var cbM = h.cb;
+        // Kalau water tracker — catat minum (anggap user dah minum)
+        if (h.source === 'water' && h.waterItem && currentUser) {
+          var wi = h.waterItem;
+          var todayKey = (function() {
+            var d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+          })();
+          var mlMinum = 250; // default sekali minum = 250ml
+          var newMinum = (wi.minum || 0) + mlMinum;
+          var newLog = [{ ml: mlMinum, ts: Date.now(), src: 'kindle' }];
+          db.collection('users').doc(currentUser.uid).collection('water_tracker').doc(todayKey)
+            .set({ minum: newMinum, log: db.FieldValue ? db.FieldValue.arrayUnion(newLog[0]) : newLog, dateKey: todayKey, updatedAt: Date.now() }, { merge: true })
+            .catch(function() {});
+          // Update champion_item
+          var goal = wi.goal || 2000;
+          var baki = Math.max(0, goal - newMinum);
+          var pct = Math.min(100, Math.round(newMinum / goal * 100));
+          db.collection('users').doc(currentUser.uid).collection('water_tracker').doc('champion_item')
+            .set({
+              title: '💧 Air: ' + newMinum + 'ml / ' + goal + 'ml (' + pct + '%)',
+              text: baki > 0 ? 'Baki ' + baki + 'ml lagi untuk capai goal hari ini.' : '✅ Goal air hari ini dah tercapai!',
+              minum: newMinum, goal: goal, baki: baki, pct: pct, updatedAt: Date.now()
+            }, { merge: true }).catch(function() {});
+        }
         _selesaiMotivasi();
         if (cbM) cbM();
         return;
