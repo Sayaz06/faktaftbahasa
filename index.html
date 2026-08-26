@@ -119,6 +119,55 @@
     .msg { text-align: center; font-size: 0.75rem; margin: 2px 0; min-height: 0.9em; }
     .error { color: #800; font-weight: bold; }
     .footer { text-align: center; font-size: 0.65rem; color: #666; margin-top: 8px; }
+
+    /* ── GO-TICK ── */
+    .gt-screen { display: none; }
+    .gt-screen.active { display: block; }
+    .gt-tajuk-list { margin: 4px 0; }
+    .gt-tajuk-item {
+      display: block; width: 100%; padding: 11px 8px; margin: 4px 0;
+      font-size: 1.0rem; font-weight: bold; text-align: left;
+      border: 2px solid #000; background: #fff; color: #000;
+      cursor: pointer; border-radius: 6px;
+    }
+    .gt-tajuk-item.emergency {
+      border-color: #800; color: #800; background: #fff8f8;
+    }
+    .gt-tajuk-item:active { background: #000; color: #fff; }
+    .gt-tajuk-item.emergency:active { background: #800; color: #fff; }
+    .gt-tajuk-progress {
+      font-size: 0.7rem; font-weight: normal; color: #555; margin-left: 6px;
+    }
+    .gt-tajuk-progress.done { color: #080; font-weight: bold; }
+    .gt-checklist { margin: 4px 0; }
+    .gt-group-label {
+      font-size: 0.7rem; font-weight: bold; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #555; margin: 8px 0 3px;
+      border-bottom: 1px solid #ccc; padding-bottom: 2px;
+    }
+    .gt-item-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 4px; border-bottom: 1px solid #eee; cursor: pointer;
+    }
+    .gt-item-row:active { background: #f0f0f0; }
+    .gt-checkbox {
+      width: 22px; height: 22px; border: 2px solid #000;
+      border-radius: 4px; flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .gt-checkbox.ticked { background: #000; color: #fff; }
+    .gt-item-name {
+      font-size: 0.95rem; flex: 1;
+    }
+    .gt-item-name.ticked { text-decoration: line-through; color: #888; }
+    .gt-status-bar {
+      border: 1px solid #000; padding: 3px 6px; font-size: 0.68rem;
+      text-align: center; margin-bottom: 3px; background: #f5f5f5;
+    }
+    .gt-emergency-badge {
+      font-size: 0.65rem; background: #800; color: #fff;
+      padding: 1px 6px; border-radius: 4px; margin-left: 4px;
+    }    
   </style>
 </head>
 <body>
@@ -136,8 +185,32 @@
     <div class="sub" id="menu-user">—</div>
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
+    <button id="btn-go-gotick" class="btn">Go-Tick ✓</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
+  </div>
+
+  <!-- SCREEN: SENARAI TAJUK GO-TICK -->
+  <div id="screen-gotick-list" class="screen">
+    <div class="gt-status-bar" id="gt-list-status">Go-Tick</div>
+    <h1>Go-Tick</h1>
+    <div class="gt-tajuk-list" id="gt-tajuk-list">
+      <div class="msg">Memuatkan...</div>
+    </div>
+    <button id="btn-gt-back-menu" class="btn" style="margin-top:8px;font-size:0.9rem;padding:10px;">← Menu</button>
+    <div id="gt-list-err" class="msg error"></div>
+  </div>
+
+  <!-- SCREEN: CHECKLIST GO-TICK -->
+  <div id="screen-gotick-check" class="screen">
+    <div class="gt-status-bar" id="gt-check-status">—</div>
+    <div class="checklist-title" id="gt-check-title" style="font-size:1.05rem;font-weight:bold;text-align:center;margin:4px 0 6px;"></div>
+    <div class="gt-checklist" id="gt-checklist"></div>
+    <div style="margin-top:8px;">
+      <button id="btn-gt-untick-all" class="btn" style="font-size:0.9rem;padding:10px;">Untick All</button>
+      <button id="btn-gt-back-list" class="btn" style="font-size:0.9rem;padding:10px;">← Senarai Tajuk</button>
+    </div>
+    <div id="gt-check-err" class="msg error"></div>
   </div>
 
   <div id="screen-play" class="screen">
@@ -1500,7 +1573,156 @@
       autoFitImage(t);
     });
 
-    auth.onAuthStateChanged(function(user) {
+    // ══════════════════════════════════════════
+    // GO-TICK
+    // ══════════════════════════════════════════
+    var gtAllTajuk = [];
+    var gtActiveTajuk = null;
+
+    function gtLoadTajuk(cb) {
+      if (!currentUser) return;
+      setText('gt-list-status', 'Memuatkan...');
+      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').get()
+        .then(function(snap) {
+          gtAllTajuk = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; gtAllTajuk.push(x); });
+          // Kecemasan atas, kemudian susun ikut order
+          gtAllTajuk.sort(function(a, b) {
+            if (a.isEmergency && !b.isEmergency) return -1;
+            if (!a.isEmergency && b.isEmergency) return 1;
+            return (a.order || 0) - (b.order || 0);
+          });
+          setText('gt-list-status', 'Go-Tick · ' + gtAllTajuk.length + ' tajuk');
+          cb && cb();
+        }).catch(function(e) {
+          setText('gt-list-err', 'Gagal load: ' + e.message);
+        });
+    }
+
+    function gtRenderTajukList() {
+      var list = document.getElementById('gt-tajuk-list');
+      if (!list) return;
+      if (!gtAllTajuk.length) {
+        list.innerHTML = '<div class="msg">Tiada tajuk. Tambah dari telefon.</div>';
+        return;
+      }
+      list.innerHTML = '';
+      gtAllTajuk.forEach(function(t) {
+        var items = t.items || [];
+        var ticked = items.filter(function(it) { return it.ticked; }).length;
+        var total = items.length;
+        var allDone = total > 0 && ticked === total;
+        var btn = document.createElement('button');
+        btn.className = 'gt-tajuk-item' + (t.isEmergency ? ' emergency' : '');
+        var badge = t.isEmergency ? '<span class="gt-emergency-badge">KECEMASAN</span>' : '';
+        var prog = '<span class="gt-tajuk-progress' + (allDone ? ' done' : '') + '">' + ticked + '/' + total + (allDone ? ' ✓' : '') + '</span>';
+        btn.innerHTML = (t.isEmergency ? '🚨 ' : '') + (t.title || 'Tanpa Tajuk') + badge + prog;
+        btn.onclick = function() { gtOpenTajuk(t); };
+        list.appendChild(btn);
+      });
+    }
+
+    function gtOpenTajuk(t) {
+      gtActiveTajuk = t;
+      setText('gt-check-status', t.isEmergency ? '🚨 KECEMASAN' : 'Go-Tick');
+      document.getElementById('gt-check-title').textContent = t.title || '';
+      gtRenderChecklist();
+      showScreen('screen-gotick-check');
+    }
+
+    function gtRenderChecklist() {
+      var el = document.getElementById('gt-checklist');
+      if (!el || !gtActiveTajuk) return;
+      var items = gtActiveTajuk.items || [];
+      if (!items.length) {
+        el.innerHTML = '<div class="msg">Tiada item. Tambah dari telefon.</div>';
+        return;
+      }
+      el.innerHTML = '';
+      // Kumpulkan ikut group
+      var groups = [];
+      var groupMap = {};
+      items.forEach(function(it, idx) {
+        var g = it.group || '';
+        if (!groupMap.hasOwnProperty(g)) {
+          groupMap[g] = groups.length;
+          groups.push({ name: g, items: [] });
+        }
+        groups[groupMap[g]].items.push({ item: it, idx: idx });
+      });
+      groups.forEach(function(grp) {
+        if (grp.name) {
+          var gl = document.createElement('div');
+          gl.className = 'gt-group-label';
+          gl.textContent = grp.name;
+          el.appendChild(gl);
+        }
+        grp.items.forEach(function(entry) {
+          var it = entry.item;
+          var idx = entry.idx;
+          var row = document.createElement('div');
+          row.className = 'gt-item-row';
+          var cb = document.createElement('div');
+          cb.className = 'gt-checkbox' + (it.ticked ? ' ticked' : '');
+          cb.textContent = it.ticked ? '✓' : '';
+          var nm = document.createElement('div');
+          nm.className = 'gt-item-name' + (it.ticked ? ' ticked' : '');
+          nm.textContent = it.name || '';
+          row.appendChild(cb);
+          row.appendChild(nm);
+          row.onclick = function() { gtToggleItem(idx); };
+          el.appendChild(row);
+        });
+      });
+      // Update progress status
+      var ticked = items.filter(function(it) { return it.ticked; }).length;
+      setText('gt-check-status', (gtActiveTajuk.isEmergency ? '🚨 KECEMASAN · ' : 'Go-Tick · ') + ticked + '/' + items.length + (ticked === items.length && items.length > 0 ? ' — Lengkap ✓' : ''));
+    }
+
+    function gtToggleItem(idx) {
+      if (!gtActiveTajuk || !currentUser) return;
+      var items = gtActiveTajuk.items || [];
+      if (idx < 0 || idx >= items.length) return;
+      items[idx].ticked = !items[idx].ticked;
+      gtActiveTajuk.items = items;
+      // Update Firestore
+      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
+        .update({ items: items, updatedAt: Date.now() }).catch(function(e) {
+          setText('gt-check-err', 'Gagal simpan: ' + e.message);
+        });
+      gtRenderChecklist();
+    }
+
+    function gtUntickAll() {
+      if (!gtActiveTajuk || !currentUser) return;
+      var items = (gtActiveTajuk.items || []).map(function(it) {
+        return { group: it.group || '', name: it.name || '', ticked: false };
+      });
+      gtActiveTajuk.items = items;
+      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
+        .update({ items: items, updatedAt: Date.now() }).catch(function(e) {
+          setText('gt-check-err', 'Gagal simpan: ' + e.message);
+        });
+      gtRenderChecklist();
+    }
+
+    document.getElementById('btn-go-gotick').onclick = function() {
+      showScreen('screen-gotick-list');
+      gtLoadTajuk(function() { gtRenderTajukList(); });
+    };
+    document.getElementById('btn-gt-back-menu').onclick = function() { showScreen('screen-menu'); };
+    document.getElementById('btn-gt-back-list').onclick = function() {
+      // Refresh senarai tajuk (progress mungkin berubah)
+      gtLoadTajuk(function() { gtRenderTajukList(); showScreen('screen-gotick-list'); });
+    };
+    document.getElementById('btn-gt-untick-all').onclick = function() {
+      if (confirm('Untick semua item dalam "' + (gtActiveTajuk && gtActiveTajuk.title || '') + '"?')) {
+        gtUntickAll();
+      }
+    };
+    // ══════════════════════════════════════════
+
+    auth.onAuthStateChanged(function(user) {    
       document.body.classList.remove('auth-checking');
       currentUser = user;
       document.getElementById('btn-login').disabled = false;
