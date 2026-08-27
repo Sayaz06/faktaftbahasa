@@ -807,22 +807,18 @@
       var activeSources = champSources.filter(function(s) { return champData[s] && champData[s].length > 0; });
       if (!activeSources.length) return null;
 
-      // Bergilir ikut lastIdx
-      var sourceKey = activeSources[champLastIdx % activeSources.length];
-      champLastIdx = (champLastIdx + 1) % activeSources.length;
-
-      // Simpan lastSourceIndex + champIdx ke Firestore
-      db.collection('users').doc(currentUser.uid)
-        .collection('kindle_settings').doc('champion')
-        .update({
-          lastSourceIndex: champLastIdx,
-          champIdx: champIdx
-        }).catch(function() {});
+      // Pilih sumber ikut lastIdx — BELUM naikkan index dulu
+      var activeLen = activeSources.length;
+      var sourceKey = activeSources[champLastIdx % activeLen];
 
       var list = champData[sourceKey];
       var idx = champIdx[sourceKey] % list.length;
-      champIdx[sourceKey] = (champIdx[sourceKey] + 1) % list.length;
       var item = list[idx];
+
+      // Simpan sourceKey dan activeLen dalam item supaya commit/revert boleh guna nilai tepat
+      // Index BELUM dinaikkan — hanya dinaikkan bila user sahkan (champCommitItem)
+      item._champSourceKey = sourceKey;
+      item._champActiveLen = activeLen;
 
       // Bentuk output standard { title, depan, belakang, adaFlip, source }
       if (sourceKey === 'motivasi' || sourceKey === 'perjanjian') {
@@ -863,6 +859,15 @@
       return null;
     }
 
+    function champCommitItem(sourceKey, activeLen) {
+      // Naikkan index selepas user sahkan — dipanggil bila Ya atau selesai motivasi/rutin/perjanjian
+      champIdx[sourceKey] = (champIdx[sourceKey] + 1) % champData[sourceKey].length;
+      champLastIdx = (champLastIdx + 1) % activeLen;
+      db.collection('users').doc(currentUser.uid)
+        .collection('kindle_settings').doc('champion')
+        .update({ lastSourceIndex: champLastIdx, champIdx: champIdx }).catch(function() {});
+    }
+
     function tunjukMotivasiJQ(cbSelepas) {
       // Cuba Champion queue dulu, fallback ke jqMotivasiList lama
       var item = (champSources.length > 0) ? champGetNextItem() : null;
@@ -898,6 +903,8 @@
       window._jqMotivasiHandler = {
         adaFlip: item.adaFlip,
         depan: item.depan,
+        champSourceKey: item._champSourceKey || null,
+        champActiveLen: item._champActiveLen || 1,
         belakang: item.belakang,
         flipped: false,
         title: item.title,
@@ -1658,7 +1665,7 @@
         if ((h.source === 'supplement' || h.source === 'water') && currentUser) {
           var hSnap = h; // simpan rujukan
           champShowConfirm(hSnap,
-            // Ya — rekod
+            // Ya — rekod + commit index
             function() {
               if (hSnap.source === 'water' && hSnap.waterItem) {
                 var wi = hSnap.waterItem;
@@ -1681,21 +1688,15 @@
                     minum: newMinum, goal: goal, baki: baki, pct: pct, updatedAt: Date.now()
                   }, { merge: true }).catch(function() {});
               }
-              // Index maju (sudah dilakukan dalam champGetNextItem), teruskan
+              // Commit index — baru naikkan selepas user sahkan
+              if (hSnap.champSourceKey) champCommitItem(hSnap.champSourceKey, hSnap.champActiveLen);
               _selesaiMotivasi();
               if (cbM) cbM();
             },
-            // Skip — revert index supaya item sama muncul semula kitaran depan
+            // Skip — TIDAK commit index, item yang sama akan muncul semula
             function() {
-              // Revert champIdx untuk source ini
-              var src = hSnap.source;
-              champIdx[src] = ((champIdx[src] || 1) - 1 + (champData[src] ? champData[src].length : 1)) % (champData[src] ? champData[src].length : 1);
-              // Revert champLastIdx juga
-              champLastIdx = ((champLastIdx || 1) - 1 + champSources.length) % champSources.length;
-              // Update Firestore — simpan kedua-dua
-              db.collection('users').doc(currentUser.uid)
-                .collection('kindle_settings').doc('champion')
-                .update({ lastSourceIndex: champLastIdx, champIdx: champIdx }).catch(function() {});
+              // Index tidak dinaikkan — item kekal untuk kitaran seterusnya
+              // Tiada perlu revert kerana commit belum berlaku
               _selesaiMotivasi();
               if (cbM) cbM();
             }
@@ -1703,6 +1704,8 @@
           return;
         }
 
+        // Motivasi / Perjanjian / Rutin — commit index terus (tiada confirm)
+        if (h.champSourceKey) champCommitItem(h.champSourceKey, h.champActiveLen);
         _selesaiMotivasi();
         if (cbM) cbM();
         return;
