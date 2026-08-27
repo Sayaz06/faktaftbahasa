@@ -95,7 +95,29 @@
       line-height: 1.4;
       font-weight: normal;
       text-align: left;
-    }   
+    }
+
+    /* ── TIPS CLOSE BUTTON ── */
+    #tips-close-btn {
+      display: none;
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 888;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    }
+    #tips-close-btn.visible { display: flex; }
     .big-text.long-text {
       font-size: 1.05rem;
       line-height: 1.3;
@@ -245,6 +267,8 @@
     <div id="gt-check-err" class="msg error"></div>
   </div>
   
+  <button id="tips-close-btn" title="Tutup Tips">×</button>
+
   <div id="screen-play" class="screen">
     <div class="status-bar" id="play-status">—</div>
     <div class="counter-box" id="counter-box">
@@ -400,12 +424,12 @@
       var img = d.imageUrl || '';
       var r, i;
 
-      // Fasa Gambar × 5 (hanya jika ada gambar)
-      // r=0,1,2 → G1 | r=3,4 → G2
+      // Fasa Gambar × 10 (hanya jika ada gambar)
+      // r=0..4 → G1 (5 kad) | r=5..9 → G2 (5 kad)
       var img2 = d.imageUrl11 || '';
       if (img) {
-        for (r = 0; r < 5; r++) {
-          var isG2 = (r >= 3); // kad 4 dan 5 guna G2
+        for (r = 0; r < 10; r++) {
+          var isG2 = (r >= 5); // kad 6-10 guna G2
           var imgFasa, frontFasa, gambarSlot;
           if (!isG2) {
             // G1
@@ -544,8 +568,8 @@
         var barisImg = itemCards[i].imageUrl || '';
         var barisImg2 = (d.items && d.items[i] && d.items[i].imageUrl11) ? d.items[i].imageUrl11 : '';
         if (barisImg) {
-          for (r = 0; r < 5; r++) {
-            var cgIsG2 = (r >= 3); // kad 4 dan 5 guna G2
+          for (r = 0; r < 10; r++) {
+            var cgIsG2 = (r >= 5); // kad 6-10 guna G2
             var cgImg, cgFront, cgSlot;
             if (!cgIsG2) {
               // G1
@@ -1371,6 +1395,7 @@
         document.getElementById('btn-tips').className = 'btn-sm on';
         document.getElementById('btn-flip').className = 'btn-sm';
         setCardImage('');
+        document.getElementById('tips-close-btn').classList.add('visible');
       } else if (isFlipped) {
         // F1 bahasa: flip → tunjuk perkataan (depan)
         var flipText = isF1Bahasa ? (c.front || '(kosong)') : (c.back || '(Tiada terjemahan)');
@@ -1396,6 +1421,11 @@
         if (c.imageUrl) setCardImage(c.imageUrl);
         else setCardImage('');
       }
+      // Sembunyikan tips-close-btn kalau bukan dalam tips mode
+      if (!showTips) {
+        document.getElementById('tips-close-btn').classList.remove('visible');
+      }
+
       // Auto-fit selepas render (image mungkin belum load)
       setTimeout(function() {
         autoFitImage(displayText.length);
@@ -1859,6 +1889,12 @@
       if (cards[cardIndex].isTamat) return;
       if (cards[cardIndex].isGambar) return;
       isFlipped = false; showTips = !showTips; renderCard();
+    };
+
+    document.getElementById('tips-close-btn').onclick = function() {
+      showTips = false;
+      document.getElementById('tips-close-btn').classList.remove('visible');
+      renderCard();
     };
 
     window.addEventListener('resize', function() {
