@@ -800,12 +800,8 @@
       var idx = champIdx[sourceKey] % list.length;
       var item = list[idx];
 
-      // Simpan sourceKey dan activeLen dalam item supaya commit/revert boleh guna nilai tepat
+      // Bentuk output standard — sertakan _champSourceKey dan _champActiveLen terus dalam objek return
       // Index BELUM dinaikkan — hanya dinaikkan bila user sahkan (champCommitItem)
-      item._champSourceKey = sourceKey;
-      item._champActiveLen = activeLen;
-
-      // Bentuk output standard { title, depan, belakang, adaFlip, source }
       if (sourceKey === 'motivasi' || sourceKey === 'perjanjian') {
         var adaFlip = item.text && item.text.includes('=');
         return {
@@ -813,7 +809,9 @@
           title: item.title || '',
           depan: adaFlip ? item.text.split('=')[0].trim() : (item.text || item.title || ''),
           belakang: adaFlip ? item.text.split('=').slice(1).join('=').trim() : '',
-          adaFlip: !!adaFlip
+          adaFlip: !!adaFlip,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
         };
       } else if (sourceKey === 'rutin') {
         return {
@@ -821,7 +819,9 @@
           title: item.title || '',
           depan: item.zikir || item.title || '',
           belakang: '',
-          adaFlip: false
+          adaFlip: false,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
         };
       } else if (sourceKey === 'supplement') {
         return {
@@ -829,7 +829,9 @@
           title: item.title || '',
           depan: (item.title || '') + (item.text ? '\n' + item.text : ''),
           belakang: '',
-          adaFlip: false
+          adaFlip: false,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
         };
       } else if (sourceKey === 'water') {
         return {
@@ -838,7 +840,9 @@
           depan: (item.title || '💧 Air') + '\n' + (item.text || ''),
           belakang: '',
           adaFlip: false,
-          waterItem: item // simpan untuk update minum bila SETERUSNYA
+          waterItem: item,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
         };
       }
       return null;
