@@ -1123,26 +1123,83 @@
       return cards.length > 0;
     }
 
-    function loadSRIntoCards(srData, modeName) {
-      var drawer;
-      if (modeName === 'bahasa') {
-        drawer = allBahasaDrawers.filter(function(d) { return d.id === (srData.drawerId || srData.id); })[0];
-        if (!drawer) return false;
-        cards = cardsFromBahasaDrawer(drawer, true);
-      } else {
-        drawer = allDrawers.filter(function(d) { return d.id === (srData.drawerId || srData.id); })[0];
-        if (!drawer) return false;
-        cards = cardsFromFaktaDrawer(drawer, true);
+    // Cache prefetch drawer terkini dari Firestore (background)
+    var _prefetchCache = {}; // { drawerId: drawerObj }
+
+    function prefetchDrawer(drawerId, colName) {
+      if (!currentUser || !drawerId) return;
+      db.collection('users').doc(currentUser.uid).collection(colName).doc(drawerId)
+        .get().then(function(snap) {
+          if (snap.exists) {
+            var d = snap.data(); d.id = snap.id;
+            _prefetchCache[drawerId] = d;
+            // Kemas kini cache utama juga
+            if (colName === 'bahasa_drawers') {
+              var ib = -1;
+              for (var i = 0; i < allBahasaDrawers.length; i++) {
+                if (allBahasaDrawers[i].id === drawerId) { ib = i; break; }
+              }
+              if (ib !== -1) allBahasaDrawers[ib] = d; else allBahasaDrawers.push(d);
+            } else {
+              var ifd = -1;
+              for (var j = 0; j < allDrawers.length; j++) {
+                if (allDrawers[j].id === drawerId) { ifd = j; break; }
+              }
+              if (ifd !== -1) allDrawers[ifd] = d; else allDrawers.push(d);
+            }
+          }
+        }).catch(function() {});
+    }
+
+    function getDrawerFresh(drawerId, colName) {
+      // Guna cache prefetch kalau ada, otherwise ambil dari memory
+      if (_prefetchCache[drawerId]) {
+        var d = _prefetchCache[drawerId];
+        delete _prefetchCache[drawerId];
+        return Promise.resolve(d);
       }
-      cardIndex = 0;
-      srModeAktif = true;
-      srLaciSemasa = srData;
-      return true;
+      return db.collection('users').doc(currentUser.uid).collection(colName).doc(drawerId)
+        .get().then(function(snap) {
+          if (!snap.exists) return null;
+          var d = snap.data(); d.id = snap.id;
+          return d;
+        });
+    }
+
+    function loadSRIntoCards(srData, modeName, cb) {
+      var drawerId = srData.drawerId || srData.id;
+      var colName = modeName === 'bahasa' ? 'bahasa_drawers' : 'drawer';
+      delete _prefetchCache[drawerId]; // buang cache lama, paksa fetch semula
+      db.collection('users').doc(currentUser.uid).collection(colName).doc(drawerId)
+        .get().then(function(snap) {
+          if (!snap.exists) { cb && cb(false); return; }
+          var drawer = snap.data(); drawer.id = snap.id;
+          if (modeName === 'bahasa') {
+            var ib = -1;
+            for (var i = 0; i < allBahasaDrawers.length; i++) {
+              if (allBahasaDrawers[i].id === drawerId) { ib = i; break; }
+            }
+            if (ib !== -1) allBahasaDrawers[ib] = drawer; else allBahasaDrawers.push(drawer);
+            cards = cardsFromBahasaDrawer(drawer, true);
+          } else {
+            var ifd = -1;
+            for (var j = 0; j < allDrawers.length; j++) {
+              if (allDrawers[j].id === drawerId) { ifd = j; break; }
+            }
+            if (ifd !== -1) allDrawers[ifd] = drawer; else allDrawers.push(drawer);
+            cards = cardsFromFaktaDrawer(drawer, true);
+          }
+          cardIndex = 0;
+          srModeAktif = true;
+          srLaciSemasa = srData;
+          cb && cb(true);
+        }).catch(function() { cb && cb(false); });
     }
 
     function startBahasa() {
       if (isLoading) return;
       isLoading = true;
+      _prefetchCache = {};
       mode = 'bahasa';
       isFlipped = false; showTips = false;
       jqModeSemasa = ''; jqKadSemasa = null;
@@ -1156,30 +1213,50 @@
           srQueue = overdue;
           if (srQueue.length) {
             srLaciSemasa = srQueue.shift();
-            if (loadSRIntoCards(srLaciSemasa, 'bahasa')) {
-              // Block check untuk laci SR pertama
-              var srDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
-              if (srDrawer) {
-                var srIssues = checkTipsBlock(srDrawer);
-                if (srIssues.length) {
-                  isLoading = false;
-                  setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-                  renderBlockCard(srDrawer.title || '', srIssues);
-                  return;
+            // Prefetch SR seterusnya di background
+            if (srQueue.length) prefetchDrawer(srQueue[0].drawerId, 'bahasa_drawers');
+            loadSRIntoCards(srLaciSemasa, 'bahasa', function(ok) {
+              if (ok) {
+                var srDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                if (srDrawer) {
+                  var srIssues = checkTipsBlock(srDrawer);
+                  if (srIssues.length) {
+                    isLoading = false;
+                    setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+                    renderBlockCard(srDrawer.title || '', srIssues);
+                    return;
+                  }
                 }
+                setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+                isLoading = false; clearBlockCard(); renderCard(); return;
               }
-              setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-              isLoading = false; clearBlockCard(); renderCard(); return;
-            }
+              _fallbackBahasaBiasa();
+            });
+            return;
           }
+          _fallbackBahasaBiasa();
+        }).catch(function(e) {
+          isLoading = false;
+          setText('play-err', e.message);
+          rebuildBahasaCards(); renderCard();
+        });
+
+        function _fallbackBahasaBiasa() {
           if (rebuildBahasaCards()) {
             setText('play-status', 'BAHASA · ' + (activePerkataan.name || ''));
-            // Block check untuk laci pertama biasa
             var firstCard = cards[0];
             var firstDrawerId = firstCard ? firstCard.drawerId : null;
             var firstDrawer = firstDrawerId
               ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
               : null;
+            // Prefetch laci biasa kedua di background
+            var secondDrawerId = null;
+            for (var si = 0; si < cards.length; si++) {
+              if (cards[si].drawerId && cards[si].drawerId !== firstDrawerId) {
+                secondDrawerId = cards[si].drawerId; break;
+              }
+            }
+            if (secondDrawerId) prefetchDrawer(secondDrawerId, 'bahasa_drawers');
             if (firstDrawer) {
               var firstIssues = checkTipsBlock(firstDrawer);
               if (firstIssues.length) {
@@ -1190,17 +1267,14 @@
             }
           }
           isLoading = false; clearBlockCard(); renderCard();
-        }).catch(function(e) {
-          isLoading = false;
-          setText('play-err', e.message);
-          rebuildBahasaCards(); renderCard();
-        });
+        }
       });
     }
 
     function startFakta() {
       if (isLoading) return;
       isLoading = true;
+      _prefetchCache = {};
       mode = 'fakta';
       isFlipped = false; showTips = false;
       jqModeSemasa = ''; jqKadSemasa = null;
@@ -1214,13 +1288,29 @@
           srQueue = overdue;
           if (srQueue.length) {
             srLaciSemasa = srQueue.shift();
-            if (loadSRIntoCards(srLaciSemasa, 'fakta')) {
-              setText('play-status', 'SR FAKTA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-              isLoading = false; renderCard(); return;
-            }
+            // Prefetch SR fakta seterusnya di background
+            if (srQueue.length) prefetchDrawer(srQueue[0].drawerId, 'drawer');
+            loadSRIntoCards(srLaciSemasa, 'fakta', function(ok) {
+              if (ok) {
+                setText('play-status', 'SR FAKTA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+                isLoading = false; renderCard(); return;
+              }
+              if (rebuildFaktaCards()) {
+                setText('play-status', 'FAKTA · ' + (activeTopic.name || ''));
+              }
+              isLoading = false; renderCard();
+            });
+            return;
           }
           if (rebuildFaktaCards()) {
             setText('play-status', 'FAKTA · ' + (activeTopic.name || ''));
+            // Prefetch laci fakta biasa kedua di background
+            var fd2 = null;
+            var fd1 = cards.length ? cards[0].drawerId : null;
+            for (var fi = 0; fi < cards.length; fi++) {
+              if (cards[fi].drawerId && cards[fi].drawerId !== fd1) { fd2 = cards[fi].drawerId; break; }
+            }
+            if (fd2) prefetchDrawer(fd2, 'drawer');
           }
           isLoading = false; renderCard();
         }).catch(function(e) {
@@ -1500,34 +1590,46 @@
           srQueue = overdue || [];
           if (srQueue.length) {
             srLaciSemasa = srQueue.shift();
-            if (loadSRIntoCards(srLaciSemasa, mode)) {
-              var srStatusLabel = (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0);
-              setText('play-status', srStatusLabel);
-              isFlipped = false; showTips = false; isBusy = false;
-              setText('play-err', '');
-              // Block check untuk SR bahasa seterusnya dalam srQueue
-              if (mode === 'bahasa') {
-                var srNextDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
-                if (srNextDrawer) {
-                  var srNextIssues = checkTipsBlock(srNextDrawer);
-                  if (srNextIssues.length) {
-                    renderBlockCard(srNextDrawer.title || '', srNextIssues);
-                    return;
+            // Prefetch SR seterusnya di background
+            if (srQueue.length) prefetchDrawer(srQueue[0].drawerId, mode === 'bahasa' ? 'bahasa_drawers' : 'drawer');
+            loadSRIntoCards(srLaciSemasa, mode, function(ok) {
+              if (ok) {
+                var srStatusLabel = (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0);
+                setText('play-status', srStatusLabel);
+                isFlipped = false; showTips = false; isBusy = false;
+                setText('play-err', '');
+                if (mode === 'bahasa') {
+                  var srNextDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                  if (srNextDrawer) {
+                    var srNextIssues = checkTipsBlock(srNextDrawer);
+                    if (srNextIssues.length) {
+                      renderBlockCard(srNextDrawer.title || '', srNextIssues);
+                      return;
+                    }
                   }
                 }
-              }
-              clearBlockCard();
-              if (mode === 'bahasa' && jqAktif && jqMotivasiList.length) {
-                tunjukMotivasiJQ(function() {
-                  setText('play-status', srStatusLabel);
+                clearBlockCard();
+                if (mode === 'bahasa' && jqAktif && jqMotivasiList.length) {
+                  tunjukMotivasiJQ(function() {
+                    setText('play-status', srStatusLabel);
+                    renderCard();
+                  });
+                } else {
                   renderCard();
-                });
-              } else {
-                renderCard();
+                }
+                return;
               }
-              return;
-            }
+              // SR drawer tiada — terus ke laci biasa
+              _terusLaciSeterusnya();
+            });
+            return;
           }
+          _terusLaciSeterusnya();
+        }).catch(function(e) {
+          isBusy = false; setText('play-err', e.message || 'Gagal check SR');
+        });
+
+        function _terusLaciSeterusnya() {
           // Tiada SR due → laci / perkataan seterusnya
           if (!isSR && isLast && mode === 'bahasa') {
             lompatPerkataanSeterusnya().then(function(ok) {
@@ -1623,10 +1725,8 @@
             ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
             : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
           renderCard();
-        }).catch(function(e) {
-          isBusy = false; setText('play-err', e.message || 'Gagal check SR');
-        });
-      }
+        } // tutup _terusLaciSeterusnya
+      }          
 
       // isTamat fakta: SR sudah didaftar per-baris dalam nextCard; jangan daftar semula whole-laci
       var srId = (srLaciSemasa && (srLaciSemasa.srDocId || srLaciSemasa.id)) || drawerId;
@@ -1718,6 +1818,25 @@
       // Fasa Gambar — terus ke kad seterusnya sahaja
       if (c.isGambar) {
         isFlipped = false; showTips = false;
+        // Prefetch: kad Gambar G1 ke-5 (index r=4, iaitu kad Gambar ke-5 dalam blok 10)
+        // Kira berapa kad Gambar dalam blok semasa
+        if (c.gambarSlot === 1) {
+          var gCount = 0;
+          for (var gi = cardIndex; gi >= 0 && cards[gi] && cards[gi].isGambar && cards[gi].drawerId === c.drawerId; gi--) gCount++;
+          if (gCount === 5) {
+            // Ini kad G1 ke-5 — masa terbaik prefetch laci SR/biasa seterusnya
+            if (srModeAktif && srQueue.length) {
+              prefetchDrawer(srQueue[0].drawerId, mode === 'bahasa' ? 'bahasa_drawers' : 'drawer');
+            } else if (!srModeAktif) {
+              // Laci biasa — prefetch laci selepas laci semasa
+              var nextLaciId = null;
+              for (var ni = cardIndex + 1; ni < cards.length; ni++) {
+                if (cards[ni].drawerId && cards[ni].drawerId !== c.drawerId) { nextLaciId = cards[ni].drawerId; break; }
+              }
+              if (nextLaciId) prefetchDrawer(nextLaciId, mode === 'bahasa' ? 'bahasa_drawers' : 'drawer');
+            }
+          }
+        }
         cardIndex++;
         if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
         else renderCard();
@@ -1727,6 +1846,16 @@
       // Fakta F1 habis (isEndF1) → tunjuk motivasi JQ, kemudian sambung ke F2
       if (mode === 'fakta' && c.isEndF1) {
         isFlipped = false; showTips = false;
+        // Waktu terbaik prefetch SR/laci fakta seterusnya
+        if (srModeAktif && srQueue.length) {
+          prefetchDrawer(srQueue[0].drawerId, 'drawer');
+        } else if (!srModeAktif) {
+          var nextFaktaId = null;
+          for (var nfi = cardIndex + 1; nfi < cards.length; nfi++) {
+            if (cards[nfi].drawerId && cards[nfi].drawerId !== c.drawerId) { nextFaktaId = cards[nfi].drawerId; break; }
+          }
+          if (nextFaktaId) prefetchDrawer(nextFaktaId, 'drawer');
+        }
         cardIndex++;
         syncIndex(cardIndex);
         if (jqAktif && jqMotivasiList.length) {
