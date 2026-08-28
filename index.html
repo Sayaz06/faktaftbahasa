@@ -1154,6 +1154,7 @@
             if ((d.notes || '').trim()) cards = cards.concat(cardsFromBahasaDrawer(d, false));
           }
           cardIndex = cariCardIndexDariLastDrawer();
+          console.log('[DEBUG] lastDrawerId:', activePerkataan && activePerkataan.lastDrawerId, '| cardIndex:', cardIndex, '| cards.length:', cards.length, '| cards[cardIndex]:', cards[cardIndex] && cards[cardIndex].drawerId);
           srModeAktif = false;
           srLaciSemasa = null;
           cb && cb(cards.length > 0);
