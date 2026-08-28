@@ -348,6 +348,8 @@
         var srQueue = [];
     var lastGambarHeight = 180; // simpan tinggi G1 untuk placeholder G2
     var _srAdaCache = false; // cache: ada SR overdue atau tidak (dikemas kini selepas setiap afterTamat)
+    var jqKadSemasa = null;
+    var jqCardIndexSimpan = -1;
     
     // ── JQ (Jogging Queue) ──
     var jqAktif = false;
@@ -1288,8 +1290,15 @@
 
     // Helper: prefetch laci biasa bahasa pertama (untuk guna selepas SR)
     function _prefetchLaciBiasaBahasa() {
-      if (!activePerkataan) return;
-      var perkId = activePerkataan.id;
+      // Cuba guna activePerkataan dulu, kalau null cari dari allBahasaPerkataan
+      var perk = activePerkataan;
+      if (!perk) {
+        for (var i = 0; i < allBahasaPerkataan.length; i++) {
+          if (allBahasaPerkataan[i].isActive) { perk = allBahasaPerkataan[i]; break; }
+        }
+      }
+      if (!perk) return;
+      var perkId = perk.id;
       var sorted = allBahasaDrawers
         .filter(function(d) { return d.perkataanId === perkId; })
         .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
@@ -1360,8 +1369,15 @@
 
     // Helper: prefetch laci biasa fakta pertama (untuk guna selepas SR)
     function _prefetchLaciBiasaFakta() {
-      if (!activeTopic) return;
-      var aktifId = activeTopic.id;
+      // Cuba guna activeTopic dulu, kalau null cari dari allTopics
+      var topic = activeTopic;
+      if (!topic) {
+        for (var i = 0; i < allTopics.length; i++) {
+          if (allTopics[i].isActive) { topic = allTopics[i]; break; }
+        }
+      }
+      if (!topic) return;
+      var aktifId = topic.id;
       var sorted = allDrawers
         .filter(function(d) { return d.topicId === aktifId; })
         .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
@@ -1679,10 +1695,19 @@
               }
             }
 
-            setText('play-status', mode === 'bahasa'
+            var _statusSR = mode === 'bahasa'
               ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
-              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
-            isBusy = false; setText('play-err', ''); renderCard();
+              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            setText('play-status', _statusSR);
+            isBusy = false; setText('play-err', '');
+            if (jqAktif && jqMotivasiList.length) {
+              tunjukMotivasiJQ(function() {
+                setText('play-status', _statusSR);
+                renderCard();
+              });
+            } else {
+              renderCard();
+            }
           });
 
         } else {
