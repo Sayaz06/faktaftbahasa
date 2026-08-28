@@ -1730,7 +1730,12 @@
         tunjukMotivasiJQ(function() {
           _tunjukKadSelesai();
         });
+      } else {
+        _tunjukKadSelesai();
       }
+
+      return Promise.resolve(true);
+    }
 
     function afterTamat(c) {
       isBusy = true;
