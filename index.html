@@ -1757,16 +1757,18 @@
                     }
                   }
                   clearBlockCard();
-                  if (mode === 'bahasa' && jqAktif && jqMotivasiList.length) {
+                  if (jqAktif && jqMotivasiList.length) {
                     tunjukMotivasiJQ(function() {
                       setText('play-status', srStatusLabel);
-                      // Block check selepas JQ untuk SR bahasa
-                      var srDrawerjq = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
-                      if (srDrawerjq) {
-                        var srIssuesjq = checkTipsBlock(srDrawerjq);
-                        if (srIssuesjq.length) {
-                          renderBlockCard(srDrawerjq.title || '', srIssuesjq);
-                          return;
+                      // Block check selepas JQ untuk SR bahasa sahaja
+                      if (mode === 'bahasa') {
+                        var srDrawerjq = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                        if (srDrawerjq) {
+                          var srIssuesjq = checkTipsBlock(srDrawerjq);
+                          if (srIssuesjq.length) {
+                            renderBlockCard(srDrawerjq.title || '', srIssuesjq);
+                            return;
+                          }
                         }
                       }
                       renderCard();
