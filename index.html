@@ -1048,7 +1048,83 @@
       }
     }
 
-    function rebuildBahasaCards(cb) {
+    function simpanLastDrawer(drawerId, itemIndex) {
+      if (!currentUser) return;
+      if (mode === 'bahasa' && activePerkataan) {
+        db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
+          .update({ lastDrawerId: drawerId || null }).catch(function() {});
+        activePerkataan.lastDrawerId = drawerId || null;
+      } else if (mode === 'fakta' && activeTopic) {
+        db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
+          .update({
+            lastDrawerId: drawerId || null,
+            lastItemIndex: (itemIndex !== undefined && itemIndex !== null) ? itemIndex : null
+          }).catch(function() {});
+        activeTopic.lastDrawerId = drawerId || null;
+        activeTopic.lastItemIndex = (itemIndex !== undefined && itemIndex !== null) ? itemIndex : null;
+      }
+    }
+
+    function resetLastDrawer() {
+      if (!currentUser) return;
+      if (mode === 'bahasa' && activePerkataan) {
+        db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
+          .update({ lastDrawerId: null }).catch(function() {});
+        activePerkataan.lastDrawerId = null;
+      } else if (mode === 'fakta' && activeTopic) {
+        db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
+          .update({ lastDrawerId: null, lastItemIndex: null }).catch(function() {});
+        activeTopic.lastDrawerId = null;
+        activeTopic.lastItemIndex = null;
+      }
+    }
+
+    function cariCardIndexDariLastDrawer() {
+      // Bahasa: cari laci SELEPAS lastDrawerId
+      if (mode === 'bahasa' && activePerkataan && activePerkataan.lastDrawerId) {
+        var lastId = activePerkataan.lastDrawerId;
+        var foundLast = false;
+        for (var i = 0; i < cards.length; i++) {
+          if (foundLast && cards[i].drawerId !== lastId) {
+            if (cards[i].isGambar || cards[i].isF0) return i;
+          }
+          if (cards[i].drawerId === lastId) foundLast = true;
+        }
+        if (foundLast) return cards.length; // laci terakhir dah habis
+        return 0; // lastDrawerId tidak jumpa — mula dari awal
+      }
+
+      // Fakta: cari baris SELEPAS lastDrawerId + lastItemIndex
+      if (mode === 'fakta' && activeTopic && activeTopic.lastDrawerId) {
+        var lastDId = activeTopic.lastDrawerId;
+        var lastIdx = activeTopic.lastItemIndex;
+        var passedLastLaci = false;
+
+        for (var j = 0; j < cards.length; j++) {
+          var cj = cards[j];
+
+          // Dalam laci yang sama dengan lastDrawerId
+          if (cj.drawerId === lastDId) {
+            passedLastLaci = true;
+            // Cari baris seterusnya selepas lastItemIndex
+            if (lastIdx !== null && lastIdx !== undefined) {
+              if (cj.itemIndex > lastIdx && (cj.isGambar || cj.fasa === 1)) {
+                return j;
+              }
+            }
+            // lastItemIndex null — skip keseluruhan laci ini
+          } else if (passedLastLaci) {
+            // Dah lepas laci lastDrawerId — ini laci seterusnya
+            if (cj.isGambar || cj.fasa === 1) return j;
+          }
+        }
+        return cards.length; // semua habis
+      }
+
+      return 0; // tiada lastDrawerId — mula dari awal
+    }
+
+    function rebuildBahasaCards(cb) {    
       activePerkataan = null;
       for (var i = 0; i < allBahasaPerkataan.length; i++) {
         if (allBahasaPerkataan[i].isActive) { activePerkataan = allBahasaPerkataan[i]; break; }
@@ -1077,7 +1153,7 @@
             var d = activeDrawers[j];
             if ((d.notes || '').trim()) cards = cards.concat(cardsFromBahasaDrawer(d, false));
           }
-          cardIndex = 0;
+          cardIndex = cariCardIndexDariLastDrawer();
           srModeAktif = false;
           srLaciSemasa = null;
           cb && cb(cards.length > 0);
@@ -1118,7 +1194,7 @@
             var has = (d.items && d.items.length) || (d.notes || '').trim();
             if (has) cards = cards.concat(cardsFromFaktaDrawer(d, false));
           }
-          cardIndex = 0;
+          cardIndex = cariCardIndexDariLastDrawer();
           srModeAktif = false;
           srLaciSemasa = null;
           cb && cb(cards.length > 0);
@@ -1622,9 +1698,10 @@
             allBahasaPerkataan[j].isActive = false;
           }
         }
-        batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0 });
+        batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
         next.isActive = true;
         next.lastIndex = 0;
+        next.lastDrawerId = null;
 
         return batch.commit().then(function() {
           activePerkataan = next;
@@ -1654,9 +1731,10 @@
             allBahasaPerkataan[k].isActive = false;
           }
         }
-        batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0 });
+        batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
         pertama.isActive = true;
         pertama.lastIndex = 0;
+        pertama.lastDrawerId = null;
         batch2.commit().then(function() {
           activePerkataan = pertama;
           rebuildBahasaCards(function(ok) {
@@ -1748,6 +1826,8 @@
 
       // isTamat fakta: SR sudah didaftar per-baris; jangan daftar semula whole-laci
       var srId = (srLaciSemasa && (srLaciSemasa.srDocId || srLaciSemasa.id)) || drawerId;
+      // Simpan lastDrawerId sebelum SR atau laci seterusnya
+      if (!isSR) simpanLastDrawer(drawerId, c.itemIndex !== undefined ? c.itemIndex : null);
       var p = isSR
         ? selesaiSRUlangan(srId, mode)
         : (mode === 'fakta' ? Promise.resolve() : daftarSRBaru(drawerId, mode));
@@ -1755,18 +1835,24 @@
       p.then(function() {
         if (isSR) {
           // ── SELEPAS SR: WAJIB ke laci biasa dulu ──
+          // Simpan lastDrawerId dari SR yang baru habis sebelum reset
+          var _srDrawerId = srLaciSemasa ? srLaciSemasa.drawerId : drawerId;
+          var _srItemIndex = (srLaciSemasa && srLaciSemasa.itemIndex !== undefined) ? srLaciSemasa.itemIndex : null;
           srModeAktif = false;
           srLaciSemasa = null;
 
-          // Reset lastIndex ke 0 supaya laci biasa mula dari gambar
+          // Simpan lastDrawerId supaya rebuild tahu nak mula dari mana
           if (mode === 'bahasa' && activePerkataan) {
             activePerkataan.lastIndex = 0;
+            activePerkataan.lastDrawerId = _srDrawerId || null;
             db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
-              .update({ lastIndex: 0 }).catch(function() {});
+              .update({ lastIndex: 0, lastDrawerId: _srDrawerId || null }).catch(function() {});
           } else if (mode === 'fakta' && activeTopic) {
             activeTopic.lastIndex = 0;
+            activeTopic.lastDrawerId = _srDrawerId || null;
+            activeTopic.lastItemIndex = _srItemIndex;
             db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
-              .update({ lastIndex: 0 }).catch(function() {});
+              .update({ lastIndex: 0, lastDrawerId: _srDrawerId || null, lastItemIndex: _srItemIndex }).catch(function() {});
           }
 
           var _rebuildFn = mode === 'bahasa' ? rebuildBahasaCards : rebuildFaktaCards;
@@ -2065,9 +2151,9 @@
 
       // Kad selesai fakta — tekan SETERUSNYA → kitar semula dari awal
       if (c.isKadSelesaiFakta) {
+        resetLastDrawer();
         rebuildFaktaCards(function(ok) {
           if (ok) {
-            cardIndex = 0; syncIndex(0);
             setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
           }
           renderCard();
@@ -2154,6 +2240,7 @@
       if (mode === 'fakta' && !srModeAktif && c.isLastOfBaris && c.drawerId != null && c.itemIndex != null) {
         isBusy = true;
         setText('play-err', 'Daftar SR baris...');
+        simpanLastDrawer(c.drawerId, c.itemIndex);
         daftarSRBaru(c.drawerId, 'fakta', c.itemIndex, c.front).then(function() {
           isBusy = false;
           setText('play-err', '');
