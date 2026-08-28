@@ -1695,7 +1695,52 @@
       return i;
     }
 
-    function lompatPerkataanSeterusnya() {
+    function resetBahasaKePerkataanPertama() {
+      if (!currentUser) return;
+      var jenisId = activePerkataan ? activePerkataan.jenisId : null;
+      var sorted = allBahasaPerkataan
+        .filter(function(p) { return !jenisId || p.jenisId === jenisId; })
+        .sort(function(a, b) {
+          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+        });
+      var pertama = sorted[0];
+      if (!pertama) { isBusy = false; startBahasa(); return; }
+      var batch2 = db.batch();
+      var uid = currentUser.uid;
+      for (var k = 0; k < allBahasaPerkataan.length; k++) {
+        if (allBahasaPerkataan[k].isActive) {
+          batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
+          allBahasaPerkataan[k].isActive = false;
+        }
+      }
+      batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+      pertama.isActive = true;
+      pertama.lastIndex = 0;
+      pertama.lastDrawerId = null;
+      batch2.commit().then(function() {
+        activePerkataan = pertama;
+        rebuildBahasaCards(function(ok) {
+          isBusy = false;
+          if (!ok) return;
+          setText('play-status', 'BAHASA · ' + (pertama.name || ''));
+          var firstCard = cards[cardIndex] || cards[0];
+          var firstDrawerId = firstCard ? firstCard.drawerId : null;
+          var firstDrawerObj = firstDrawerId
+            ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+            : null;
+          if (firstDrawerObj) {
+            var issues = checkTipsBlock(firstDrawerObj);
+            if (issues.length) {
+              renderBlockCard(firstDrawerObj.title || '', issues);
+              return;
+            }
+          }
+          renderCard();
+        });
+      }).catch(function() { isBusy = false; startBahasa(); });
+    }
+
+    function lompatPerkataanSeterusnya() {    
       if (!activePerkataan) return Promise.resolve(false);
       var sorted = allBahasaPerkataan
         .filter(function(p) { return p.jenisId === activePerkataan.jenisId; })
@@ -2178,15 +2223,9 @@
         return;
       }
 
-      // Kad selesai bahasa — tekan SETERUSNYA → JQ → perkataan pertama
+      // Kad selesai bahasa — terus ke perkataan pertama (jangan JQ semula)
       if (c.isKadSelesai) {
-        if (jqAktif && jqMotivasiList.length) {
-          tunjukMotivasiJQ(function() {
-            _resetKePerkataamPertama();
-          });
-        } else {
-          _resetKePerkataamPertama();
-        }
+        resetBahasaKePerkataanPertama();
         return;
       }
 
@@ -2370,8 +2409,23 @@
     document.getElementById('btn-reload').onclick = function() {
       isLoading = false;
       clearBlockCard();
-      if (mode === 'bahasa') startBahasa();
-      else if (mode === 'fakta') startFakta();
+      if (mode === 'bahasa') {
+        if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesai) {
+          resetBahasaKePerkataanPertama();
+        } else {
+          startBahasa();
+        }
+      } else if (mode === 'fakta') {
+        if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesaiFakta) {
+          resetLastDrawer();
+          rebuildFaktaCards(function(ok) {
+            if (ok) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            renderCard();
+          });
+        } else {
+          startFakta();
+        }
+      }
     };
     document.getElementById('btn-next').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
