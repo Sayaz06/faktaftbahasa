@@ -1338,14 +1338,14 @@
           rebuildBahasaCards(function(ok) {
             if (ok) {
               setText('play-status', 'BAHASA · ' + (activePerkataan.name || ''));
-              var firstCard = cards[0];
+              var firstCard = cards[cardIndex] || cards[0];
               var firstDrawerId = firstCard ? firstCard.drawerId : null;
               var firstDrawer = firstDrawerId
                 ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
                 : null;
-              // Prefetch laci ke-2
+              // Prefetch laci selepas laci semasa
               var secondDrawerId = null;
-              for (var si = 0; si < cards.length; si++) {
+              for (var si = cardIndex; si < cards.length; si++) {
                 if (cards[si].drawerId && cards[si].drawerId !== firstDrawerId) {
                   secondDrawerId = cards[si].drawerId; break;
                 }
