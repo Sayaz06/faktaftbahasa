@@ -1688,18 +1688,15 @@
         if (sorted[i].id === activePerkataan.id) { idx = i; break; }
       }
 
-      // Ada perkataan seterusnya — reset laci lama dulu, baru tick perkataan baru
+      // Ada perkataan seterusnya — lompat ke sana
       if (idx >= 0 && idx < sorted.length - 1) {
         var next = sorted[idx + 1];
         var batch = db.batch();
         var uid = currentUser.uid;
         for (var j = 0; j < allBahasaPerkataan.length; j++) {
           if (allBahasaPerkataan[j].isActive) {
-            // Reset lastDrawerId perkataan lama supaya nanti bila balik, mula dari laci 1
-            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false, lastDrawerId: null, lastIndex: 0 });
+            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
             allBahasaPerkataan[j].isActive = false;
-            allBahasaPerkataan[j].lastDrawerId = null;
-            allBahasaPerkataan[j].lastIndex = 0;
           }
         }
         batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
@@ -1733,14 +1730,6 @@
           if (allBahasaPerkataan[k].isActive) {
             batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
             allBahasaPerkataan[k].isActive = false;
-          }
-        }
-        // Reset semua perkataan (termasuk yang terakhir) sebelum tick pertama
-        for (var kr = 0; kr < allBahasaPerkataan.length; kr++) {
-          if (allBahasaPerkataan[kr].lastDrawerId || allBahasaPerkataan[kr].lastIndex) {
-            batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[kr].id), { lastDrawerId: null, lastIndex: 0 });
-            allBahasaPerkataan[kr].lastDrawerId = null;
-            allBahasaPerkataan[kr].lastIndex = 0;
           }
         }
         batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
@@ -1793,13 +1782,35 @@
         }).catch(function() { isBusy = false; });
       }
 
-      // Habis semua perkataan — terus reset ke perkataan pertama tanpa kad selesai
+      // Tunjuk JQ pertama, kemudian kad "selesai"
+      function _tunjukKadSelesai() {
+        cards = [{
+          front: 'Semua perkataan dalam jenis kata ini telah selesai.\nTekan SETERUSNYA untuk kembali ke perkataan pertama,\natau tick perkataan dalam jenis kata lain di phone.',
+          back: '', tips: '', imageUrl: '',
+          title: '', drawerId: null,
+          isF0: false, isTamat: false, isSR: false,
+          isKadSelesai: true
+        }];
+        cardIndex = 0;
+        setText('play-status', 'BAHASA · Selesai');
+        setText('play-mode', 'TAMAT SEMUA');
+        setText('side-label', '');
+        setText('main-text', cards[0].front);
+        var mainEl = document.getElementById('main-text');
+        if (mainEl) mainEl.className = 'big-text tips-mode';
+        setText('play-progress', '');
+        setText('play-meta', '');
+        setText('play-err', '');
+        setCardImage('');
+        clearBlockCard();
+      }
+
       if (jqAktif && jqMotivasiList.length) {
         tunjukMotivasiJQ(function() {
-          _resetKePerkataamPertama();
+          _tunjukKadSelesai();
         });
       } else {
-        _resetKePerkataamPertama();
+        _tunjukKadSelesai();
       }
 
       return Promise.resolve(true);
@@ -1832,18 +1843,18 @@
           srLaciSemasa = null;
 
           // Simpan lastDrawerId supaya rebuild tahu nak mula dari mana
-          // Untuk bahasa: JANGAN overwrite lastDrawerId — biar nilai laci biasa terakhir kekal
           if (mode === 'bahasa' && activePerkataan) {
             activePerkataan.lastIndex = 0;
+            activePerkataan.lastDrawerId = _srDrawerId || null;
             db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
-              .update({ lastIndex: 0 }).catch(function() {});
+              .update({ lastIndex: 0, lastDrawerId: _srDrawerId || null }).catch(function() {});
           } else if (mode === 'fakta' && activeTopic) {
             activeTopic.lastIndex = 0;
             activeTopic.lastDrawerId = _srDrawerId || null;
             activeTopic.lastItemIndex = _srItemIndex;
             db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
               .update({ lastIndex: 0, lastDrawerId: _srDrawerId || null, lastItemIndex: _srItemIndex }).catch(function() {});
-          }          
+          }
 
           var _rebuildFn = mode === 'bahasa' ? rebuildBahasaCards : rebuildFaktaCards;
           _rebuildFn(function(ok) {
@@ -2155,10 +2166,10 @@
       if (c.isKadSelesai) {
         if (jqAktif && jqMotivasiList.length) {
           tunjukMotivasiJQ(function() {
-            lompatPerkataanSeterusnya();
+            _resetKePerkataamPertama();
           });
         } else {
-          lompatPerkataanSeterusnya();
+          _resetKePerkataamPertama();
         }
         return;
       }
