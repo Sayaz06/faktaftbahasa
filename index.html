@@ -1584,6 +1584,7 @@
         mainEl.className = 'big-text';
         setText('side-label', '');
         setText('play-progress', '');
+        setText('play-mode', mode === 'bahasa' ? 'BAHASA' : 'FAKTA');
         setCardImage('');
         return;
       }
@@ -1866,6 +1867,19 @@
             setText('play-status', _statusSR);
             isBusy = false; setText('play-err', '');
 
+            if (mode === 'bahasa' && cardIndex >= cards.length) {
+              lompatPerkataanSeterusnya();
+              return;
+            }
+            if (mode === 'fakta' && cardIndex >= cards.length) {
+              resetLastDrawer();
+              rebuildFaktaCards(function(ok2) {
+                if (ok2) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+                renderCard();
+              });
+              return;
+            }
+
             if (jqAktif && jqMotivasiList.length) {
               tunjukMotivasiJQ(function() {
                 setText('play-status', _statusSR);
@@ -2144,7 +2158,20 @@
         return;
       }
 
-      if (!cards.length || cardIndex >= cards.length) return;
+      if (!cards.length || cardIndex >= cards.length) {
+        if (mode === 'bahasa') {
+          lompatPerkataanSeterusnya().then(function(ok) {
+            if (!ok) resetBahasaKePerkataanPertama();
+          });
+        } else if (mode === 'fakta') {
+          resetLastDrawer();
+          rebuildFaktaCards(function(ok) {
+            if (ok) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            renderCard();
+          });
+        }
+        return;
+      }
       var c = cards[cardIndex];
       if (c.isTamat) { afterTamat(c); return; }
 
