@@ -1827,7 +1827,7 @@
       // isTamat fakta: SR sudah didaftar per-baris; jangan daftar semula whole-laci
       var srId = (srLaciSemasa && (srLaciSemasa.srDocId || srLaciSemasa.id)) || drawerId;
       // Simpan lastDrawerId sebelum SR atau laci seterusnya
-      if (!isSR) simpanLastDrawer(drawerId, c.itemIndex !== undefined ? c.itemIndex : null);
+      if (!isSR) simpanLastDrawer(drawerId, mode === 'fakta' && c.itemIndex !== undefined ? c.itemIndex : null);      
       var p = isSR
         ? selesaiSRUlangan(srId, mode)
         : (mode === 'fakta' ? Promise.resolve() : daftarSRBaru(drawerId, mode));
