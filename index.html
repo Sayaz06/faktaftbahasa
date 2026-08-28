@@ -1843,18 +1843,18 @@
           srLaciSemasa = null;
 
           // Simpan lastDrawerId supaya rebuild tahu nak mula dari mana
+          // Untuk bahasa: JANGAN overwrite lastDrawerId — biar nilai laci biasa terakhir kekal
           if (mode === 'bahasa' && activePerkataan) {
             activePerkataan.lastIndex = 0;
-            activePerkataan.lastDrawerId = _srDrawerId || null;
             db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
-              .update({ lastIndex: 0, lastDrawerId: _srDrawerId || null }).catch(function() {});
+              .update({ lastIndex: 0 }).catch(function() {});
           } else if (mode === 'fakta' && activeTopic) {
             activeTopic.lastIndex = 0;
             activeTopic.lastDrawerId = _srDrawerId || null;
             activeTopic.lastItemIndex = _srItemIndex;
             db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
               .update({ lastIndex: 0, lastDrawerId: _srDrawerId || null, lastItemIndex: _srItemIndex }).catch(function() {});
-          }
+          }          
 
           var _rebuildFn = mode === 'bahasa' ? rebuildBahasaCards : rebuildFaktaCards;
           _rebuildFn(function(ok) {
