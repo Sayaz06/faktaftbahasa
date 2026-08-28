@@ -1677,35 +1677,50 @@
             isFlipped = false; showTips = false;
             clearBlockCard();
 
-            // Block check bahasa untuk laci biasa pertama
-            if (mode === 'bahasa') {
-              var firstCard = cards[0];
-              var firstDrawerId = firstCard ? firstCard.drawerId : null;
-              var firstDrawerObj = firstDrawerId
-                ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
-                : null;
-              if (firstDrawerObj) {
-                var blockIssuesSR = checkTipsBlock(firstDrawerObj);
-                if (blockIssuesSR.length) {
-                  isBusy = false;
-                  setText('play-status', 'BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''));
-                  renderBlockCard(firstDrawerObj.title || '', blockIssuesSR);
-                  return;
-                }
-              }
-            }
-
             var _statusSR = mode === 'bahasa'
               ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
               : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
             setText('play-status', _statusSR);
             isBusy = false; setText('play-err', '');
+
             if (jqAktif && jqMotivasiList.length) {
               tunjukMotivasiJQ(function() {
                 setText('play-status', _statusSR);
+                // Block check bahasa selepas JQ
+                if (mode === 'bahasa') {
+                  var firstCard = cards[0];
+                  var firstDrawerId = firstCard ? firstCard.drawerId : null;
+                  var firstDrawerObj = firstDrawerId
+                    ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+                    : null;
+                  if (firstDrawerObj) {
+                    var blockIssuesSR = checkTipsBlock(firstDrawerObj);
+                    if (blockIssuesSR.length) {
+                      isBusy = true;
+                      renderBlockCard(firstDrawerObj.title || '', blockIssuesSR);
+                      isBusy = false;
+                      return;
+                    }
+                  }
+                }
                 renderCard();
               });
             } else {
+              // Block check bahasa (tiada JQ)
+              if (mode === 'bahasa') {
+                var firstCard = cards[0];
+                var firstDrawerId = firstCard ? firstCard.drawerId : null;
+                var firstDrawerObj = firstDrawerId
+                  ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+                  : null;
+                if (firstDrawerObj) {
+                  var blockIssuesSR = checkTipsBlock(firstDrawerObj);
+                  if (blockIssuesSR.length) {
+                    renderBlockCard(firstDrawerObj.title || '', blockIssuesSR);
+                    return;
+                  }
+                }
+              }
               renderCard();
             }
           });
