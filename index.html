@@ -1610,34 +1610,127 @@
       for (var i = 0; i < sorted.length; i++) {
         if (sorted[i].id === activePerkataan.id) { idx = i; break; }
       }
-      if (idx < 0 || idx >= sorted.length - 1) return Promise.resolve(false);
 
-      var next = sorted[idx + 1];
-      var batch = db.batch();
-      var uid = currentUser.uid;
-      for (var j = 0; j < allBahasaPerkataan.length; j++) {
-        if (allBahasaPerkataan[j].isActive) {
-          batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
-          allBahasaPerkataan[j].isActive = false;
-        }
-      }
-      batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0 });
-      next.isActive = true;
-      next.lastIndex = 0;
-
-      return batch.commit().then(function() {
-        activePerkataan = next;
-        rebuildBahasaCards(function(ok) {
-          setText('play-status', 'BAHASA · ' + (next.name || ''));
-          if (jqAktif && jqMotivasiList.length) {
-            tunjukMotivasiJQ(function() { renderCard(); });
-          } else {
-            renderCard();
+      // Ada perkataan seterusnya — lompat ke sana
+      if (idx >= 0 && idx < sorted.length - 1) {
+        var next = sorted[idx + 1];
+        var batch = db.batch();
+        var uid = currentUser.uid;
+        for (var j = 0; j < allBahasaPerkataan.length; j++) {
+          if (allBahasaPerkataan[j].isActive) {
+            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
+            allBahasaPerkataan[j].isActive = false;
           }
+        }
+        batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0 });
+        next.isActive = true;
+        next.lastIndex = 0;
+
+        return batch.commit().then(function() {
+          activePerkataan = next;
+          rebuildBahasaCards(function(ok) {
+            setText('play-status', 'BAHASA · ' + (next.name || ''));
+            if (jqAktif && jqMotivasiList.length) {
+              tunjukMotivasiJQ(function() { renderCard(); });
+            } else {
+              renderCard();
+            }
+          });
+          return true;
+        }).catch(function() { return false; });
+      }
+
+      // Habis semua perkataan — tunjuk JQ dulu, kemudian kad "selesai"
+      var _uid = currentUser.uid;
+      var _sorted = sorted;
+
+      function _resetKePerkataamPertama() {
+        var pertama = _sorted[0];
+        if (!pertama) { isBusy = false; return; }
+        var batch2 = db.batch();
+        for (var k = 0; k < allBahasaPerkataan.length; k++) {
+          if (allBahasaPerkataan[k].isActive) {
+            batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
+            allBahasaPerkataan[k].isActive = false;
+          }
+        }
+        batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0 });
+        pertama.isActive = true;
+        pertama.lastIndex = 0;
+        batch2.commit().then(function() {
+          activePerkataan = pertama;
+          rebuildBahasaCards(function(ok) {
+            if (!ok) { isBusy = false; return; }
+            setText('play-status', 'BAHASA · ' + (pertama.name || ''));
+            if (jqAktif && jqMotivasiList.length) {
+              tunjukMotivasiJQ(function() {
+                // checkTips selepas JQ kedua
+                var firstCard = cards[0];
+                var firstDrawerId = firstCard ? firstCard.drawerId : null;
+                var firstDrawerObj = firstDrawerId
+                  ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+                  : null;
+                if (firstDrawerObj) {
+                  var issues = checkTipsBlock(firstDrawerObj);
+                  if (issues.length) {
+                    isBusy = false;
+                    renderBlockCard(firstDrawerObj.title || '', issues);
+                    return;
+                  }
+                }
+                isBusy = false;
+                renderCard();
+              });
+            } else {
+              // Tiada JQ — checkTips terus
+              var firstCard = cards[0];
+              var firstDrawerId = firstCard ? firstCard.drawerId : null;
+              var firstDrawerObj = firstDrawerId
+                ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+                : null;
+              if (firstDrawerObj) {
+                var issues = checkTipsBlock(firstDrawerObj);
+                if (issues.length) {
+                  isBusy = false;
+                  renderBlockCard(firstDrawerObj.title || '', issues);
+                  return;
+                }
+              }
+              isBusy = false;
+              renderCard();
+            }
+          });
+        }).catch(function() { isBusy = false; });
+      }
+
+      // Tunjuk JQ pertama, kemudian kad "selesai"
+      function _tunjukKadSelesai() {
+        cards = [{
+          front: 'Semua perkataan dalam jenis kata ini telah selesai.\nTekan SETERUSNYA untuk kembali ke perkataan pertama,\natau tick perkataan dalam jenis kata lain di phone.',
+          back: '', tips: '', imageUrl: '',
+          title: '', drawerId: null,
+          isF0: false, isTamat: false, isSR: false,
+          isKadSelesai: true
+        }];
+        cardIndex = 0;
+        setText('play-status', 'BAHASA · Selesai');
+        setText('play-mode', 'TAMAT SEMUA');
+        setText('side-label', '');
+        setText('main-text', cards[0].front);
+        var mainEl = document.getElementById('main-text');
+        if (mainEl) mainEl.className = 'big-text tips-mode';
+        setText('play-progress', '');
+        setText('play-meta', '');
+        setText('play-err', '');
+        setCardImage('');
+        clearBlockCard();
+      }
+
+      if (jqAktif && jqMotivasiList.length) {
+        tunjukMotivasiJQ(function() {
+          _tunjukKadSelesai();
         });
-        return true;
-      }).catch(function() { return false; });
-    }
+      }
 
     function afterTamat(c) {
       isBusy = true;
@@ -1804,9 +1897,33 @@
               return;
             }
             if (isLast && mode === 'fakta') {
-              cardIndex = 0; syncIndex(0); isBusy = false; setText('play-err', '');
-              setText('main-text', 'Habis semua laci topik ini. (Kitar semula dari awal)');
-              setText('side-label', ''); setCardImage('');
+              isBusy = false; setText('play-err', '');
+              function _tunjukKadSelesaiFakta() {
+                cards = [{
+                  front: 'Semua laci dalam topik ini telah selesai.\nTekan SETERUSNYA untuk ulang dari awal.',
+                  back: '', tips: '', imageUrl: '',
+                  title: '', drawerId: null,
+                  isF0: false, isTamat: false, isSR: false,
+                  isKadSelesaiFakta: true
+                }];
+                cardIndex = 0;
+                setText('play-status', 'FAKTA · Selesai');
+                setText('play-mode', 'TAMAT SEMUA');
+                setText('side-label', '');
+                setText('main-text', cards[0].front);
+                var mainEl = document.getElementById('main-text');
+                if (mainEl) mainEl.className = 'big-text tips-mode';
+                setText('play-progress', '');
+                setText('play-meta', '');
+                setText('play-err', '');
+                setCardImage('');
+                clearBlockCard();
+              }
+              if (jqAktif && jqMotivasiList.length) {
+                tunjukMotivasiJQ(function() { _tunjukKadSelesaiFakta(); });
+              } else {
+                _tunjukKadSelesaiFakta();
+              }
               return;
             }
             // Block check bahasa untuk laci seterusnya
@@ -1939,6 +2056,30 @@
       if (!cards.length || cardIndex >= cards.length) return;
       var c = cards[cardIndex];
       if (c.isTamat) { afterTamat(c); return; }
+
+      // Kad selesai fakta — tekan SETERUSNYA → kitar semula dari awal
+      if (c.isKadSelesaiFakta) {
+        rebuildFaktaCards(function(ok) {
+          if (ok) {
+            cardIndex = 0; syncIndex(0);
+            setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+          }
+          renderCard();
+        });
+        return;
+      }
+
+      // Kad selesai bahasa — tekan SETERUSNYA → JQ → perkataan pertama
+      if (c.isKadSelesai) {
+        if (jqAktif && jqMotivasiList.length) {
+          tunjukMotivasiJQ(function() {
+            _resetKePerkataamPertama();
+          });
+        } else {
+          _resetKePerkataamPertama();
+        }
+        return;
+      }
 
       // Fasa Gambar — terus ke kad seterusnya sahaja
       if (c.isGambar) {
