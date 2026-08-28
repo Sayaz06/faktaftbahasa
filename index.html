@@ -1760,6 +1760,15 @@
                   if (mode === 'bahasa' && jqAktif && jqMotivasiList.length) {
                     tunjukMotivasiJQ(function() {
                       setText('play-status', srStatusLabel);
+                      // Block check selepas JQ untuk SR bahasa
+                      var srDrawerjq = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                      if (srDrawerjq) {
+                        var srIssuesjq = checkTipsBlock(srDrawerjq);
+                        if (srIssuesjq.length) {
+                          renderBlockCard(srDrawerjq.title || '', srIssuesjq);
+                          return;
+                        }
+                      }
                       renderCard();
                     });
                   } else {
@@ -1825,6 +1834,21 @@
                 setText('play-status', mode === 'bahasa'
                   ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
                   : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
+                // Block check selepas JQ
+                if (mode === 'bahasa') {
+                  var nextCard0jq = cards[cardIndex];
+                  var nextDrawerIdjq = nextCard0jq ? nextCard0jq.drawerId : null;
+                  var nextDrawerObjjq = nextDrawerIdjq
+                    ? allBahasaDrawers.filter(function(d) { return d.id === nextDrawerIdjq; })[0]
+                    : null;
+                  if (nextDrawerObjjq) {
+                    var blockIssuesjq = checkTipsBlock(nextDrawerObjjq);
+                    if (blockIssuesjq.length) {
+                      renderBlockCard(nextDrawerObjjq.title || '', blockIssuesjq);
+                      return;
+                    }
+                  }
+                }
                 renderCard();
               });
               return;
