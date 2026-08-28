@@ -1688,15 +1688,18 @@
         if (sorted[i].id === activePerkataan.id) { idx = i; break; }
       }
 
-      // Ada perkataan seterusnya — lompat ke sana
+      // Ada perkataan seterusnya — reset laci lama dulu, baru tick perkataan baru
       if (idx >= 0 && idx < sorted.length - 1) {
         var next = sorted[idx + 1];
         var batch = db.batch();
         var uid = currentUser.uid;
         for (var j = 0; j < allBahasaPerkataan.length; j++) {
           if (allBahasaPerkataan[j].isActive) {
-            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
+            // Reset lastDrawerId perkataan lama supaya nanti bila balik, mula dari laci 1
+            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false, lastDrawerId: null, lastIndex: 0 });
             allBahasaPerkataan[j].isActive = false;
+            allBahasaPerkataan[j].lastDrawerId = null;
+            allBahasaPerkataan[j].lastIndex = 0;
           }
         }
         batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
@@ -1730,6 +1733,14 @@
           if (allBahasaPerkataan[k].isActive) {
             batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
             allBahasaPerkataan[k].isActive = false;
+          }
+        }
+        // Reset semua perkataan (termasuk yang terakhir) sebelum tick pertama
+        for (var kr = 0; kr < allBahasaPerkataan.length; kr++) {
+          if (allBahasaPerkataan[kr].lastDrawerId || allBahasaPerkataan[kr].lastIndex) {
+            batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[kr].id), { lastDrawerId: null, lastIndex: 0 });
+            allBahasaPerkataan[kr].lastDrawerId = null;
+            allBahasaPerkataan[kr].lastIndex = 0;
           }
         }
         batch2.update(db.collection('users').doc(_uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
