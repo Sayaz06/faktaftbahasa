@@ -861,6 +861,7 @@
     }
 
     function tunjukMotivasiJQ(cbSelepas) {
+      isBusy = false;
       // Cuba Champion queue dulu, fallback ke jqMotivasiList lama
       var item = (champSources.length > 0) ? champGetNextItem() : null;
 
@@ -1823,8 +1824,11 @@
         clearBlockCard();
       }
 
+      isBusy = false;
+      setText('play-err', '');
       if (jqAktif && jqMotivasiList.length) {
         tunjukMotivasiJQ(function() {
+          isBusy = false;
           _tunjukKadSelesai();
         });
       } else {
