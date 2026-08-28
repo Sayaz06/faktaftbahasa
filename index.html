@@ -1440,11 +1440,11 @@
           rebuildFaktaCards(function(ok) {
             if (ok) {
               setText('play-status', 'FAKTA · ' + (activeTopic.name || ''));
-              // Prefetch laci ke-2 dalam topik
+              // Prefetch laci selepas baris semasa
+              var fdNow = cards.length && cards[cardIndex] ? cards[cardIndex].drawerId : (cards.length ? cards[0].drawerId : null);
               var fd2 = null;
-              var fd1 = cards.length ? cards[0].drawerId : null;
-              for (var fi = 0; fi < cards.length; fi++) {
-                if (cards[fi].drawerId && cards[fi].drawerId !== fd1) { fd2 = cards[fi].drawerId; break; }
+              for (var fi = cardIndex; fi < cards.length; fi++) {
+                if (cards[fi].drawerId && cards[fi].drawerId !== fdNow) { fd2 = cards[fi].drawerId; break; }
               }
               if (fd2) prefetchDrawer(fd2, 'drawer');
             }
