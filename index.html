@@ -1893,11 +1893,12 @@
           function _terusLaciSeterusnya() {
             if (isLast && mode === 'bahasa') {
               lompatPerkataanSeterusnya().then(function(ok) {
-                isBusy = false; setText('play-err', '');
                 if (!ok) {
-                  setText('main-text', 'Habis semua perkataan dalam jenis kata ini.');
+                  isBusy = false; setText('play-err', '');
+                  setText('main-text', 'Tiada perkataan dalam jenis kata ini.');
                   setText('side-label', ''); setCardImage('');
                 }
+                // ok = true: lompatPerkataanSeterusnya handle sendiri
               });
               return;
             }
