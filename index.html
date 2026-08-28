@@ -1793,35 +1793,13 @@
         }).catch(function() { isBusy = false; });
       }
 
-      // Tunjuk JQ pertama, kemudian kad "selesai"
-      function _tunjukKadSelesai() {
-        cards = [{
-          front: 'Semua perkataan dalam jenis kata ini telah selesai.\nTekan SETERUSNYA untuk kembali ke perkataan pertama,\natau tick perkataan dalam jenis kata lain di phone.',
-          back: '', tips: '', imageUrl: '',
-          title: '', drawerId: null,
-          isF0: false, isTamat: false, isSR: false,
-          isKadSelesai: true
-        }];
-        cardIndex = 0;
-        setText('play-status', 'BAHASA · Selesai');
-        setText('play-mode', 'TAMAT SEMUA');
-        setText('side-label', '');
-        setText('main-text', cards[0].front);
-        var mainEl = document.getElementById('main-text');
-        if (mainEl) mainEl.className = 'big-text tips-mode';
-        setText('play-progress', '');
-        setText('play-meta', '');
-        setText('play-err', '');
-        setCardImage('');
-        clearBlockCard();
-      }
-
+      // Habis semua perkataan — terus reset ke perkataan pertama tanpa kad selesai
       if (jqAktif && jqMotivasiList.length) {
         tunjukMotivasiJQ(function() {
-          _tunjukKadSelesai();
+          _resetKePerkataamPertama();
         });
       } else {
-        _tunjukKadSelesai();
+        _resetKePerkataamPertama();
       }
 
       return Promise.resolve(true);
@@ -2177,10 +2155,10 @@
       if (c.isKadSelesai) {
         if (jqAktif && jqMotivasiList.length) {
           tunjukMotivasiJQ(function() {
-            _resetKePerkataamPertama();
+            lompatPerkataanSeterusnya();
           });
         } else {
-          _resetKePerkataamPertama();
+          lompatPerkataanSeterusnya();
         }
         return;
       }
