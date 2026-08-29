@@ -2158,10 +2158,16 @@
               _selesaiMotivasi();
               if (cbM) cbM();
             },
-            // Skip — TIDAK commit index, item yang sama akan muncul semula
+            // Skip — naikkan giliran sumber sahaja, item kekal untuk kitaran seterusnya
             function() {
-              // Index tidak dinaikkan — item kekal untuk kitaran seterusnya
-              // Tiada perlu revert kerana commit belum berlaku
+              // champIdx[sourceKey] TIDAK naik — item sama akan muncul semula pada gilirannya
+              // champLastIdx naik — supaya sumber lain dapat giliran dulu
+              if (hSnap.champSourceKey && hSnap.champActiveLen) {
+                champLastIdx = (champLastIdx + 1) % hSnap.champActiveLen;
+                db.collection('users').doc(currentUser.uid)
+                  .collection('kindle_settings').doc('champion')
+                  .update({ lastSourceIndex: champLastIdx }).catch(function() {});
+              }
               _selesaiMotivasi();
               if (cbM) cbM();
             }
