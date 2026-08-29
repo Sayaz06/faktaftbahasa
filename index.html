@@ -137,6 +137,7 @@
     }
     .progress { font-size: 0.72rem; margin-top: 1px; }
     .meta { font-size: 0.65rem; color: #444; margin-top: 1px; }
+    #play-overall { font-size: 0.68rem; font-weight: bold; letter-spacing: 0.02em; }
 
     .msg { text-align: center; font-size: 0.75rem; margin: 2px 0; min-height: 0.9em; }
     .error { color: #800; font-weight: bold; }
@@ -271,6 +272,7 @@
 
   <div id="screen-play" class="screen">
     <div class="status-bar" id="play-status">—</div>
+    <div class="status-bar" id="play-overall" style="display:none;border-color:#c00;color:#c00;background:#fff8f8;margin-bottom:3px;"></div>
     <div class="counter-box" id="counter-box">
       <div class="mode-label" id="play-mode">—</div>
       <div class="side-label" id="side-label">MUKA DEPAN</div>
@@ -1678,6 +1680,27 @@
       setText('play-progress', c.isTamat ? '' : (fasaPos + ' / ' + fasaTotal));
 
       setText('play-meta', '');
+
+      // ── PROGRESS KESELURUHAN ──
+      (function() {
+        var overallEl = document.getElementById('play-overall');
+        if (!overallEl) return;
+        if (srModeAktif || c.isTamat || !cards.length) {
+          overallEl.style.display = 'none'; return;
+        }
+        // Kira berapa kad laci biasa tinggal dari cardIndex ke hujung (tolak kad isTamat)
+        var totalBiasa = 0, bakinya = 0;
+        for (var oi = 0; oi < cards.length; oi++) {
+          if (!cards[oi].isTamat) {
+            totalBiasa++;
+            if (oi >= cardIndex) bakinya++;
+          }
+        }
+        // Detect restart: kalau bakinya > totalBiasa/2 dan cardIndex kecil — mungkin dah restart
+        var semasa = totalBiasa - bakinya + 1;
+        overallEl.style.display = 'block';
+        overallEl.textContent = 'Kad ' + semasa + ' / ' + totalBiasa + ' keseluruhan';
+      })();
 
       var displayText = '';
       if (c.isGambar) {
