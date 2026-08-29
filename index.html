@@ -272,7 +272,6 @@
 
   <div id="screen-play" class="screen">
     <div class="status-bar" id="play-status">—</div>
-    <div class="status-bar" id="play-overall" style="display:none;border-color:#c00;color:#c00;background:#fff8f8;margin-bottom:3px;"></div>
     <div class="counter-box" id="counter-box">
       <div class="mode-label" id="play-mode">—</div>
       <div class="side-label" id="side-label">MUKA DEPAN</div>
@@ -292,6 +291,7 @@
     <div class="btn-row" style="margin-top:4px;">
       <button id="btn-jq" class="btn-sm" style="width:100%;font-size:0.75rem;">JQ: OFF</button>
     </div>
+    <div id="play-overall" style="border:1px solid #c00;color:#c00;background:#fff8f8;padding:3px 6px;font-size:0.68rem;font-weight:bold;text-align:center;margin-top:3px;letter-spacing:0.02em;"></div>
     <div id="play-err" class="msg error"></div>
   </div>
 
@@ -1685,10 +1685,16 @@
       (function() {
         var overallEl = document.getElementById('play-overall');
         if (!overallEl) return;
-        if (srModeAktif || c.isTamat || !cards.length) {
-          overallEl.style.display = 'none'; return;
+        if (srModeAktif) {
+          overallEl.textContent = 'SR'; return;
         }
-        // Kira berapa kad laci biasa tinggal dari cardIndex ke hujung (tolak kad isTamat)
+        // JQ aktif semasa — mode JQ
+        if (jqModeSemasa) {
+          overallEl.textContent = 'JQ'; return;
+        }
+        if (c.isTamat || !cards.length) {
+          overallEl.textContent = ''; return;
+        }
         var totalBiasa = 0, bakinya = 0;
         for (var oi = 0; oi < cards.length; oi++) {
           if (!cards[oi].isTamat) {
@@ -1696,9 +1702,7 @@
             if (oi >= cardIndex) bakinya++;
           }
         }
-        // Detect restart: kalau bakinya > totalBiasa/2 dan cardIndex kecil — mungkin dah restart
         var semasa = totalBiasa - bakinya + 1;
-        overallEl.style.display = 'block';
         overallEl.textContent = 'Kad ' + semasa + ' / ' + totalBiasa + ' keseluruhan';
       })();
 
