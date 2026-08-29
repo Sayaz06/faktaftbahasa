@@ -2645,6 +2645,58 @@
     document.getElementById('btn-gt-untick-all-global').onclick = gtUntickSemua;
     // ══════════════════════════════════════════
 
+    // ══════════════════════════════════════════
+    // LOCK OVERLAY
+    // ══════════════════════════════════════════
+    (function() {
+      var lockOverlay = document.getElementById('lock-overlay');
+      var lockPinInput = document.getElementById('lock-pin-input');
+      var lockPinOk = document.getElementById('lock-pin-ok');
+      var lockPinMsg = document.getElementById('lock-pin-msg');
+      var btnLockFloat = document.getElementById('btn-lock-float');
+
+      // Tunjuk lock overlay
+      function activateLock() {
+        lockOverlay.style.display = 'flex';
+        lockPinInput.value = '';
+        lockPinMsg.textContent = '';
+        setTimeout(function() { lockPinInput.focus(); }, 100);
+      }
+
+      // Cuba unlock dengan PIN Firebase
+      function cubaUnlock() {
+        var pin = lockPinInput.value.trim();
+        if (!pin || !/^\d{4,6}$/.test(pin)) {
+          lockPinMsg.textContent = 'PIN mesti 4-6 digit';
+          return;
+        }
+        lockPinMsg.textContent = 'Mengesahkan...';
+        lockPinOk.disabled = true;
+        auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
+          .then(function() {
+            lockOverlay.style.display = 'none';
+            lockPinOk.disabled = false;
+            lockPinInput.value = '';
+            lockPinMsg.textContent = '';
+          })
+          .catch(function(e) {
+            lockPinOk.disabled = false;
+            if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') {
+              lockPinMsg.textContent = 'PIN salah';
+            } else {
+              lockPinMsg.textContent = e.message || e.code;
+            }
+          });
+      }
+
+      btnLockFloat.onclick = activateLock;
+      lockPinOk.onclick = cubaUnlock;
+      lockPinInput.onkeydown = function(e) {
+        if (e.key === 'Enter') cubaUnlock();
+      };
+    })();
+    // ══════════════════════════════════════════
+
     auth.onAuthStateChanged(function(user) {    
       document.body.classList.remove('auth-checking');
       currentUser = user;
@@ -2680,5 +2732,23 @@
       <button class="champ-overlay-btn-skip" id="champ-overlay-skip">⏭ Terlalu awal — ambil pada kitaran seterusnya</button>
     </div>
   </div>
+
+  <!-- LOCK OVERLAY -->
+  <div id="lock-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99999;flex-direction:column;align-items:center;justify-content:center;">
+    <div style="color:#fff;font-size:1.1rem;font-weight:bold;letter-spacing:0.15em;margin-bottom:24px;opacity:0.5;">🔒 LOCKED</div>
+    <input id="lock-pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off" style="max-width:200px;background:#111;color:#fff;border-color:#444;">
+    <button id="lock-pin-ok" class="btn btn-primary" style="max-width:200px;margin-top:8px;padding:10px;">Unlock</button>
+    <div id="lock-pin-msg" style="color:#f44;font-size:0.8rem;margin-top:8px;min-height:1.2em;"></div>
+  </div>
+
+  <!-- BUTANG LOCK TERAPUNG -->
+  <button id="btn-lock-float" style="
+    position:fixed;bottom:18px;right:18px;
+    width:42px;height:42px;border-radius:50%;
+    border:2px solid #000;background:#fff;color:#000;
+    font-size:1.1rem;cursor:pointer;z-index:9998;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,0.18);
+  ">🔒</button>
 </body>  
 </html>
