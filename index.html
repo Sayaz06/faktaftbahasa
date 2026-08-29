@@ -266,7 +266,7 @@
     <div class="gt-checklist" id="gt-checklist"></div>
     <div id="gt-check-err" class="msg error"></div>
   </div>
-  
+
   <button id="tips-close-btn" title="Tutup Tips">×</button>
 
   <div id="screen-play" class="screen">
@@ -350,7 +350,7 @@
     var _srAdaCache = false; // cache: ada SR overdue atau tidak (dikemas kini selepas setiap afterTamat)
     var jqKadSemasa = null;
     var jqCardIndexSimpan = -1;
-    
+
     // ── JQ (Jogging Queue) ──
     var jqAktif = false;
     var jqMotivasiList = [];
@@ -374,7 +374,7 @@
       motivasi: 0, perjanjian: 0, rutin: 0, supplement: 0, water: 0
     };
     var _champUnsubs = []; // cleanup onSnapshot
-    
+
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
       for (var i = 0; i < screens.length; i++) screens[i].className = 'screen';
@@ -511,7 +511,7 @@
       });
       return out;
     }
-    
+
     function formatKtoBaris(text) {
       if (!text) return '';
       return text
@@ -678,17 +678,25 @@
         .get().then(function(snap) {
           if (snap.exists) {
             jqAktif = snap.data().aktif === true;
+            window._champResumeJQ = snap.data().champFasaAktif === true;
           } else {
             jqAktif = false;
+            window._champResumeJQ = false;
           }
           updateJQButton();
-        }).catch(function() { jqAktif = false; updateJQButton(); });
+        }).catch(function() { jqAktif = false; window._champResumeJQ = false; updateJQButton(); });
     }
 
     function simpanJQStatus(aktif) {
       if (!currentUser) return;
       db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('jq')
         .set({ aktif: aktif, updatedAt: Date.now() }).catch(function() {});
+    }
+
+    function simpanChampFasa(aktif) {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('jq')
+        .update({ champFasaAktif: aktif }).catch(function() {});
     }
 
     function updateJQButton() {
@@ -905,6 +913,7 @@
         waterItem: item.waterItem || null,
         cb: cbSelepas
       };
+      simpanChampFasa(true);
     }
 
     function champShowConfirm(h, cbYa, cbSkip) {
@@ -941,6 +950,7 @@
       window._jqMotivasiHandler = null;
       isFlipped = false; showTips = false;
       setText('play-err', '');
+      simpanChampFasa(false);
     }
 
     function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {
@@ -1570,7 +1580,7 @@
         btnNext.textContent = 'SETERUSNYA';
       }
     }
-    
+
     function renderCard() {
       var mainEl = document.getElementById('main-text');
       if (!cards.length) {
@@ -2629,7 +2639,12 @@
       document.getElementById('btn-login').disabled = false;
       if (user) {
         setText('menu-user', 'Linked · Login OK');
-        loadJQStatus();
+        loadJQStatus().then(function() {
+          if (window._champResumeJQ && jqAktif) {
+            window._champResumeJQ = false;
+            tunjukMotivasiJQ(function() { renderCard(); });
+          }
+        });
         subscribeJoggingMotivasi();
         subscribeChampion();
         showScreen('screen-menu');
