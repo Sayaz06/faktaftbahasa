@@ -1688,22 +1688,44 @@
         if (srModeAktif) {
           overallEl.textContent = 'SR'; return;
         }
-        // JQ aktif semasa — mode JQ
         if (jqModeSemasa) {
           overallEl.textContent = 'JQ'; return;
         }
         if (c.isTamat || !cards.length) {
           overallEl.textContent = ''; return;
         }
-        var totalBiasa = 0, bakinya = 0;
-        for (var oi = 0; oi < cards.length; oi++) {
-          if (!cards[oi].isTamat) {
-            totalBiasa++;
-            if (oi >= cardIndex) bakinya++;
+
+        if (mode === 'bahasa') {
+          // Kira laci unik dalam cards (tolak isTamat)
+          var laciSeen = {}, laciList = [];
+          for (var bi = 0; bi < cards.length; bi++) {
+            if (!cards[bi].isTamat && cards[bi].drawerId && !laciSeen[cards[bi].drawerId]) {
+              laciSeen[cards[bi].drawerId] = true;
+              laciList.push(cards[bi].drawerId);
+            }
           }
+          var laciSemasa = c.drawerId ? (laciList.indexOf(c.drawerId) + 1) : 1;
+          var laciTotal = laciList.length;
+          overallEl.textContent = 'Laci ' + laciSemasa + ' / ' + laciTotal;
+
+        } else if (mode === 'fakta') {
+          // Kira baris unik — kombinasi drawerId + itemIndex
+          var barisSeen = {}, barisList = [];
+          for (var fi = 0; fi < cards.length; fi++) {
+            var fc = cards[fi];
+            if (!fc.isTamat && fc.drawerId) {
+              var bKey = fc.drawerId + '::' + (fc.itemIndex !== undefined ? fc.itemIndex : 0);
+              if (!barisSeen[bKey]) {
+                barisSeen[bKey] = true;
+                barisList.push(bKey);
+              }
+            }
+          }
+          var cKey = c.drawerId + '::' + (c.itemIndex !== undefined ? c.itemIndex : 0);
+          var barisSemasa = (barisList.indexOf(cKey) + 1) || 1;
+          var barisTotal = barisList.length;
+          overallEl.textContent = 'Baris ' + barisSemasa + ' / ' + barisTotal;
         }
-        var semasa = totalBiasa - bakinya + 1;
-        overallEl.textContent = 'Kad ' + semasa + ' / ' + totalBiasa + ' keseluruhan';
       })();
 
       var displayText = '';
