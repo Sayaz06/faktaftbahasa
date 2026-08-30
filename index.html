@@ -1626,10 +1626,32 @@
     function renderCard() {
       var mainEl = document.getElementById('main-text');
       var counterBox = document.getElementById('counter-box');
-      // Hitamkan kotak kalau perkataan terakhir dalam jenis kata (bahasa sahaja)
       if (counterBox) {
         var isLastPerk = (mode === 'bahasa' && activePerkataan && activePerkataan.isLastPerkataan === true);
-        if (isLastPerk) counterBox.classList.add('last-perkataan');
+        var isLast10Fakta = false;
+        if (mode === 'fakta' && !srModeAktif && activeTopic && activeTopic.totalBaris > 0) {
+          var c0 = cards[cardIndex];
+          if (c0 && !c0.isTamat && c0.itemIndex !== undefined && c0.itemIndex !== null) {
+            var totalB = activeTopic.totalBaris;
+            // Kira baris semasa secara global (merentasi semua laci dalam topik)
+            var barisGlobal = 0;
+            var activeDrawersSorted = allDrawers
+              .filter(function(d) { return d.topicId === activeTopic.id; })
+              .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+            for (var adi = 0; adi < activeDrawersSorted.length; adi++) {
+              var ad = activeDrawersSorted[adi];
+              if (ad.id === c0.drawerId) {
+                barisGlobal += (c0.itemIndex + 1);
+                break;
+              }
+              if (ad.items && ad.items.length) {
+                ad.items.forEach(function(it) { if (it.ayat && it.ayat.trim()) barisGlobal++; });
+              }
+            }
+            isLast10Fakta = (totalB - barisGlobal) < 10;
+          }
+        }
+        if (isLastPerk || isLast10Fakta) counterBox.classList.add('last-perkataan');
         else counterBox.classList.remove('last-perkataan');
       }
       if (!cards.length) {
@@ -1715,6 +1737,27 @@
         if (mode === 'bahasa') {
           var isLastPerkOverall = (activePerkataan && activePerkataan.isLastPerkataan === true);
           overallEl.textContent = isLastPerkOverall ? '⬛ Laci hitam = perkataan akhir dalam jenis kata ini' : '';
+        } else if (mode === 'fakta' && !srModeAktif) {
+          var isLast10Overall = false;
+          if (activeTopic && activeTopic.totalBaris > 0) {
+            var c0o = cards[cardIndex];
+            if (c0o && !c0o.isTamat && c0o.itemIndex !== undefined && c0o.itemIndex !== null) {
+              var totalBo = activeTopic.totalBaris;
+              var barisGlobalO = 0;
+              var adSortedO = allDrawers
+                .filter(function(d) { return d.topicId === activeTopic.id; })
+                .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+              for (var adio = 0; adio < adSortedO.length; adio++) {
+                var ado = adSortedO[adio];
+                if (ado.id === c0o.drawerId) { barisGlobalO += (c0o.itemIndex + 1); break; }
+                if (ado.items && ado.items.length) {
+                  ado.items.forEach(function(it) { if (it.ayat && it.ayat.trim()) barisGlobalO++; });
+                }
+              }
+              isLast10Overall = (totalBo - barisGlobalO) < 10;
+            }
+          }
+          overallEl.textContent = isLast10Overall ? '⬛ Laci hitam = 10 baris terakhir dalam topik ini' : '';
         } else {
           overallEl.textContent = '';
         }
