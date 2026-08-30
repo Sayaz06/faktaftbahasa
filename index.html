@@ -1626,10 +1626,28 @@
     function renderCard() {
       var mainEl = document.getElementById('main-text');
       var counterBox = document.getElementById('counter-box');
-      // Hitamkan kotak kalau perkataan terakhir dalam jenis kata (bahasa sahaja)
       if (counterBox) {
         var isLastPerk = (mode === 'bahasa' && activePerkataan && activePerkataan.isLastPerkataan === true);
-        if (isLastPerk) counterBox.classList.add('last-perkataan');
+        var isLast10Fakta = false;
+        if (mode === 'fakta' && !srModeAktif && cards.length) {
+          // Kira baris unik dalam topik semasa
+          var f10Seen = {}, f10List = [];
+          for (var f10i = 0; f10i < cards.length; f10i++) {
+            var f10c = cards[f10i];
+            if (!f10c.isTamat && f10c.drawerId) {
+              var f10k = f10c.drawerId + '::' + (f10c.itemIndex !== undefined ? f10c.itemIndex : 0);
+              if (!f10Seen[f10k]) { f10Seen[f10k] = true; f10List.push(f10k); }
+            }
+          }
+          var c0 = cards[cardIndex];
+          if (c0 && !c0.isTamat && c0.drawerId) {
+            var cKey0 = c0.drawerId + '::' + (c0.itemIndex !== undefined ? c0.itemIndex : 0);
+            var barisSemasa0 = f10List.indexOf(cKey0) + 1;
+            var barisTotal0 = f10List.length;
+            isLast10Fakta = barisTotal0 > 0 && (barisTotal0 - barisSemasa0) < 10;
+          }
+        }
+        if (isLastPerk || isLast10Fakta) counterBox.classList.add('last-perkataan');
         else counterBox.classList.remove('last-perkataan');
       }
       if (!cards.length) {
@@ -1715,6 +1733,24 @@
         if (mode === 'bahasa') {
           var isLastPerkOverall = (activePerkataan && activePerkataan.isLastPerkataan === true);
           overallEl.textContent = isLastPerkOverall ? '⬛ Laci hitam = perkataan akhir dalam jenis kata ini' : '';
+        } else if (mode === 'fakta') {
+          var f10SeenO = {}, f10ListO = [];
+          for (var f10o = 0; f10o < cards.length; f10o++) {
+            var f10co = cards[f10o];
+            if (!f10co.isTamat && f10co.drawerId) {
+              var f10ko = f10co.drawerId + '::' + (f10co.itemIndex !== undefined ? f10co.itemIndex : 0);
+              if (!f10SeenO[f10ko]) { f10SeenO[f10ko] = true; f10ListO.push(f10ko); }
+            }
+          }
+          var c0o = cards[cardIndex];
+          var isLast10O = false;
+          if (c0o && !c0o.isTamat && c0o.drawerId) {
+            var cKey0o = c0o.drawerId + '::' + (c0o.itemIndex !== undefined ? c0o.itemIndex : 0);
+            var barisSemasa0o = f10ListO.indexOf(cKey0o) + 1;
+            var barisTotal0o = f10ListO.length;
+            isLast10O = barisTotal0o > 0 && (barisTotal0o - barisSemasa0o) < 10;
+          }
+          overallEl.textContent = isLast10O ? '⬛ Laci hitam = 10 baris terakhir dalam topik ini' : '';
         } else {
           overallEl.textContent = '';
         }
