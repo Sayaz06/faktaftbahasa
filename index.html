@@ -292,7 +292,7 @@
       <div class="meta" id="play-meta"></div>
     </div>
     <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
-    <div id="play-overall" style="border:1px solid #c00;color:#c00;background:#fff8f8;padding:3px 6px;font-size:0.68rem;font-weight:bold;text-align:center;margin-top:3px;letter-spacing:0.02em;"></div>
+    <div id="play-overall" style="padding:2px 0;font-size:0.65rem;color:#555;text-align:center;margin-top:2px;min-height:1em;"></div>
     <div class="btn-row">
       <button id="btn-back-menu" class="btn-sm btn-menu">Menu</button>
       <button id="btn-flip" class="btn-sm">Flip</button>
@@ -1713,35 +1713,10 @@
         }
 
         if (mode === 'bahasa') {
-          // Kira laci unik dalam cards (tolak isTamat)
-          var laciSeen = {}, laciList = [];
-          for (var bi = 0; bi < cards.length; bi++) {
-            if (!cards[bi].isTamat && cards[bi].drawerId && !laciSeen[cards[bi].drawerId]) {
-              laciSeen[cards[bi].drawerId] = true;
-              laciList.push(cards[bi].drawerId);
-            }
-          }
-          var laciSemasa = c.drawerId ? (laciList.indexOf(c.drawerId) + 1) : 1;
-          var laciTotal = laciList.length;
-          overallEl.textContent = 'Laci ' + laciSemasa + ' / ' + laciTotal;
-
-        } else if (mode === 'fakta') {
-          // Kira baris unik — kombinasi drawerId + itemIndex
-          var barisSeen = {}, barisList = [];
-          for (var fi = 0; fi < cards.length; fi++) {
-            var fc = cards[fi];
-            if (!fc.isTamat && fc.drawerId) {
-              var bKey = fc.drawerId + '::' + (fc.itemIndex !== undefined ? fc.itemIndex : 0);
-              if (!barisSeen[bKey]) {
-                barisSeen[bKey] = true;
-                barisList.push(bKey);
-              }
-            }
-          }
-          var cKey = c.drawerId + '::' + (c.itemIndex !== undefined ? c.itemIndex : 0);
-          var barisSemasa = (barisList.indexOf(cKey) + 1) || 1;
-          var barisTotal = barisList.length;
-          overallEl.textContent = 'Baris ' + barisSemasa + ' / ' + barisTotal;
+          var isLastPerkOverall = (activePerkataan && activePerkataan.isLastPerkataan === true);
+          overallEl.textContent = isLastPerkOverall ? '⬛ Laci hitam = perkataan akhir dalam jenis kata ini' : '';
+        } else {
+          overallEl.textContent = '';
         }
       })();
 
