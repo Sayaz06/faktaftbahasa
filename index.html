@@ -83,6 +83,16 @@
       border: 3px solid #000; border-radius: 10px; padding: 6px 8px;
       text-align: center; margin: 3px 0;
     }
+    .counter-box.last-perkataan {
+      background: #000; color: #fff;
+    }
+    .counter-box.last-perkataan .mode-label,
+    .counter-box.last-perkataan .side-label,
+    .counter-box.last-perkataan .big-text,
+    .counter-box.last-perkataan .progress,
+    .counter-box.last-perkataan .meta {
+      color: #fff;
+    }
     .mode-label { font-size: 0.65rem; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 1px; }
     .side-label { font-size: 0.65rem; font-weight: bold; margin-bottom: 1px; }
     .big-text {
@@ -1615,6 +1625,13 @@
     
     function renderCard() {
       var mainEl = document.getElementById('main-text');
+      var counterBox = document.getElementById('counter-box');
+      // Hitamkan kotak kalau perkataan terakhir dalam jenis kata (bahasa sahaja)
+      if (counterBox) {
+        var isLastPerk = (mode === 'bahasa' && activePerkataan && activePerkataan.isLastPerkataan === true);
+        if (isLastPerk) counterBox.classList.add('last-perkataan');
+        else counterBox.classList.remove('last-perkataan');
+      }
       if (!cards.length) {
         setText('main-text', 'Tiada kad');
         mainEl.className = 'big-text';
