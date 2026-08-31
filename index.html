@@ -296,6 +296,7 @@
       <button id="btn-om-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Balik</button>
       <button id="btn-om-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Simpan ✓</button>
     </div>
+    <button id="btn-om-edit-del" style="width:100%;margin-top:8px;padding:10px;border:2px solid #c00;background:#fff;color:#c00;font-weight:bold;border-radius:8px;cursor:pointer;">🗑️ Padam Laci Ini</button>
     <div id="om-edit-msg" style="text-align:center;font-size:0.75rem;color:#555;margin-top:6px;min-height:1em;"></div>
   </div>
   
@@ -2677,6 +2678,20 @@
 
     document.getElementById('btn-om-edit-back').onclick = function() {
       showScreen('screen-other-motivation');
+    };
+
+    document.getElementById('btn-om-edit-del').onclick = function() {
+      if (!currentUser || !omEditId) return;
+      if (!confirm('Padam laci ini?')) return;
+      db.collection('users').doc(currentUser.uid)
+        .collection('other_motivation').doc(omEditId)
+        .delete()
+        .then(function() {
+          showScreen('screen-other-motivation');
+        })
+        .catch(function(e) {
+          setText('om-edit-msg', '❌ Gagal padam: ' + (e.message || e));
+        });
     };
 
     document.getElementById('btn-om-edit-save').onclick = function() {
