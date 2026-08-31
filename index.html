@@ -752,22 +752,6 @@
           });
             champData.motivasi = jqMotivasiList;
         }, function() { jqMotivasiList = []; champData.motivasi = []; });
-
-      // Subscribe other_motivation — load on-demand bila JQ ON
-      _champUnsubs.push(
-        db.collection('users').doc(currentUser.uid)
-          .collection('other_motivation')
-          .orderBy('order', 'asc')
-          .onSnapshot(function(snap) {
-            allOtherMotivation = [];
-            snap.forEach(function(d) {
-              var x = d.data(); x.id = d.id;
-              if (x.title || x.text) allOtherMotivation.push(x);
-            });
-            console.log('📥 Cache miss — other_motivation diload dari Firestore (' + allOtherMotivation.length + ' item)');
-            champData.otherMotivation = allOtherMotivation;
-          }, function() { allOtherMotivation = []; champData.otherMotivation = []; })
-      );
     }
 
     function subscribeChampion() {
@@ -789,6 +773,7 @@
             champIdx.rutin = savedIdx.rutin || 0;
             champIdx.supplement = savedIdx.supplement || 0;
             champIdx.water = savedIdx.water || 0;
+            champIdx.otherMotivation = savedIdx.otherMotivation || 0;
           } else {
             champSources = ['motivasi'];
             champLastIdx = 0;
@@ -822,6 +807,22 @@
             snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.title) champData.supplement.push(x); });
             champData.supplement.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
           }, function() { champData.supplement = []; })
+      );
+
+      // Subscribe Other Motivation
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid)
+          .collection('other_motivation')
+          .orderBy('order', 'asc')
+          .onSnapshot(function(snap) {
+            allOtherMotivation = [];
+            snap.forEach(function(d) {
+              var x = d.data(); x.id = d.id;
+              if (x.title || x.text) allOtherMotivation.push(x);
+            });
+            console.log('📥 other_motivation diload dari Firestore (' + allOtherMotivation.length + ' item)');
+            champData.otherMotivation = allOtherMotivation;
+          }, function() { allOtherMotivation = []; champData.otherMotivation = []; })
       );
 
       // Subscribe Water — baca champion_item sahaja
