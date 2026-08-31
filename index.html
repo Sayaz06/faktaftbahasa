@@ -252,11 +252,20 @@
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
     <button id="btn-go-gotick" class="btn">Go-Tick ✓</button>
+    <button id="btn-go-other-motivation" class="btn">✨ Other Motivation</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
   </div>
 
-  <!-- SCREEN: GO-TICK SENARAI DESTINASI -->
+  <!-- SCREEN: OTHER MOTIVATION -->
+  <div id="screen-other-motivation" class="screen">
+    <div class="status-bar" id="om-status">OTHER MOTIVATION</div>
+    <button id="btn-om-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Motivasi</button>
+    <div id="om-list" style="overflow-y:auto;flex:1;"></div>
+    <button id="btn-om-back" class="btn" style="margin-top:8px;font-size:0.9rem;padding:10px;">← Menu</button>
+  </div>
+
+  <!-- SCREEN: GO-TICK SENARAI DESTINASI -->  
   <div id="screen-gotick-list" class="screen">
     <div class="gt-status-bar" id="gt-list-status">Go-Tick</div>
     <h1>Go-Tick</h1>
@@ -2558,6 +2567,76 @@ setText('play-err', '');
     document.getElementById('btn-go-bahasa').onclick = startBahasa;
     document.getElementById('btn-go-fakta').onclick = startFakta;
     document.getElementById('btn-back-menu').onclick = function() { showScreen('screen-menu'); };
+
+    // ══════════════════════════════════════════
+    // OTHER MOTIVATION
+    // ══════════════════════════════════════════
+    var allOtherMotivation = [];
+    var _omUnsub = null;
+
+    document.getElementById('btn-go-other-motivation').onclick = function() {
+      showScreen('screen-other-motivation');
+      loadOtherMotivation();
+    };
+
+    document.getElementById('btn-om-back').onclick = function() {
+      showScreen('screen-menu');
+    };
+
+    document.getElementById('btn-om-tambah').onclick = async function() {
+      if (!currentUser) return;
+      var maxOrder = allOtherMotivation.reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
+      await db.collection('users').doc(currentUser.uid).collection('other_motivation').add({
+        title: '', text: '', imageUrl: '', order: maxOrder + 1, createdAt: Date.now()
+      });
+      showToast('✅ Motivasi berjaya ditambah.');
+    };
+
+    function loadOtherMotivation() {
+      if (!currentUser) return;
+      if (_omUnsub) return; // dah subscribe
+      console.log('📥 Cache miss — other_motivation diload dari Firestore');
+      _omUnsub = db.collection('users').doc(currentUser.uid)
+        .collection('other_motivation')
+        .orderBy('order', 'asc')
+        .onSnapshot(function(snap) {
+          allOtherMotivation = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allOtherMotivation.push(x); });
+          console.log('✅ Cache hit — other_motivation (' + allOtherMotivation.length + ' item)');
+          renderOtherMotivation();
+        }, function(e) {
+          console.error('❌ Gagal load other_motivation:', e);
+        });
+    }
+
+    function renderOtherMotivation() {
+      var list = document.getElementById('om-list');
+      if (!list) return;
+      list.innerHTML = '';
+
+      if (!allOtherMotivation.length) {
+        list.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Tiada motivasi. Tekan + Tambah.</div>';
+        return;
+      }
+
+      allOtherMotivation.forEach(function(data) {
+        var div = document.createElement('div');
+        div.style.cssText = 'border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:10px;';
+
+        var imgHtml = data.imageUrl
+          ? '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;margin-bottom:6px;object-fit:cover;">'
+          : '<div style="font-size:0.7rem;color:#888;margin-bottom:6px;font-style:italic;">Tiada gambar lagi</div>';
+
+        div.innerHTML = imgHtml +
+          '<div style="font-weight:bold;font-size:0.9rem;margin-bottom:4px;">' + (data.title || '(Tiada tajuk)') + '</div>' +
+          '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>';
+
+        list.appendChild(div);
+      });
+    }
+
+    // Clear cache bila logout
+    var _origLogout = document.getElementById('btn-logout').onclick;    
     document.getElementById('btn-reload').onclick = function() {
       isLoading = false;
       clearBlockCard();
@@ -2859,6 +2938,10 @@ setText('play-err', '');
         jqMotivasiList = [];
         jqPendingCardIndex = -1;
         updateJQButton();
+        // Clear other motivation cache
+        if (_omUnsub) { _omUnsub(); _omUnsub = null; }
+        allOtherMotivation = [];
+        console.log('🧹 Cache other_motivation dibersihkan — logout');
         showScreen('screen-login');
         setText('login-msg', '');
       }
