@@ -262,7 +262,32 @@
     <div class="status-bar" id="om-status">OTHER MOTIVATION</div>
     <button id="btn-om-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Motivasi</button>
     <div id="om-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
-    <button id="btn-om-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Menu</button>
+    <button id="btn-om-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Senarai</button>
+  </div>
+
+  <!-- SCREEN: OTHER MOTIVATION EDIT -->
+  <div id="screen-om-edit" class="screen" style="display:flex;flex-direction:column;height:100vh;padding:8px;box-sizing:border-box;">
+    <div class="status-bar" id="om-edit-status">EDIT MOTIVASI</div>
+
+    <!-- Tajuk -->
+    <div style="font-size:0.72rem;color:#555;margin:6px 0 2px;">Tajuk:</div>
+    <input id="om-edit-title" type="text" placeholder="Tajuk motivasi..."
+      style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;margin-bottom:8px;">
+
+    <!-- Teks — textarea besar, boleh scroll, keyboard tak tindih -->
+    <div style="font-size:0.72rem;color:#555;margin-bottom:2px;">Teks:</div>
+    <textarea id="om-edit-text" placeholder="Teks motivasi..."
+      style="width:100%;flex:1;padding:10px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;resize:none;line-height:1.6;min-height:200px;"></textarea>
+
+    <!-- Gambar -->
+    <div id="om-edit-img-wrap" style="margin-top:8px;text-align:center;font-size:0.72rem;color:#888;font-style:italic;">Tiada gambar lagi</div>
+
+    <!-- Buttons -->
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button id="btn-om-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Balik</button>
+      <button id="btn-om-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Simpan ✓</button>
+    </div>
+    <div id="om-edit-msg" style="text-align:center;font-size:0.75rem;color:#555;margin-top:6px;min-height:1em;"></div>
   </div>
   
   <!-- SCREEN: GO-TICK SENARAI DESTINASI -->  
@@ -2610,6 +2635,8 @@ setText('play-err', '');
         });
     }
 
+    var omEditId = null; // ID laci yang sedang diedit
+
     function renderOtherMotivation() {
       var list = document.getElementById('om-list');
       if (!list) return;
@@ -2622,7 +2649,7 @@ setText('play-err', '');
 
       allOtherMotivation.forEach(function(data) {
         var div = document.createElement('div');
-        div.style.cssText = 'border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:10px;';
+        div.style.cssText = 'border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:10px;cursor:pointer;';
 
         var imgHtml = data.imageUrl
           ? '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;margin-bottom:6px;object-fit:cover;">'
@@ -2630,11 +2657,66 @@ setText('play-err', '');
 
         div.innerHTML = imgHtml +
           '<div style="font-weight:bold;font-size:0.9rem;margin-bottom:4px;">' + (data.title || '(Tiada tajuk)') + '</div>' +
-          '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>';
+          '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>' +
+          '<div style="font-size:0.7rem;color:#888;margin-top:6px;text-align:right;">Tekan untuk edit →</div>';
+
+        div.addEventListener('click', function() {
+          bukaEditOM(data);
+        });
 
         list.appendChild(div);
       });
     }
+
+    function bukaEditOM(data) {
+      omEditId = data.id;
+      document.getElementById('om-edit-title').value = data.title || '';
+      document.getElementById('om-edit-text').value = data.text || '';
+      document.getElementById('om-edit-msg').textContent = '';
+      setText('om-edit-status', 'EDIT — ' + (data.title || 'Tanpa Tajuk'));
+
+      // Papar gambar atau nota tiada gambar
+      var imgWrap = document.getElementById('om-edit-img-wrap');
+      if (data.imageUrl) {
+        imgWrap.innerHTML = '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;object-fit:cover;">';
+      } else {
+        imgWrap.innerHTML = 'Tiada gambar lagi — tambah melalui app phone';
+        imgWrap.style.cssText = 'margin-top:8px;text-align:center;font-size:0.72rem;color:#888;font-style:italic;';
+      }
+
+      showScreen('screen-om-edit');
+      // Focus textarea selepas screen muncul supaya keyboard muncul dengan betul
+      setTimeout(function() { document.getElementById('om-edit-title').focus(); }, 300);
+    }
+
+    document.getElementById('btn-om-edit-back').onclick = function() {
+      showScreen('screen-other-motivation');
+    };
+
+    document.getElementById('btn-om-edit-save').onclick = function() {
+      if (!currentUser || !omEditId) return;
+      var title = document.getElementById('om-edit-title').value.trim();
+      var text = document.getElementById('om-edit-text').value.trim();
+      var btn = document.getElementById('btn-om-edit-save');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+
+      db.collection('users').doc(currentUser.uid)
+        .collection('other_motivation').doc(omEditId)
+        .set({ title: title, text: text, updatedAt: Date.now() }, { merge: true })
+        .then(function() {
+          btn.disabled = false;
+          btn.textContent = 'Simpan ✓';
+          setText('om-edit-msg', '✅ Tersimpan!');
+          setText('om-edit-status', 'EDIT — ' + (title || 'Tanpa Tajuk'));
+          setTimeout(function() { setText('om-edit-msg', ''); }, 2000);
+        })
+        .catch(function(e) {
+          btn.disabled = false;
+          btn.textContent = 'Simpan ✓';
+          setText('om-edit-msg', '❌ Gagal: ' + (e.message || e));
+        });
+    };
 
     // Clear cache bila logout
     var _origLogout = document.getElementById('btn-logout').onclick;    
