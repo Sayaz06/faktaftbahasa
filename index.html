@@ -133,6 +133,16 @@
       font-size: 1.05rem;
       line-height: 1.3;
     }
+    .big-text.extra-long {
+      font-size: 0.85rem;
+      line-height: 1.3;
+      font-weight: normal;
+    }
+    .big-text.ultra-long {
+      font-size: 0.72rem;
+      line-height: 1.3;
+      font-weight: normal;
+    }
     .card-img {
       display: block; max-width: 100%;
       margin: 2px auto; border: 1px solid #000;
@@ -1006,8 +1016,19 @@
       }
 
       var mainEl = document.getElementById('main-text');
-      if (mainEl) mainEl.className = kandungan.length > 80 ? 'big-text long-text' : 'big-text';
-
+      if (mainEl) {
+        var pjg = kandungan.length;
+        if (item.source === 'otherMotivation') {
+          // Auto-kecil ikut panjang kandungan untuk otherMotivation
+          mainEl.className = pjg > 300 ? 'big-text ultra-long'
+                           : pjg > 150 ? 'big-text extra-long'
+                           : pjg > 80  ? 'big-text long-text'
+                           : 'big-text';
+        } else {
+          mainEl.className = pjg > 80 ? 'big-text long-text' : 'big-text';
+        }
+      }
+      
       window._jqMotivasiHandler = {
         adaFlip: item.adaFlip,
         depan: item.depan,
