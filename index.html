@@ -979,24 +979,34 @@
 
       var sourceLabel = { motivasi: 'MOTIVASI', perjanjian: 'PERJANJIAN', rutin: 'RUTIN', supplement: 'SUPLEMEN', water: 'AIR', otherMotivation: 'MOTIVASI LAIN' };      
       isFlipped = false; showTips = false;
-      setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + ' · ' + item.title);
+      // otherMotivation — tajuk tidak dipapar di status bar
+      setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + (item.source === 'otherMotivation' ? '' : ' · ' + item.title));
       setText('play-mode', 'CHAMPION · ' + (sourceLabel[item.source] || item.source));
       setText('side-label', 'MUKA DEPAN');
-      setText('main-text', item.depan);
+
+      // otherMotivation: tajuk dipapar dalam kotak — bawah gambar, atas teks
+      var kandungan;
+      if (item.source === 'otherMotivation') {
+        kandungan = (item.title ? item.title + '\n\n' : '') + (item.depan || '');
+      } else {
+        kandungan = item.depan;
+      }
+      setText('main-text', kandungan);
+
       setText('play-progress', item.adaFlip ? '(Flip untuk penerangan)' : '(Tekan SETERUSNYA untuk teruskan)');
       setText('play-meta', '');
 
-setText('play-err', '');
+      setText('play-err', '');
       // Papar gambar untuk otherMotivation — kena letak selepas setCardImage
       if (item.source === 'otherMotivation' && item.imageUrl) {
         setCardImage(item.imageUrl);
-        autoFitImage((item.depan || '').length);
+        autoFitImage(kandungan.length);
       } else {
         setCardImage('');
       }
-      
+
       var mainEl = document.getElementById('main-text');
-      if (mainEl) mainEl.className = item.depan.length > 80 ? 'big-text long-text' : 'big-text';
+      if (mainEl) mainEl.className = kandungan.length > 80 ? 'big-text long-text' : 'big-text';
 
       window._jqMotivasiHandler = {
         adaFlip: item.adaFlip,
