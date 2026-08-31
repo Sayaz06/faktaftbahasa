@@ -274,7 +274,20 @@
     <button id="btn-om-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Senarai</button>
   </div>
 
-  <!-- SCREEN: OTHER MOTIVATION EDIT -->
+  <!-- PADAM OTHER MOTIVATION OVERLAY -->
+  <div id="om-del-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border:3px solid #c00;border-radius:10px;padding:20px;width:85%;max-width:320px;text-align:center;">
+      <div style="font-size:0.9rem;font-weight:bold;margin-bottom:10px;">Taip "padam" untuk confirm:</div>
+      <input id="om-del-input" type="text" placeholder="padam" style="width:100%;padding:10px;font-size:1rem;border:2px solid #c00;border-radius:6px;text-align:center;box-sizing:border-box;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button id="btn-om-del-cancel" style="flex:1;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Batal</button>
+        <button id="btn-om-del-ok" style="flex:1;padding:10px;border:2px solid #c00;background:#c00;color:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Padam</button>
+      </div>
+      <div id="om-del-err" style="color:#c00;font-size:0.78rem;margin-top:8px;min-height:1em;"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: OTHER MOTIVATION EDIT -->  
   <div id="screen-om-edit" class="screen" style="flex-direction:column;height:100vh;padding:8px;box-sizing:border-box;">  
     <div class="status-bar" id="om-edit-status">EDIT MOTIVASI</div>
 
@@ -2682,7 +2695,23 @@
 
     document.getElementById('btn-om-edit-del').onclick = function() {
       if (!currentUser || !omEditId) return;
-      if (!confirm('Padam laci ini?')) return;
+      document.getElementById('om-del-input').value = '';
+      document.getElementById('om-del-err').textContent = '';
+      document.getElementById('om-del-overlay').style.display = 'flex';
+      setTimeout(function() { document.getElementById('om-del-input').focus(); }, 100);
+    };
+
+    document.getElementById('btn-om-del-cancel').onclick = function() {
+      document.getElementById('om-del-overlay').style.display = 'none';
+    };
+
+    document.getElementById('btn-om-del-ok').onclick = function() {
+      var val = document.getElementById('om-del-input').value.trim().toLowerCase();
+      if (val !== 'padam') {
+        document.getElementById('om-del-err').textContent = 'Taip "padam" untuk confirm.';
+        return;
+      }
+      document.getElementById('om-del-overlay').style.display = 'none';
       db.collection('users').doc(currentUser.uid)
         .collection('other_motivation').doc(omEditId)
         .delete()
@@ -2693,6 +2722,10 @@
           setText('om-edit-msg', '❌ Gagal padam: ' + (e.message || e));
         });
     };
+
+    document.getElementById('om-del-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('btn-om-del-ok').click();
+    });
 
     document.getElementById('btn-om-edit-save').onclick = function() {
       if (!currentUser || !omEditId) return;
