@@ -398,11 +398,13 @@
       perjanjian: [],
       rutin: [],
       supplement: [],
-      water: []
+      water: [],
+      otherMotivation: []
     };
     var champIdx = {       // index item semasa dalam setiap sumber
-      motivasi: 0, perjanjian: 0, rutin: 0, supplement: 0, water: 0
+      motivasi: 0, perjanjian: 0, rutin: 0, supplement: 0, water: 0, otherMotivation: 0
     };
+    var allOtherMotivation = [];
     var _champUnsubs = []; // cleanup onSnapshot
     
     function showScreen(id) {
@@ -748,8 +750,24 @@
           jqMotivasiList.sort(function(a, b) {
             return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
           });
-          champData.motivasi = jqMotivasiList;
+            champData.motivasi = jqMotivasiList;
         }, function() { jqMotivasiList = []; champData.motivasi = []; });
+
+      // Subscribe other_motivation — load on-demand bila JQ ON
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid)
+          .collection('other_motivation')
+          .orderBy('order', 'asc')
+          .onSnapshot(function(snap) {
+            allOtherMotivation = [];
+            snap.forEach(function(d) {
+              var x = d.data(); x.id = d.id;
+              if (x.title || x.text) allOtherMotivation.push(x);
+            });
+            console.log('📥 Cache miss — other_motivation diload dari Firestore (' + allOtherMotivation.length + ' item)');
+            champData.otherMotivation = allOtherMotivation;
+          }, function() { allOtherMotivation = []; champData.otherMotivation = []; })
+      );
     }
 
     function subscribeChampion() {
@@ -835,7 +853,20 @@
 
       // Bentuk output standard — sertakan _champSourceKey dan _champActiveLen terus dalam objek return
       // Index BELUM dinaikkan — hanya dinaikkan bila user sahkan (champCommitItem)
-      if (sourceKey === 'motivasi' || sourceKey === 'perjanjian') {
+      if (sourceKey === 'otherMotivation') {
+        return {
+          source: 'otherMotivation',
+          title: item.title || '',
+          depan: item.text || item.title || '',
+          belakang: '',
+          adaFlip: false,
+          imageUrl: item.imageUrl || '',
+          imgRatioW: item.imgRatioW || 16,
+          imgRatioH: item.imgRatioH || 9,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
+        };
+      } else if (sourceKey === 'motivasi' || sourceKey === 'perjanjian') {
         var adaFlip = item.text && item.text.includes('=');
         return {
           source: sourceKey,
@@ -910,7 +941,7 @@
         };
       }
 
-      var sourceLabel = { motivasi: 'MOTIVASI', perjanjian: 'PERJANJIAN', rutin: 'RUTIN', supplement: 'SUPLEMEN', water: 'AIR' };
+      var sourceLabel = { motivasi: 'MOTIVASI', perjanjian: 'PERJANJIAN', rutin: 'RUTIN', supplement: 'SUPLEMEN', water: 'AIR', otherMotivation: 'MOTIVASI LAIN' };      
       isFlipped = false; showTips = false;
       setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + ' · ' + item.title);
       setText('play-mode', 'CHAMPION · ' + (sourceLabel[item.source] || item.source));
@@ -918,6 +949,17 @@
       setText('main-text', item.depan);
       setText('play-progress', item.adaFlip ? '(Flip untuk penerangan)' : '(Tekan SETERUSNYA untuk teruskan)');
       setText('play-meta', '');
+
+      // Papar gambar untuk otherMotivation
+      var cardImg = document.getElementById('card-img');
+      if (item.source === 'otherMotivation' && item.imageUrl) {
+        cardImg.src = item.imageUrl;
+        cardImg.style.display = 'block';
+        autoFitImage((item.depan || '').length);
+      } else {
+        cardImg.style.display = 'none';
+        cardImg.src = '';
+      }
       setText('play-err', '');
       setCardImage('');
       var mainEl = document.getElementById('main-text');
