@@ -2589,7 +2589,8 @@ setText('play-err', '');
       await db.collection('users').doc(currentUser.uid).collection('other_motivation').add({
         title: '', text: '', imageUrl: '', order: maxOrder + 1, createdAt: Date.now()
       });
-      showToast('✅ Motivasi berjaya ditambah.');
+      setText('om-status', '✅ Motivasi berjaya ditambah!');
+      setTimeout(function() { setText('om-status', 'OTHER MOTIVATION'); }, 2000);
     };
 
     function loadOtherMotivation() {
