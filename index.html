@@ -158,8 +158,6 @@
     }
     .progress { font-size: 0.72rem; margin-top: 1px; }
     .meta { font-size: 0.65rem; color: #444; margin-top: 1px; }
-    #play-overall { font-size: 0.68rem; font-weight: bold; letter-spacing: 0.02em; }
-
     .msg { text-align: center; font-size: 0.75rem; margin: 2px 0; min-height: 0.9em; }
     .error { color: #800; font-weight: bold; }
     .footer { text-align: center; font-size: 0.65rem; color: #666; margin-top: 8px; }
@@ -337,7 +335,6 @@
       <div class="meta" id="play-meta"></div>
     </div>
     <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
-    <div id="play-overall" style="padding:2px 0;font-size:0.65rem;color:#555;text-align:center;margin-top:2px;min-height:1em;"></div>
     <div class="btn-row">
       <button id="btn-back-menu" class="btn-sm btn-menu">Menu</button>
       <button id="btn-flip" class="btn-sm">Flip</button>
@@ -1825,49 +1822,6 @@
       setText('play-progress', c.isTamat ? '' : (fasaPos + ' / ' + fasaTotal));
 
       setText('play-meta', '');
-
-      // ── PROGRESS KESELURUHAN ──
-      (function() {
-        var overallEl = document.getElementById('play-overall');
-        if (!overallEl) return;
-        if (srModeAktif) {
-          overallEl.textContent = 'SR'; return;
-        }
-        if (jqModeSemasa) {
-          overallEl.textContent = 'JQ'; return;
-        }
-        if (c.isTamat || !cards.length) {
-          overallEl.textContent = ''; return;
-        }
-
-        if (mode === 'bahasa') {
-          var isLastPerkOverall = (activePerkataan && activePerkataan.isLastPerkataan === true);
-          overallEl.textContent = isLastPerkOverall ? '⬛ Laci hitam = perkataan akhir dalam jenis kata ini' : '';
-        } else if (mode === 'fakta' && !srModeAktif) {
-          var isLast10Overall = false;
-          if (activeTopic && activeTopic.totalBaris > 0) {
-            var c0o = cards[cardIndex];
-            if (c0o && !c0o.isTamat && c0o.itemIndex !== undefined && c0o.itemIndex !== null) {
-              var totalBo = activeTopic.totalBaris;
-              var barisGlobalO = 0;
-              var adSortedO = allDrawers
-                .filter(function(d) { return d.topicId === activeTopic.id; })
-                .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
-              for (var adio = 0; adio < adSortedO.length; adio++) {
-                var ado = adSortedO[adio];
-                if (ado.id === c0o.drawerId) { barisGlobalO += (c0o.itemIndex + 1); break; }
-                if (ado.items && ado.items.length) {
-                  ado.items.forEach(function(it) { if (it.ayat && it.ayat.trim()) barisGlobalO++; });
-                }
-              }
-              isLast10Overall = (totalBo - barisGlobalO) < 10;
-            }
-          }
-          overallEl.textContent = isLast10Overall ? '⬛ Laci hitam = 10 baris terakhir dalam topik ini' : '';
-        } else {
-          overallEl.textContent = '';
-        }
-      })();
 
       var displayText = '';
       if (c.isGambar) {
