@@ -951,18 +951,15 @@
       setText('play-progress', item.adaFlip ? '(Flip untuk penerangan)' : '(Tekan SETERUSNYA untuk teruskan)');
       setText('play-meta', '');
 
-      // Papar gambar untuk otherMotivation
-      var cardImg = document.getElementById('card-img');
+setText('play-err', '');
+      // Papar gambar untuk otherMotivation — kena letak selepas setCardImage
       if (item.source === 'otherMotivation' && item.imageUrl) {
-        cardImg.src = item.imageUrl;
-        cardImg.style.display = 'block';
+        setCardImage(item.imageUrl);
         autoFitImage((item.depan || '').length);
       } else {
-        cardImg.style.display = 'none';
-        cardImg.src = '';
+        setCardImage('');
       }
-      setText('play-err', '');
-      setCardImage('');
+      
       var mainEl = document.getElementById('main-text');
       if (mainEl) mainEl.className = item.depan.length > 80 ? 'big-text long-text' : 'big-text';
 
