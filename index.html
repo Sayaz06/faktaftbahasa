@@ -3165,20 +3165,17 @@
       var namesEl = document.getElementById('ws-notif-names');
       if (!badge) return;
 
-      // Kumpul nama unik (guna fromKey untuk dedupe, display guna from)
+      // Kira bilangan nama unik
       var seen = {};
-      var names = [];
+      var uniqueCount = 0;
       _wsNotifDocs.forEach(function(d) {
         var key = d.fromKey || d.from.toLowerCase();
-        if (!seen[key]) {
-          seen[key] = true;
-          names.push(d.from);
-        }
+        if (!seen[key]) { seen[key] = true; uniqueCount++; }
       });
 
-      if (names.length > 0) {
+      if (uniqueCount > 0) {
         badge.className = 'active';
-        if (namesEl) namesEl.textContent = '🔔 ' + names.join('\n');
+        if (namesEl) namesEl.textContent = '🔔 Noti : ' + uniqueCount;
       } else {
         badge.className = '';
         if (namesEl) namesEl.textContent = '';
