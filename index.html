@@ -3139,7 +3139,7 @@
               _wsNotifDocs.push(d);
             } else {
               var diff = Math.abs(seen[key] - d.ts);
-              if (diff > 500) {
+              if (diff > 1500) {
                 // Beza lebih 500ms — ini mesej berlainan, masuk
                 _wsNotifDocs.push(d);
                 seen[key] = d.ts;
