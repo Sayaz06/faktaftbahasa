@@ -2918,11 +2918,23 @@
       isLoading = false;
       clearBlockCard();
       if (mode === 'bahasa') {
-        if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesai) {
-          resetBahasaKePerkataanPertama();
-        } else {
-          startBahasa();
-        }
+        // Refresh jenis_kata dari Firebase dulu
+        db.collection('users').doc(currentUser.uid).collection('jenis_kata').get()
+          .then(function(snap) {
+            allJenisKata = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
+            if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesai) {
+              resetBahasaKePerkataanPertama();
+            } else {
+              startBahasa();
+            }
+          }).catch(function() {
+            if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesai) {
+              resetBahasaKePerkataanPertama();
+            } else {
+              startBahasa();
+            }
+          });
       } else if (mode === 'fakta') {
         if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesaiFakta) {
           resetLastDrawer();
