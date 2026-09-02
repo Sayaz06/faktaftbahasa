@@ -414,6 +414,9 @@
     <div class="btn-row" style="margin-top:4px;">
       <button id="btn-jq" class="btn-sm" style="width:100%;font-size:0.75rem;">JQ: OFF</button>
     </div>
+    <div class="btn-row" style="margin-top:4px;">
+      <button id="btn-jenis-seterusnya" class="btn-sm" style="display:none;width:100%;font-size:0.72rem;border-color:#22c55e;color:#22c55e;">→ Jenis Kata Seterusnya</button>
+    </div>
     <div id="play-err" class="msg error"></div>
   </div>
 
@@ -806,12 +809,15 @@
       // Hanya fetch metadata yang diperlukan — drawer laci diambil satu-satu on-demand
       Promise.all([
         db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
-        db.collection('users').doc(uid).collection('topics').get()
+        db.collection('users').doc(uid).collection('topics').get(),
+        db.collection('users').doc(uid).collection('jenis_kata').get()
       ]).then(function(res) {
         allBahasaPerkataan = [];
         res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
         allTopics = [];
         res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
+        allJenisKata = [];
+        res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
         cb && cb();
       }).catch(function(e) {
         setText('play-err', 'Gagal load: ' + e.message);
@@ -1976,6 +1982,8 @@
 
     function resetBahasaKePerkataanPertama() {
       if (!currentUser) return;
+      var btnJS = document.getElementById('btn-jenis-seterusnya');
+      if (btnJS) btnJS.style.display = 'none';
       var jenisId = activePerkataan ? activePerkataan.jenisId : null;
       var sorted = allBahasaPerkataan
         .filter(function(p) { return !jenisId || p.jenisId === jenisId; })
@@ -2064,8 +2072,36 @@
       // Habis semua perkataan — tunjuk JQ dulu, kemudian kad "selesai"
       // Tunjuk JQ pertama, kemudian kad "selesai"
       function _tunjukKadSelesai() {
+        // Cari jenis kata seterusnya (sort sama seperti releasestress — localeCompare numeric)
+        var jenisSemasaId = activePerkataan ? activePerkataan.jenisId : null;
+        var allJenisSorted = allJenisKata.slice().sort(function(a, b) {
+          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+        });
+        var idxJenis = -1;
+        for (var ji = 0; ji < allJenisSorted.length; ji++) {
+          if (allJenisSorted[ji].id === jenisSemasaId) { idxJenis = ji; break; }
+        }
+        var jenisBerikut = (idxJenis >= 0 && idxJenis < allJenisSorted.length - 1)
+          ? allJenisSorted[idxJenis + 1] : null;
+
+        var btnJS = document.getElementById('btn-jenis-seterusnya');
+        if (btnJS) {
+          btnJS.style.display = 'block';
+          if (jenisBerikut) {
+            btnJS.textContent = '→ Jenis Kata Seterusnya';
+            btnJS.style.borderColor = '#22c55e';
+            btnJS.style.color = '#22c55e';
+            btnJS._jenisBerikutId = jenisBerikut.id;
+          } else {
+            btnJS.textContent = '→ Tiada Jenis Kata Seterusnya, sila tambah di app phone dan reset kindle semula.';
+            btnJS.style.borderColor = '#f87171';
+            btnJS.style.color = '#f87171';
+            btnJS._jenisBerikutId = null;
+          }
+        }
+
         cards = [{
-          front: 'Semua perkataan dalam jenis kata ini telah selesai.\nTekan SETERUSNYA untuk kembali ke perkataan pertama,\natau tick perkataan dalam jenis kata lain di phone.',
+          front: 'Semua perkataan dalam jenis kata ini telah selesai.',
           back: '', tips: '', imageUrl: '',
           title: '', drawerId: null,
           isF0: false, isTamat: false, isSR: false,
@@ -2852,6 +2888,54 @@
       }
     };
     document.getElementById('btn-next').onclick = nextCard;
+
+    document.getElementById('btn-jenis-seterusnya').addEventListener('click', function() {
+      var jenisBerikutId = this._jenisBerikutId;
+      if (!jenisBerikutId || !currentUser) return;
+      var uid = currentUser.uid;
+
+      // Sembunyi button
+      this.style.display = 'none';
+
+      // Cari perkataan pertama dalam jenis kata berikut (sort localeCompare numeric)
+      var perkataanDlmJenis = allBahasaPerkataan
+        .filter(function(p) { return p.jenisId === jenisBerikutId; })
+        .sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }); });
+
+      if (!perkataanDlmJenis.length) {
+        setText('play-err', 'Tiada perkataan dalam jenis kata ini.');
+        return;
+      }
+
+      var pertama = perkataanDlmJenis[0];
+      var batch = db.batch();
+
+      // Buang isActive semua perkataan
+      for (var k = 0; k < allBahasaPerkataan.length; k++) {
+        if (allBahasaPerkataan[k].isActive) {
+          batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
+          allBahasaPerkataan[k].isActive = false;
+        }
+      }
+
+      // Tick perkataan pertama jenis kata berikut
+      batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+      pertama.isActive = true;
+      pertama.lastIndex = 0;
+      pertama.lastDrawerId = null;
+
+      batch.commit().then(function() {
+        activePerkataan = pertama;
+        rebuildBahasaCards(function(ok) {
+          isBusy = false;
+          if (!ok) return;
+          setText('play-status', 'BAHASA · ' + (pertama.name || ''));
+          renderCard();
+        });
+      }).catch(function(e) {
+        setText('play-err', 'Ralat: ' + (e.message || e));
+      });
+    });    
     document.getElementById('counter-box').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
       if (window._jqMotivasiHandler) {
