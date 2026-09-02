@@ -257,6 +257,24 @@
       max-width: 160px;
     }
     #ws-notif-badge.active { display: block; }
+    #btn-jenis-seterusnya-float {
+      display: none;
+      position: fixed; top: 8px; right: 8px;
+      background: #fff; color: #16a34a;
+      border: 2px solid #16a34a; border-radius: 10px;
+      padding: 5px 10px; font-size: 0.72rem; font-weight: bold;
+      cursor: pointer; z-index: 10000;
+      max-width: 160px; text-align: center; line-height: 1.4;
+    }
+    #btn-jenis-seterusnya-float.tiada {
+      color: #c00; border-color: #c00;
+    }
+    #btn-jenis-seterusnya-float.active { display: block; }
+    /* Kalau badge notif pun aktif, geser button jenis ke kiri */
+    #ws-notif-badge.active ~ #btn-jenis-seterusnya-float.active,
+    body.jenis-btn-aktif #btn-jenis-seterusnya-float.active {
+      right: 8px; top: 50px;
+    }
     #ws-notif-overlay {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
@@ -450,7 +468,9 @@
   ">🔒</button>
 
   <!-- ══ WS NOTIFICATION BADGE ══ -->
-  <div id="ws-notif-badge"><span id="ws-notif-names"></span></div>  
+  <div id="ws-notif-badge"><span id="ws-notif-names"></span></div>
+  <!-- ══ BUTTON JENIS SETERUSNYA ══ -->
+  <button id="btn-jenis-seterusnya-float"></button>
 
   <!-- ══ WS NOTIFICATION OVERLAY ══ -->
   <div id="ws-notif-overlay">
@@ -1982,8 +2002,6 @@
 
     function resetBahasaKePerkataanPertama() {
       if (!currentUser) return;
-      var btnJS = document.getElementById('btn-jenis-seterusnya');
-      if (btnJS) btnJS.style.display = 'none';
       var jenisId = activePerkataan ? activePerkataan.jenisId : null;
       var sorted = allBahasaPerkataan
         .filter(function(p) { return !jenisId || p.jenisId === jenisId; })
@@ -2084,19 +2102,20 @@
         var jenisBerikut = (idxJenis >= 0 && idxJenis < allJenisSorted.length - 1)
           ? allJenisSorted[idxJenis + 1] : null;
 
-        var btnJS = document.getElementById('btn-jenis-seterusnya');
-        if (btnJS) {
-          btnJS.style.display = 'block';
-          if (jenisBerikut) {
-            btnJS.textContent = '→ Jenis Kata Seterusnya';
-            btnJS.style.borderColor = '#22c55e';
-            btnJS.style.color = '#22c55e';
-            btnJS._jenisBerikutId = jenisBerikut.id;
+        // Tunjuk button float — kekal sampai user tekan
+        var btnFloat = document.getElementById('btn-jenis-seterusnya-float');
+        if (btnFloat) {
+          btnFloat.className = jenisBerikut ? 'active' : 'active tiada';
+          btnFloat._jenisBerikutId = jenisBerikut ? jenisBerikut.id : null;
+          btnFloat.textContent = jenisBerikut
+            ? '→ Jenis Kata Seterusnya'
+            : '→ Tiada Jenis Kata Seterusnya, sila tambah di app phone dan reset kindle semula.';
+          // Adjust posisi kalau badge notif aktif
+          var badge = document.getElementById('ws-notif-badge');
+          if (badge && badge.classList.contains('active')) {
+            btnFloat.style.top = '50px';
           } else {
-            btnJS.textContent = '→ Tiada Jenis Kata Seterusnya, sila tambah di app phone dan reset kindle semula.';
-            btnJS.style.borderColor = '#f87171';
-            btnJS.style.color = '#f87171';
-            btnJS._jenisBerikutId = null;
+            btnFloat.style.top = '8px';
           }
         }
 
@@ -2889,15 +2908,16 @@
     };
     document.getElementById('btn-next').onclick = nextCard;
 
-    document.getElementById('btn-jenis-seterusnya').addEventListener('click', function() {
+    document.getElementById('btn-jenis-seterusnya-float').addEventListener('click', function() {
       var jenisBerikutId = this._jenisBerikutId;
       if (!jenisBerikutId || !currentUser) return;
       var uid = currentUser.uid;
+      var self = this;
 
-      // Sembunyi button
-      this.style.display = 'none';
+      // Sembunyi button — hanya bila user tekan
+      self.className = '';
 
-      // Cari perkataan pertama dalam jenis kata berikut (sort localeCompare numeric)
+      // Cari perkataan pertama dalam jenis kata berikut
       var perkataanDlmJenis = allBahasaPerkataan
         .filter(function(p) { return p.jenisId === jenisBerikutId; })
         .sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }); });
@@ -2934,8 +2954,9 @@
         });
       }).catch(function(e) {
         setText('play-err', 'Ralat: ' + (e.message || e));
+        self.className = 'active';
       });
-    });    
+    });
     document.getElementById('counter-box').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
       if (window._jqMotivasiHandler) {
