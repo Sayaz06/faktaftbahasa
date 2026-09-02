@@ -2,54 +2,3497 @@
 <html lang="ms">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test Audio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kindle App — Fakta/Bahasa</title>
   <style>
-    body { font-family: Georgia, serif; text-align: center; padding: 40px 20px; background: #fff; }
-    h2 { font-size: 1.2rem; margin-bottom: 30px; }
-    button {
-      display: block; width: 100%; max-width: 300px; margin: 10px auto;
-      padding: 16px; font-size: 1rem; font-weight: bold;
-      border: 2px solid #000; border-radius: 8px;
-      background: #000; color: #fff; cursor: pointer;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #fff;
+      color: #000;
+      font-family: Georgia, "Times New Roman", serif;
+      -webkit-text-size-adjust: 100%;
     }
-    button.stop { background: #fff; color: #000; }
-    #status {
-      margin-top: 20px; font-size: 0.85rem; color: #555;
-      min-height: 2em;
+    body {
+      padding: 4px 6px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    #screen-om-edit.active { display: flex; }
+
+    h1 { font-size: 1.15rem; text-align: center; margin: 4px 0 6px; }
+    .sub { text-align: center; font-size: 0.78rem; color: #333; margin-bottom: 8px; }
+
+    .btn {
+      display: block; width: 100%; padding: 11px 8px; margin: 4px 0;
+      font-size: 1.05rem; font-weight: bold; text-align: center;
+      border: 2px solid #000; background: #fff; color: #000;
+      cursor: pointer; border-radius: 6px;
+    }
+    .btn:active { background: #000; color: #fff; }
+    .btn-primary { background: #000; color: #fff; }
+    .btn-primary:active { background: #333; }
+    .btn-primary:disabled, .btn-primary[disabled] {
+      background: #999; border-color: #999; color: #fff; cursor: not-allowed;
+    }
+    .btn:disabled, .btn[disabled] {
+      background: #eee; border-color: #aaa; color: #aaa; cursor: not-allowed;
+    }    
+
+    .btn-row {
+      display: table;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 4px 0;
+      margin: 3px 0 0;
+    }
+    .btn-row .btn-sm {
+      display: table-cell;
+      width: 25%;
+      padding: 16px 2px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-align: center;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      cursor: pointer;
+      border-radius: 6px;
+      vertical-align: middle;
+    }
+    .btn-row .btn-sm.on { background: #000; color: #fff; }
+    .btn-row .btn-sm:active { background: #000; color: #fff; }
+    .btn-row .btn-menu {
+      background: #ddd;
+      color: #000;
+    }   
+
+    .pin-input {
+      width: 100%; padding: 12px; font-size: 1.4rem; text-align: center;
+      letter-spacing: 0.3em; border: 2px solid #000; border-radius: 8px;
+      background: #fff; color: #000; outline: none; margin: 8px 0;
+      font-family: monospace;
+    }
+
+    .status-bar {
+      border: 1px solid #000; padding: 3px 6px; font-size: 0.68rem;
+      text-align: center; margin-bottom: 3px; background: #f5f5f5;
+    }
+    .counter-box {
+      border: 3px solid #000; border-radius: 10px; padding: 6px 8px;
+      text-align: center; margin: 3px 0;
+    }
+    .counter-box.last-perkataan {
+      background: #000; color: #fff;
+    }
+    .counter-box.last-perkataan .mode-label,
+    .counter-box.last-perkataan .side-label,
+    .counter-box.last-perkataan .big-text,
+    .counter-box.last-perkataan .progress,
+    .counter-box.last-perkataan .meta {
+      color: #fff;
+    }
+    .mode-label { font-size: 0.65rem; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 1px; }
+    .side-label { font-size: 0.65rem; font-weight: bold; margin-bottom: 1px; }
+    .big-text {
+      font-size: 1.25rem; line-height: 1.3; font-weight: bold;
+      word-break: break-word; margin: 3px 0; white-space: pre-wrap;
+      text-align: center;
+    }
+    .big-text.tips-mode {
+      font-size: 0.92rem;
+      line-height: 1.4;
+      font-weight: normal;
+      text-align: left;
+    }
+
+    /* ── TIPS CLOSE BUTTON ── */
+    #tips-close-btn {
+      display: none;
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      z-index: 888;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid #000;
+      background: #fff;
+      color: #000;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+    }
+    #tips-close-btn.visible { display: flex; }
+    .big-text.long-text {
+      font-size: 1.05rem;
+      line-height: 1.3;
+    }
+    .big-text.extra-long {
+      font-size: 0.85rem;
+      line-height: 1.3;
+      font-weight: normal;
+    }
+    .big-text.ultra-long {
+      font-size: 0.72rem;
+      line-height: 1.3;
+      font-weight: normal;
+    }
+    .card-img {
+      display: block; max-width: 100%;
+      margin: 2px auto; border: 1px solid #000;
+      /* max-height dikawal JS autoFit */
+    }
+    .card-img-placeholder {
+      display: none;
+      width: 100%;
+      margin: 2px auto;
+      border: 1px dashed #aaa;
+      background: #f5f5f5;
+      box-sizing: border-box;
+    }
+    .progress { font-size: 0.72rem; margin-top: 1px; }
+    .meta { font-size: 0.65rem; color: #444; margin-top: 1px; }
+    .msg { text-align: center; font-size: 0.75rem; margin: 2px 0; min-height: 0.9em; }
+    .error { color: #800; font-weight: bold; }
+    .footer { text-align: center; font-size: 0.65rem; color: #666; margin-top: 8px; }
+
+    /* ── CHAMPION CONFIRM OVERLAY ── */
+    .champ-overlay {
+      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6); z-index: 999;
+      align-items: center; justify-content: center;
+    }
+    .champ-overlay.active { display: flex; }
+    .champ-overlay-box {
+      background: #fff; border: 3px solid #000; border-radius: 12px;
+      padding: 18px 16px; max-width: 340px; width: 90%; text-align: center;
+    }
+    .champ-overlay-title {
+      font-size: 0.72rem; font-weight: bold; letter-spacing: 0.05em;
+      text-transform: uppercase; color: #555; margin-bottom: 6px;
+    }
+    .champ-overlay-name {
+      font-size: 1.05rem; font-weight: bold; margin-bottom: 4px;
+    }
+    .champ-overlay-q {
+      font-size: 0.88rem; margin-bottom: 14px; color: #333;
+    }
+    .champ-overlay-btn-yes {
+      display: block; width: 100%; padding: 11px; margin-bottom: 24px;
+      font-size: 0.95rem; font-weight: bold; background: #000; color: #fff;
+      border: 2px solid #000; border-radius: 8px; cursor: pointer;
+    }
+    .champ-overlay-btn-skip {
+      display: block; width: 100%; padding: 11px; margin-top: 24px;
+      font-size: 0.82rem; font-weight: bold; background: #fff; color: #000;
+      border: 2px solid #aaa; border-radius: 8px; cursor: pointer;
+      line-height: 1.3;
+    }
+
+    /* ── GO-TICK ── */
+    .gt-screen { display: none; }
+    .gt-screen.active { display: block; }
+    .gt-tajuk-list { margin: 4px 0; }
+    .gt-tajuk-item {
+      display: block; width: 100%; padding: 11px 8px; margin: 4px 0;
+      font-size: 1.0rem; font-weight: bold; text-align: left;
+      border: 2px solid #000; background: #fff; color: #000;
+      cursor: pointer; border-radius: 6px;
+    }
+    .gt-tajuk-item.emergency {
+      border-color: #800; color: #800; background: #fff8f8;
+    }
+    .gt-tajuk-item:active { background: #000; color: #fff; }
+    .gt-tajuk-item.emergency:active { background: #800; color: #fff; }
+    .gt-tajuk-progress {
+      font-size: 0.7rem; font-weight: normal; color: #555; margin-left: 6px;
+    }
+    .gt-tajuk-progress.done { color: #080; font-weight: bold; }
+    .gt-checklist { margin: 4px 0; }
+    .gt-group-label {
+      font-size: 0.7rem; font-weight: bold; text-transform: uppercase;
+      letter-spacing: 0.05em; color: #555; margin: 8px 0 3px;
+      border-bottom: 1px solid #ccc; padding-bottom: 2px;
+    }
+    .gt-item-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 4px; border-bottom: 1px solid #eee; cursor: pointer;
+    }
+    .gt-item-row:active { background: #f0f0f0; }
+    .gt-checkbox {
+      width: 22px; height: 22px; border: 2px solid #000;
+      border-radius: 4px; flex-shrink: 0; display: flex;
+      align-items: center; justify-content: center; font-size: 1rem;
+    }
+    .gt-checkbox.ticked { background: #000; color: #fff; }
+    .gt-item-name {
+      font-size: 0.95rem; flex: 1;
+    }
+    .gt-item-name.ticked { text-decoration: line-through; color: #888; }
+    .gt-status-bar {
+      border: 1px solid #000; padding: 3px 6px; font-size: 0.68rem;
+      text-align: center; margin-bottom: 3px; background: #f5f5f5;
+    }
+    .gt-emergency-badge {
+      font-size: 0.65rem; background: #800; color: #fff;
+      padding: 1px 6px; border-radius: 4px; margin-left: 4px;
+    }
+
+    /* ── WS NOTIFICATION BADGE ── */
+    #ws-notif-badge {
+      display: none;
+      position: fixed; top: 8px; right: 8px;
+      background: #000; color: #fff;
+      border: 2px solid #000; border-radius: 10px;
+      padding: 5px 12px; font-size: 0.78rem; font-weight: bold;
+      cursor: pointer; z-index: 10000;
+      letter-spacing: 0.03em;
+      line-height: 1.6; white-space: pre-line; text-align: left;
+      max-width: 160px;
+    }
+    #ws-notif-badge.active { display: block; }
+    #btn-jenis-seterusnya-float {
+      display: none;
+      position: fixed; top: 8px; right: 8px;
+      background: #fff; color: #16a34a;
+      border: 2px solid #16a34a; border-radius: 10px;
+      padding: 5px 10px; font-size: 0.72rem; font-weight: bold;
+      cursor: pointer; z-index: 10000;
+      max-width: 160px; text-align: center; line-height: 1.4;
+    }
+    #btn-jenis-seterusnya-float.tiada {
+      color: #c00; border-color: #c00;
+    }
+    #btn-jenis-seterusnya-float.active { display: block; }
+    /* Kalau badge notif pun aktif, geser button jenis ke kiri */
+    #ws-notif-badge.active ~ #btn-jenis-seterusnya-float.active,
+    body.jenis-btn-aktif #btn-jenis-seterusnya-float.active {
+      right: 8px; top: 50px;
+    }
+    #ws-notif-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 10001;
+      align-items: center; justify-content: center;
+    }
+    #ws-notif-overlay.active { display: flex; }
+    #ws-notif-box {
+      background: #fff; border: 3px solid #000; border-radius: 10px;
+      padding: 16px; width: 90%; max-width: 340px;
+    }
+    #ws-notif-title {
+      font-size: 0.85rem; font-weight: bold; text-align: center;
+      margin-bottom: 10px; border-bottom: 1px solid #ccc; padding-bottom: 8px;
+    }
+    #ws-notif-list { max-height: 220px; overflow-y: auto; margin-bottom: 12px; }
+    .ws-notif-item {
+      border: 1px solid #ddd; border-radius: 6px;
+      padding: 8px 10px; margin-bottom: 6px;
+      font-size: 0.82rem; line-height: 1.5;
+    }
+    .ws-notif-from { font-weight: bold; font-size: 0.78rem; color: #333; margin-bottom: 2px; }
+    .ws-notif-msg { color: #000; }
+    #ws-notif-input {
+      display: block; width: 100%; padding: 9px;
+      font-size: 0.95rem; border: 2px solid #000;
+      border-radius: 6px; text-align: center;
+      margin-bottom: 8px; box-sizing: border-box;
+    }
+    #ws-notif-err { color: #c00; font-size: 0.75rem; text-align: center; min-height: 1em; margin-bottom: 4px; }
+    #btn-ws-notif-ok {
+      display: block; width: 100%; padding: 10px;
+      background: #000; color: #fff; font-weight: bold;
+      border: 2px solid #000; border-radius: 6px;
+      font-size: 0.95rem; cursor: pointer;
+    }
+    #btn-ws-notif-batal {
+      display: block; width: 100%; padding: 10px;
+      background: #fff; color: #000; font-weight: bold;
+      border: 2px solid #000; border-radius: 6px;
+      font-size: 0.88rem; cursor: pointer; margin-top: 6px;
     }
   </style>
 </head>
 <body>
-  <h2>🔊 Test Audio Kindle</h2>
-  <button id="btn-play" onclick="playAudio()">▶ Play</button>
-  <button id="btn-stop" class="stop" onclick="stopAudio()">■ Stop</button>
-  <div id="status">Sedia.</div>
+
+  <div id="screen-login" class="screen active">
+    <h1>Istigfar Kindle</h1>
+    <div class="sub">Linked dengan phone · PIN</div>
+    <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
+    <button id="btn-login" class="btn btn-primary">Masuk</button>
+    <div id="login-msg" class="msg"></div>
+  </div>
+
+  <div id="screen-menu" class="screen">
+    <h1>Istigfar Kindle</h1>
+    <div class="sub" id="menu-user">—</div>
+    <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
+    <button id="btn-go-fakta" class="btn">Laci Fakta</button>
+    <button id="btn-go-gotick" class="btn">Go-Tick ✓</button>
+    <button id="btn-go-other-motivation" class="btn">✨ Other Motivation</button>
+    <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
+    <div class="footer">SR auto-check · progress sync phone</div>
+  </div>
+
+  <!-- SCREEN: OTHER MOTIVATION -->
+  <div id="screen-other-motivation" class="screen">
+    <div class="status-bar" id="om-status">OTHER MOTIVATION</div>
+    <button id="btn-om-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Motivasi</button>
+    <div id="om-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
+    <button id="btn-om-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Senarai</button>
+  </div>
+
+  <!-- PADAM OTHER MOTIVATION OVERLAY -->
+  <div id="om-del-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border:3px solid #c00;border-radius:10px;padding:20px;width:85%;max-width:320px;text-align:center;">
+      <div style="font-size:0.9rem;font-weight:bold;margin-bottom:10px;">Taip "padam" untuk confirm:</div>
+      <input id="om-del-input" type="text" placeholder="padam" style="width:100%;padding:10px;font-size:1rem;border:2px solid #c00;border-radius:6px;text-align:center;box-sizing:border-box;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button id="btn-om-del-cancel" style="flex:1;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Batal</button>
+        <button id="btn-om-del-ok" style="flex:1;padding:10px;border:2px solid #c00;background:#c00;color:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Padam</button>
+      </div>
+      <div id="om-del-err" style="color:#c00;font-size:0.78rem;margin-top:8px;min-height:1em;"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: OTHER MOTIVATION EDIT -->  
+  <div id="screen-om-edit" class="screen" style="flex-direction:column;height:100vh;padding:8px;box-sizing:border-box;">  
+    <div class="status-bar" id="om-edit-status">EDIT MOTIVASI</div>
+
+    <!-- Tajuk -->
+    <div style="font-size:0.72rem;color:#555;margin:6px 0 2px;">Tajuk:</div>
+    <input id="om-edit-title" type="text" placeholder="Tajuk motivasi..."
+      style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;margin-bottom:8px;">
+
+    <!-- Teks — textarea besar, boleh scroll, keyboard tak tindih -->
+    <div style="font-size:0.72rem;color:#555;margin-bottom:2px;">Teks:</div>
+    <textarea id="om-edit-text" placeholder="Teks motivasi..."
+      style="width:100%;flex:1;padding:10px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;resize:none;line-height:1.6;min-height:200px;"></textarea>
+
+    <!-- Gambar -->
+    <div id="om-edit-img-wrap" style="margin-top:8px;text-align:center;font-size:0.72rem;color:#888;font-style:italic;">Tiada gambar lagi</div>
+
+    <!-- Buttons -->
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button id="btn-om-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Balik</button>
+      <button id="btn-om-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Simpan ✓</button>
+    </div>
+    <button id="btn-om-edit-del" style="width:100%;margin-top:8px;padding:10px;border:2px solid #c00;background:#fff;color:#c00;font-weight:bold;border-radius:8px;cursor:pointer;">🗑️ Padam Laci Ini</button>
+    <div id="om-edit-msg" style="text-align:center;font-size:0.75rem;color:#555;margin-top:6px;min-height:1em;"></div>
+  </div>
+  
+  <!-- SCREEN: GO-TICK SENARAI DESTINASI -->  
+  <div id="screen-gotick-list" class="screen">
+    <div class="gt-status-bar" id="gt-list-status">Go-Tick</div>
+    <h1>Go-Tick</h1>
+    <div class="gt-tajuk-list" id="gt-tajuk-list">
+      <div class="msg">Memuatkan...</div>
+    </div>
+    <button id="btn-gt-back-menu" class="btn" style="margin-top:8px;font-size:0.9rem;padding:10px;">← Menu</button>
+    <div id="gt-list-err" class="msg error"></div>
+  </div>
+
+  <!-- SCREEN: GO-TICK CHECKLIST DALAM DESTINASI -->
+  <div id="screen-gotick-check" class="screen">
+    <div class="gt-status-bar" id="gt-check-status">—</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0 6px;">
+      <button id="btn-gt-back-list" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">← Destinasi</button>
+      <button id="btn-gt-untick-all-global" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">Untick Semua</button>
+    </div>
+    <div class="gt-checklist" id="gt-checklist"></div>
+    <div id="gt-check-err" class="msg error"></div>
+  </div>
+  
+  <button id="tips-close-btn" title="Tutup Tips">×</button>
+
+  <div id="screen-play" class="screen">
+    <div class="status-bar" id="play-status">—</div>
+    <div class="counter-box" id="counter-box">
+      <div class="mode-label" id="play-mode">—</div>
+      <div class="side-label" id="side-label">MUKA DEPAN</div>
+            <img id="card-img" class="card-img" alt="" style="display:none;">
+      <div id="card-img-placeholder" class="card-img-placeholder"></div>
+      <div class="big-text" id="main-text">—</div>
+      <div class="progress" id="play-progress"></div>
+      <div class="meta" id="play-meta"></div>
+    </div>
+    <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>    
+    <div class="btn-row">
+      <button id="btn-back-menu" class="btn-sm btn-menu">Menu</button>
+      <button id="btn-flip" class="btn-sm">Flip</button>
+      <button id="btn-tips" class="btn-sm">Tips</button>
+      <button id="btn-reload" class="btn-sm">Reload</button>
+    </div>
+    <div class="btn-row" style="margin-top:4px;">
+      <button id="btn-jq" class="btn-sm" style="width:100%;font-size:0.75rem;">JQ: OFF</button>
+    </div>
+    <div class="btn-row" style="margin-top:4px;">
+      <button id="btn-jenis-seterusnya" class="btn-sm" style="display:none;width:100%;font-size:0.72rem;border-color:#22c55e;color:#22c55e;">→ Jenis Kata Seterusnya</button>
+    </div>
+    <div id="play-err" class="msg error"></div>
+  </div>
+
+  <!-- Popup PIN untuk ON JQ -->
+  <div id="jq-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;">
+    <div style="margin:20px auto 0;background:#fff;border:2px solid #000;border-radius:8px;padding:10px 12px;max-width:300px;width:90%;text-align:center;">
+      <div style="font-weight:bold;font-size:0.85rem;margin-bottom:6px;">Masukkan PIN untuk ON JQ</div>
+      <input id="jq-pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off" style="padding:7px;font-size:1.1rem;margin:4px 0;">
+      <button id="jq-pin-ok" class="btn btn-primary" style="margin-top:3px;padding:8px;">Sahkan</button>
+      <button id="jq-pin-batal" class="btn" style="margin-top:3px;padding:8px;">Batal</button>
+      <div id="jq-pin-msg" class="msg error"></div>
+    </div>
+  </div>
+
+  <!-- LOCK OVERLAY -->
+  <div id="lock-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:99999;flex-direction:column;align-items:center;justify-content:center;">
+    <div style="color:#fff;font-size:1.1rem;font-weight:bold;letter-spacing:0.15em;margin-bottom:24px;opacity:0.5;">🔒 LOCKED</div>
+    <input id="lock-pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off" style="max-width:200px;background:#111;color:#fff;border-color:#444;">
+    <button id="lock-pin-ok" class="btn btn-primary" style="max-width:200px;margin-top:8px;padding:10px;">Unlock</button>
+    <div id="lock-pin-msg" style="color:#f44;font-size:0.8rem;margin-top:8px;min-height:1.2em;"></div>
+  </div>
+
+  <!-- BUTANG LOCK TERAPUNG -->
+  <button id="btn-lock-float" style="
+    position:fixed;bottom:18px;right:18px;
+    width:42px;height:42px;border-radius:50%;
+    border:2px solid #000;background:#fff;color:#000;
+    font-size:1.1rem;cursor:pointer;z-index:9998;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 8px rgba(0,0,0,0.18);
+  ">🔒</button>
+
+  <!-- ══ WS NOTIFICATION BADGE ══ -->
+  <div id="ws-notif-badge"><span id="ws-notif-names"></span></div>
+  <!-- ══ BUTTON JENIS SETERUSNYA ══ -->
+  <button id="btn-jenis-seterusnya-float"></button>
+
+  <!-- ══ WS NOTIFICATION OVERLAY ══ -->
+  <div id="ws-notif-overlay">
+    <div id="ws-notif-box">
+      <div id="ws-notif-title">📬 Notifikasi</div>
+      <div style="font-size:0.72rem;color:#555;line-height:1.5;margin-bottom:10px;padding:8px;background:#f9f9f9;border-radius:6px;border:1px solid #ddd;">
+        Sekiranya terdapat lebih daripada satu perbualan aktif dalam tempoh yang sama, notifikasi akan dipaparkan sebagai <strong>"WhatsApp"</strong> dan bukannya nama pengirim sebenar. Walaupun demikian, notifikasi sebegini tetap memerlukan perhatian — sila ambil telefon dan semak WhatsApp anda. Sekiranya didapati ia berpunca daripada kumpulan yang kurang relevan, sila <strong>redam (mute)</strong> kumpulan tersebut bagi mengelakkan gangguan notifikasi pada masa hadapan.
+      </div>      
+      <div id="ws-notif-list"></div>
+      <input id="ws-notif-input" type="text" placeholder="Taip: dibaca" autocomplete="off">
+      <div id="ws-notif-err"></div>
+      <button id="btn-ws-notif-ok">✓ Tandakan Dibaca</button>
+      <button id="btn-ws-notif-batal">Batal</button>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>  
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 
   <script>
-    var audio = null;
+    var firebaseConfig = {
+      apiKey: "AIzaSyAGLX_xxH_dQ06epX4XCXtuSHN0DwZFMjA",
+      authDomain: "stress-auti-action.firebaseapp.com",
+      projectId: "stress-auti-action",
+      storageBucket: "stress-auti-action.firebasestorage.app",
+      messagingSenderId: "792580618622",
+      appId: "1:792580618622:web:f0efb1d630e795584d5b2f",
+      measurementId: "G-JH11TRZLGF"
+    };
+    firebase.initializeApp(firebaseConfig);
+    var auth = firebase.auth();
+    var db = firebase.firestore();
+    document.body.classList.add('auth-checking');
+    var ADMIN_EMAIL = 'adha86614@gmail.com';
 
-    function playAudio() {
-      try {
-        if (audio) { audio.pause(); audio = null; }
-        audio = new Audio('https://raw.githubusercontent.com/Sayaz06/Releasestress/main/SuperSayaz.mp3');
-        audio.onplay = function() { document.getElementById('status').textContent = '▶ Sedang main...'; };
-        audio.onended = function() { document.getElementById('status').textContent = '✓ Selesai.'; };
-        audio.onerror = function(e) { document.getElementById('status').textContent = '✗ Gagal: ' + (e.message || 'format tidak disokong atau tiada audio output.'); };
-        audio.play().then(function() {
-          document.getElementById('status').textContent = '▶ Sedang main...';
-        }).catch(function(e) {
-          document.getElementById('status').textContent = '✗ Gagal: ' + e.message;
+    var SR_INTERVALS = [
+      20 * 60 * 1000, 2 * 60 * 60 * 1000, 4 * 60 * 60 * 1000, 6 * 60 * 60 * 1000,
+      2 * 24 * 60 * 60 * 1000, 4 * 24 * 60 * 60 * 1000, 6 * 24 * 60 * 60 * 1000, 7 * 24 * 60 * 60 * 1000
+    ];
+
+    var currentUser = null;
+    var mode = '';
+    var cards = [];
+    var cardIndex = 0;
+    var isFlipped = false;
+    var showTips = false;
+    var isBusy = false;
+
+    var allBahasaDrawers = [];
+    var allBahasaPerkataan = [];
+    var allDrawers = [];
+    var allTopics = [];
+    var activePerkataan = null;
+    var activeTopic = null;
+    var srModeAktif = false;
+    var srLaciSemasa = null;
+        var srQueue = [];
+    var lastGambarHeight = 180; // simpan tinggi G1 untuk placeholder G2
+    var _srAdaCache = false; // cache: ada SR overdue atau tidak (dikemas kini selepas setiap afterTamat)
+    var jqKadSemasa = null;
+    var jqCardIndexSimpan = -1;
+    
+    // ── JQ (Jogging Queue) ──
+    var jqAktif = false;
+    var jqMotivasiList = [];
+    var jqMotivasiIdx = 0;
+    var jqModeSemasa = ''; // 'motivasi' atau ''
+    var jqPendingCardIndex = -1; // index kad F2 yang menunggu selepas motivasi (fakta)
+    var _jqMotivasiUnsubscribe = null; // untuk cleanup onSnapshot
+    var isLoading = false; // guard untuk elak double-trigger button
+
+    // ── CHAMPION QUEUE ──
+    var champSources = []; // sumber yang ditick: ['motivasi','perjanjian','rutin','supplement','water']
+    var champLastIdx = 0;  // giliran sumber terakhir
+    var champData = {      // cache data setiap sumber
+      motivasi: [],
+      perjanjian: [],
+      rutin: [],
+      supplement: [],
+      water: [],
+      otherMotivation: []
+    };
+    var champIdx = {       // index item semasa dalam setiap sumber
+      motivasi: 0, perjanjian: 0, rutin: 0, supplement: 0, water: 0, otherMotivation: 0
+    };
+    var allOtherMotivation = [];
+    var _champUnsubs = []; // cleanup onSnapshot
+    
+    function showScreen(id) {
+      var screens = document.querySelectorAll('.screen');
+      for (var i = 0; i < screens.length; i++) screens[i].className = 'screen';
+      var el = document.getElementById(id);
+      if (el) el.className = 'screen active';
+    }
+    function setText(id, t) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = t || '';
+    }
+    function getSRInterval(fasaIndex) {
+      if (fasaIndex < SR_INTERVALS.length) return SR_INTERVALS[fasaIndex];
+      return (8 + (fasaIndex - SR_INTERVALS.length)) * 24 * 60 * 60 * 1000;
+    }
+    function getLabelFasaSR(fasaIndex) {
+      var labels = [
+        'Fasa 1 — +20 minit', 'Fasa 2 — +2 jam', 'Fasa 3 — +4 jam', 'Fasa 4 — +6 jam',
+        'Fasa 5 — +2 hari', 'Fasa 6 — +4 hari', 'Fasa 7 — +6 hari', 'Fasa 8 — +7 hari'
+      ];
+      if (fasaIndex < labels.length) return labels[fasaIndex];
+      return 'Fasa ' + (fasaIndex + 1) + ' — +' + (8 + (fasaIndex - 8)) + ' hari';
+    }
+
+    /** Auto-saiz gambar: ambil saki-baki skrin, kecilkan bila ayat panjang */
+    function autoFitImage(textLen) {
+      var img = document.getElementById('card-img');
+      if (!img || img.style.display === 'none') return null;
+
+      var vh = window.innerHeight || 600;
+      // Rizab: status(~28) + labels(~36) + progress/meta(~36) + SETERUSNYA(~48) + btn-row(~44) + padding(~24)
+      var reserved = 220;
+      // Anggaran ketinggian teks (~18px per 28 aksara pada width ~380)
+      var textH = Math.ceil((textLen || 40) / 28) * 22;
+      if (textH < 30) textH = 30;
+      if (textH > 160) textH = 160;
+
+      var maxImg = vh - reserved - textH;
+      if (maxImg < 80) maxImg = 80;
+      if (maxImg > 320) maxImg = 320;
+
+      img.style.maxHeight = maxImg + 'px';
+      return maxImg;
+    }
+
+    function cardsFromBahasaDrawer(d, isSR) {
+      var out = [];
+      var title = d.title || 'Laci';
+      var tips0 = (d.tipsFasa0 || '').trim();
+      var tips12 = (d.tips || '').trim();
+      var img = d.imageUrl || '';
+      var r, i;
+
+      // Fasa Gambar × 10 (hanya jika ada gambar)
+      // r=0..4 → G1 (5 kad) | r=5..9 → G2 (5 kad)
+      var img2 = d.imageUrl11 || '';
+      if (img) {
+        for (r = 0; r < 10; r++) {
+          var isG2 = (r >= 5); // kad 6-10 guna G2
+          var imgFasa, frontFasa, gambarSlot;
+          if (!isG2) {
+            // G1
+            imgFasa = img;
+            frontFasa = 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
+            gambarSlot = 1;
+          } else if (img2) {
+            // G2 ada
+            imgFasa = img2;
+            frontFasa = 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
+            gambarSlot = 2;
+          } else {
+            // G2 tiada — guna G1 sementara
+            imgFasa = img;
+            frontFasa = '📷 Gambar 1 digunakan sementara waktu\n📷 Gambar 2 belum tersedia untuk digunakan.\nSila tambah melalui telefon anda.\nTekan SETERUSNYA untuk meneruskan.';
+            gambarSlot = 2;
+          }
+          out.push({
+            front: frontFasa,
+            back: '', tips: '', imageUrl: imgFasa,
+            title: title, drawerId: d.id, isF0: false, isGambar: true, isTamat: false, isSR: !!isSR, fasa: -1,
+            gambarSlot: gambarSlot
+          });
+        }
+      }
+
+      // F0 × 5
+      for (r = 0; r < 5; r++) {
+        out.push({
+          front: title, back: '', tips: tips0, imageUrl: img,
+          title: title, drawerId: d.id, isF0: true, isTamat: false, isSR: !!isSR, fasa: 0
         });
-      } catch(e) {
-        document.getElementById('status').textContent = '✗ Error: ' + e.message;
+      }
+
+      var notes = (d.notes || '').trim();
+      var noteCards = [];
+      if (notes) {
+        var lines = notes.split('\n');
+        for (i = 0; i < lines.length; i++) {
+          var line = lines[i].trim();
+          if (!line) continue;
+          var parts = line.split('=');
+          noteCards.push({
+            front: parts[0].trim(),
+            back: parts.length > 1 ? parts.slice(1).join('=').trim() : '',
+            tips: tips12, imageUrl: img,
+            title: title, drawerId: d.id, isF0: false, isTamat: false, isSR: !!isSR
+          });
+        }
+      }
+
+      // F1 × 5 (setiap baris notes)
+      for (r = 0; r < 5; r++) {
+        for (i = 0; i < noteCards.length; i++) {
+          var c1 = {};
+          for (var k1 in noteCards[i]) c1[k1] = noteCards[i][k1];
+          c1.fasa = 1;
+          out.push(c1);
+        }
+      }
+
+      // F2 × 5 (setiap baris notes)
+      for (r = 0; r < 5; r++) {
+        for (i = 0; i < noteCards.length; i++) {
+          var c2 = {};
+          for (var k2 in noteCards[i]) c2[k2] = noteCards[i][k2];
+          c2.fasa = 2;
+          out.push(c2);
+        }
+      }
+
+      out.push({
+        front: isSR ? ('SR selesai — ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0)) : 'Laci Tamat. Tekan SETERUSNYA.',
+        back: '', tips: '', imageUrl: '',
+        title: title, drawerId: d.id, isF0: false, isTamat: true, isSR: !!isSR
+      });
+      return out;
+    }
+    
+    function formatKtoBaris(text) {
+      if (!text) return '';
+      return text
+        .replace(/\s*K(\d+)\s*:\s*/gi, '\n$1 : ')
+        .replace(/\s+k(\d+)\s*/gi, '\n$1 : ')
+        .replace(/^\n+/, '')
+        .trim();
+    }
+
+    function cardsFromFaktaDrawer(d, isSR) {
+      var out = [];
+      var tips = (d.tipsFakta || d.tips || '').trim();
+      var title = d.title || 'Laci';
+      var itemCards = [];
+      var i, r;
+
+      if (d.items && d.items.length) {
+        for (i = 0; i < d.items.length; i++) {
+          var it = d.items[i];
+          var ayat = (it.ayat || it.text || '').trim();
+          if (!ayat) continue;
+          var eq = ayat.indexOf('=');
+          var depan = eq !== -1 ? ayat.slice(0, eq).trim() : ayat;
+          var belakang = eq !== -1 ? ayat.slice(eq + 1).trim() : (it.maksud || '');
+          itemCards.push({
+            front: depan,
+            back: formatKtoBaris(belakang),
+            tips: tips,
+            imageUrl: it.imageUrl || d.imageUrl || '',
+            title: title, drawerId: d.id,
+            isF0: false, isTamat: false, isSR: !!isSR
+          });
+        }
+      } else if (d.notes) {
+        var lines = d.notes.split('\n');
+        for (var j = 0; j < lines.length; j++) {
+          var line = lines[j].trim();
+          if (!line) continue;
+          var eq2 = line.indexOf('=');
+          var depan2 = eq2 !== -1 ? line.slice(0, eq2).trim() : line;
+          var belakang2 = eq2 !== -1 ? line.slice(eq2 + 1).trim() : '';
+          itemCards.push({
+            front: depan2,
+            back: formatKtoBaris(belakang2),
+            tips: tips,
+            imageUrl: d.imageUrl || '',
+            title: title, drawerId: d.id,
+            isF0: false, isTamat: false, isSR: !!isSR
+          });
+        }
+      }
+
+      // Fakta: setiap baris ada Fasa Gambar + F1×5 dan F2×5 berasingan
+      // Aliran: [Gambar×10] → F1(1/5→5/5) → [JQ Motivasi] → F2(1/5→5/5) → daftar SR → baris seterusnya
+      for (i = 0; i < itemCards.length; i++) {
+        // Fasa Gambar × 5 (hanya jika ada gambar pada baris ini)
+        var barisImg = itemCards[i].imageUrl || '';
+        var barisImg2 = (d.items && d.items[i] && d.items[i].imageUrl11) ? d.items[i].imageUrl11 : '';
+        if (barisImg) {
+          for (r = 0; r < 10; r++) {
+            var cgIsG2 = (r >= 5); // kad 6-10 guna G2
+            var cgImg, cgFront, cgSlot;
+            if (!cgIsG2) {
+              // G1
+              cgImg = barisImg;
+              cgFront = 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
+              cgSlot = 1;
+            } else if (barisImg2) {
+              // G2 ada
+              cgImg = barisImg2;
+              cgFront = 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
+              cgSlot = 2;
+            } else {
+              // G2 tiada — guna G1 sementara
+              cgImg = barisImg;
+              cgFront = '📷 Gambar 1 digunakan sementara waktu\n📷 Gambar 2 belum tersedia untuk digunakan.\nSila tambah melalui telefon anda.\nTekan SETERUSNYA untuk meneruskan.';
+              cgSlot = 2;
+            }
+            var cg = {};
+            for (var kg in itemCards[i]) cg[kg] = itemCards[i][kg];
+            cg.itemIndex = i;
+            cg.fasa = -1;
+            cg.isGambar = true;
+            cg.isLastOfBaris = false;
+            cg.isEndF1 = false;
+            cg.imageUrl = cgImg;
+            cg.front = cgFront;
+            cg.back = '';
+            cg.tips = '';
+            cg.gambarSlot = cgSlot;
+            out.push(cg);
+          }
+        }
+
+        // F1 × 5
+        for (r = 0; r < 5; r++) {
+          var cf1 = {};
+          for (var kf1 in itemCards[i]) cf1[kf1] = itemCards[i][kf1];
+          cf1.itemIndex = i;
+          cf1.fasa = 1;
+          cf1.isLastOfBaris = false;
+          cf1.isEndF1 = (r === 4); // habis F1 → trigger motivasi JQ
+          out.push(cf1);
+        }
+        // F2 × 5
+        for (r = 0; r < 5; r++) {
+          var cf2 = {};
+          for (var kf2 in itemCards[i]) cf2[kf2] = itemCards[i][kf2];
+          cf2.itemIndex = i;
+          cf2.fasa = 2;
+          cf2.isLastOfBaris = (r === 4); // habis F2 → daftar SR
+          cf2.isEndF1 = false;
+          out.push(cf2);
+        }
+      }
+
+      out.push({
+        front: isSR ? ('SR Fakta selesai — ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0)) : 'Laci Tamat. Tekan SETERUSNYA.',
+        back: '', tips: '', imageUrl: '',
+        title: title, drawerId: d.id, isF0: false, isTamat: true, isSR: !!isSR
+      });
+      return out;
+    }
+
+        var allSubjects = [];
+    var allJenisKata = [];
+
+    function loadCollections(cb) {
+      var uid = currentUser.uid;
+      // Hanya fetch metadata yang diperlukan — drawer laci diambil satu-satu on-demand
+      Promise.all([
+        db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
+        db.collection('users').doc(uid).collection('topics').get(),
+        db.collection('users').doc(uid).collection('jenis_kata').get()
+      ]).then(function(res) {
+        allBahasaPerkataan = [];
+        res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
+        allTopics = [];
+        res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
+        allJenisKata = [];
+        res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
+        cb && cb();
+      }).catch(function(e) {
+        setText('play-err', 'Gagal load: ' + e.message);
+      });
+    }
+
+    function loadSROverdue(colName) {
+      return db.collection('users').doc(currentUser.uid).collection(colName).get()
+        .then(function(snap) {
+          var now = Date.now();
+          var overdue = [];
+          snap.forEach(function(doc) {
+            var d = doc.data();
+            d.id = doc.id;
+            if (!d.nextDueAt || d.nextDueAt <= now) overdue.push(d);
+          });
+          overdue.sort(function(a, b) { return (a.nextDueAt || 0) - (b.nextDueAt || 0); });
+          return overdue;
+        });
+    }
+
+    // ── LOAD STATUS JQ DARI FIRESTORE ──
+    function loadJQStatus() {
+      if (!currentUser) return Promise.resolve();
+      return db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('jq')
+        .get().then(function(snap) {
+          if (snap.exists) {
+            jqAktif = snap.data().aktif === true;
+          } else {
+            jqAktif = false;
+          }
+          updateJQButton();
+        }).catch(function() { jqAktif = false; updateJQButton(); });
+    }
+
+    function simpanJQStatus(aktif) {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('jq')
+        .set({ aktif: aktif, updatedAt: Date.now() }).catch(function() {});
+    }
+
+    // ── JENIS SETERUSNYA STATE ──
+    function simpanJenisState(jenisBerikutId) {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('bahasa_jenis')
+        .set({ jenisBerikutId: jenisBerikutId || null, aktif: jenisBerikutId ? true : false, updatedAt: Date.now() })
+        .catch(function() {});
+    }
+
+    function loadJenisState() {
+      if (!currentUser) return Promise.resolve();
+      return db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('bahasa_jenis')
+        .get().then(function(snap) {
+          if (!snap.exists || !snap.data().aktif) return;
+          var jenisBerikutId = snap.data().jenisBerikutId;
+          if (!jenisBerikutId) return;
+          // Cari nama jenis kata
+          var jenisObj = allJenisKata.filter(function(j) { return j.id === jenisBerikutId; })[0];
+          var btnFloat = document.getElementById('btn-jenis-seterusnya-float');
+          if (!btnFloat) return;
+          btnFloat.className = 'active';
+          btnFloat._jenisBerikutId = jenisBerikutId;
+          btnFloat.textContent = '→ Jenis Kata Seterusnya';
+          var badge = document.getElementById('ws-notif-badge');
+          btnFloat.style.top = (badge && badge.classList.contains('active')) ? '50px' : '8px';
+        }).catch(function() {});
+    }
+
+    function updateJQButton() {
+      var btn = document.getElementById('btn-jq');
+      if (!btn) return;
+      if (jqAktif) {
+        btn.textContent = 'JQ: ON';
+        btn.className = 'btn-sm on';
+      } else {
+        btn.textContent = 'JQ: OFF';
+        btn.className = 'btn-sm';
       }
     }
 
-    function stopAudio() {
-      if (audio) { audio.pause(); audio.currentTime = 0; audio = null; }
-      document.getElementById('status').textContent = '■ Dihentikan.';
+    var _jqMotivasiUnsubscribe = null;
+    function subscribeJoggingMotivasi() {
+      if (!currentUser) return;
+      if (_jqMotivasiUnsubscribe) _jqMotivasiUnsubscribe();
+      _jqMotivasiUnsubscribe = db.collection('users').doc(currentUser.uid)
+        .collection('jogging_motivasi')
+        .onSnapshot(function(snap) {
+          jqMotivasiList = [];
+          snap.forEach(function(d) {
+            var x = d.data(); x.id = d.id;
+            if (x.text || x.title) jqMotivasiList.push(x);
+          });
+          jqMotivasiList.sort(function(a, b) {
+            return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true });
+          });
+            champData.motivasi = jqMotivasiList;
+        }, function() { jqMotivasiList = []; champData.motivasi = []; });
     }
+
+    function subscribeChampion() {
+      if (!currentUser) return;
+      // Cleanup lama
+      _champUnsubs.forEach(function(u) { try { u(); } catch(e) {} });
+      _champUnsubs = [];
+
+      // Load setting Champion
+      db.collection('users').doc(currentUser.uid)
+        .collection('kindle_settings').doc('champion')
+        .get().then(function(snap) {
+          if (snap.exists) {
+            champSources = snap.data().sources || [];
+            champLastIdx = snap.data().lastSourceIndex || 0;
+            var savedIdx = snap.data().champIdx || {};
+            champIdx.motivasi = savedIdx.motivasi || 0;
+            champIdx.perjanjian = savedIdx.perjanjian || 0;
+            champIdx.rutin = savedIdx.rutin || 0;
+            champIdx.supplement = savedIdx.supplement || 0;
+            champIdx.water = savedIdx.water || 0;
+            champIdx.otherMotivation = savedIdx.otherMotivation || 0;
+          } else {
+            champSources = ['motivasi'];
+            champLastIdx = 0;
+          }
+        }).catch(function() { champSources = ['motivasi']; });
+
+      // Subscribe Perjanjian
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid).collection('jogging_perjanjian')
+          .onSnapshot(function(snap) {
+            champData.perjanjian = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.text || x.title) champData.perjanjian.push(x); });
+            champData.perjanjian.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
+          }, function() { champData.perjanjian = []; })
+      );
+
+      // Subscribe Rutin
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid).collection('routine_drawers')
+          .onSnapshot(function(snap) {
+            champData.rutin = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.title || x.zikir) champData.rutin.push(x); });
+          }, function() { champData.rutin = []; })
+      );
+
+      // Subscribe Supplement
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid).collection('supplement_tracker')
+          .onSnapshot(function(snap) {
+            champData.supplement = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.title) champData.supplement.push(x); });
+            champData.supplement.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
+          }, function() { champData.supplement = []; })
+      );
+
+      // Subscribe Other Motivation
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid)
+          .collection('other_motivation')
+          .orderBy('order', 'asc')
+          .onSnapshot(function(snap) {
+            allOtherMotivation = [];
+            snap.forEach(function(d) {
+              var x = d.data(); x.id = d.id;
+              if (x.title || x.text) allOtherMotivation.push(x);
+            });
+            console.log('📥 other_motivation diload dari Firestore (' + allOtherMotivation.length + ' item)');
+            champData.otherMotivation = allOtherMotivation;
+          }, function() { allOtherMotivation = []; champData.otherMotivation = []; })
+      );
+
+      // Subscribe Water — baca champion_item sahaja
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid).collection('water_tracker').doc('champion_item')
+          .onSnapshot(function(snap) {
+            if (snap.exists) {
+              var x = snap.data(); x.id = snap.id;
+              champData.water = [x];
+            } else {
+              champData.water = [];
+            }
+          }, function() { champData.water = []; })
+      );
+    }
+
+    function champGetNextItem() {
+      // Cari sumber aktif yang ada data
+      var activeSources = champSources.filter(function(s) { return champData[s] && champData[s].length > 0; });
+      if (!activeSources.length) return null;
+
+      // Pilih sumber ikut lastIdx — BELUM naikkan index dulu
+      var activeLen = activeSources.length;
+      var sourceKey = activeSources[champLastIdx % activeLen];
+
+      var list = champData[sourceKey];
+      var idx = champIdx[sourceKey] % list.length;
+      var item = list[idx];
+
+      // Bentuk output standard — sertakan _champSourceKey dan _champActiveLen terus dalam objek return
+      // Index BELUM dinaikkan — hanya dinaikkan bila user sahkan (champCommitItem)
+      if (sourceKey === 'otherMotivation') {
+        return {
+          source: 'otherMotivation',
+          title: item.title || '',
+          depan: item.text || item.title || '',
+          belakang: '',
+          adaFlip: false,
+          imageUrl: item.imageUrl || '',
+          imgRatioW: item.imgRatioW || 16,
+          imgRatioH: item.imgRatioH || 9,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
+        };
+      } else if (sourceKey === 'motivasi' || sourceKey === 'perjanjian') {
+        var adaFlip = item.text && item.text.includes('=');
+        return {
+          source: sourceKey,
+          title: item.title || '',
+          depan: adaFlip ? item.text.split('=')[0].trim() : (item.text || item.title || ''),
+          belakang: adaFlip ? item.text.split('=').slice(1).join('=').trim() : '',
+          adaFlip: !!adaFlip,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
+        };
+      } else if (sourceKey === 'rutin') {
+        return {
+          source: 'rutin',
+          title: item.title || '',
+          depan: item.zikir || item.title || '',
+          belakang: '',
+          adaFlip: false,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
+        };
+      } else if (sourceKey === 'supplement') {
+        return {
+          source: 'supplement',
+          title: item.title || '',
+          depan: (item.title || '') + (item.text ? '\n' + item.text : ''),
+          belakang: '',
+          adaFlip: false,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
+        };
+      } else if (sourceKey === 'water') {
+        return {
+          source: 'water',
+          title: '💧 Water Tracker',
+          depan: (item.title || '💧 Air') + '\n' + (item.text || ''),
+          belakang: '',
+          adaFlip: false,
+          waterItem: item,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
+        };
+      }
+      return null;
+    }
+
+    function champCommitItem(sourceKey, activeLen) {
+      // Naikkan index selepas user sahkan — dipanggil bila Ya atau selesai motivasi/rutin/perjanjian
+      champIdx[sourceKey] = (champIdx[sourceKey] + 1) % champData[sourceKey].length;
+      champLastIdx = (champLastIdx + 1) % activeLen;
+      db.collection('users').doc(currentUser.uid)
+        .collection('kindle_settings').doc('champion')
+        .update({ lastSourceIndex: champLastIdx, champIdx: champIdx }).catch(function() {});
+    }
+
+    function tunjukMotivasiJQ(cbSelepas) {
+      isBusy = false;
+      // Cuba Champion queue dulu, fallback ke jqMotivasiList lama
+      var item = (champSources.length > 0) ? champGetNextItem() : null;
+
+      if (!item) {
+        // Fallback: guna jogging_motivasi lama
+        if (!jqMotivasiList.length) { cbSelepas && cbSelepas(); return; }
+        var m = jqMotivasiList[jqMotivasiIdx];
+        jqMotivasiIdx = (jqMotivasiIdx + 1) % jqMotivasiList.length;
+        var adaFlipF = m.text && m.text.includes('=');
+        item = {
+          source: 'motivasi',
+          title: m.title || '',
+          depan: adaFlipF ? m.text.split('=')[0].trim() : (m.text || m.title || ''),
+          belakang: adaFlipF ? m.text.split('=').slice(1).join('=').trim() : '',
+          adaFlip: !!adaFlipF
+        };
+      }
+
+      var sourceLabel = { motivasi: 'MOTIVASI', perjanjian: 'PERJANJIAN', rutin: 'RUTIN', supplement: 'SUPLEMEN', water: 'AIR', otherMotivation: 'MOTIVASI LAIN' };      
+      isFlipped = false; showTips = false;
+      // otherMotivation — tajuk tidak dipapar di status bar
+      setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + (item.source === 'otherMotivation' ? '' : ' · ' + item.title));
+      setText('play-mode', 'CHAMPION · ' + (sourceLabel[item.source] || item.source));
+      setText('side-label', 'MUKA DEPAN');
+
+      // otherMotivation: tajuk dipapar dalam kotak — bawah gambar, atas teks
+      var kandungan;
+      if (item.source === 'otherMotivation') {
+        kandungan = (item.title ? item.title + '\n\n' : '') + (item.depan || '');
+      } else {
+        kandungan = item.depan;
+      }
+      setText('main-text', kandungan);
+
+      setText('play-progress', item.adaFlip ? '(Flip untuk penerangan)' : '(Tekan SETERUSNYA untuk teruskan)');
+      setText('play-meta', '');
+
+      setText('play-err', '');
+      // Papar gambar untuk otherMotivation — kena letak selepas setCardImage
+      if (item.source === 'otherMotivation' && item.imageUrl) {
+        setCardImage(item.imageUrl);
+        autoFitImage(kandungan.length);
+      } else {
+        setCardImage('');
+      }
+
+      var mainEl = document.getElementById('main-text');
+      if (mainEl) {
+        var pjg = kandungan.length;
+        if (item.source === 'otherMotivation') {
+          // Auto-kecil ikut panjang kandungan untuk otherMotivation
+          mainEl.className = pjg > 300 ? 'big-text ultra-long'
+                           : pjg > 150 ? 'big-text extra-long'
+                           : pjg > 80  ? 'big-text long-text'
+                           : 'big-text';
+        } else {
+          mainEl.className = pjg > 80 ? 'big-text long-text' : 'big-text';
+        }
+      }
+      
+      window._jqMotivasiHandler = {
+        adaFlip: item.adaFlip,
+        depan: item.depan,
+        champSourceKey: item._champSourceKey || null,
+        champActiveLen: item._champActiveLen || 1,
+        belakang: item.belakang,
+        flipped: false,
+        title: item.title,
+        source: item.source,
+        waterItem: item.waterItem || null,
+        cb: cbSelepas
+      };
+    }
+
+    function champShowConfirm(h, cbYa, cbSkip) {
+      var sourceLabel = { supplement: '💊 SUPLEMEN', water: '💧 AIR' };
+      var overlay = document.getElementById('champ-overlay');
+      var elTitle = document.getElementById('champ-overlay-title');
+      var elName = document.getElementById('champ-overlay-name');
+      var elQ = document.getElementById('champ-overlay-q');
+      if (elTitle) elTitle.textContent = sourceLabel[h.source] || 'CHAMPION';
+      if (elName) elName.textContent = h.title || '';
+      if (elQ) elQ.textContent = h.source === 'water' ? 'Sudah minum air?' : 'Sudah ambil suplemen ini?';
+      if (overlay) overlay.classList.add('active');
+
+      var btnYes = document.getElementById('champ-overlay-yes');
+      var btnSkip = document.getElementById('champ-overlay-skip');
+
+      // Clone untuk buang event lama
+      var newYes = btnYes.cloneNode(true);
+      var newSkip = btnSkip.cloneNode(true);
+      btnYes.parentNode.replaceChild(newYes, btnYes);
+      btnSkip.parentNode.replaceChild(newSkip, btnSkip);
+
+      newYes.onclick = function() {
+        overlay.classList.remove('active');
+        cbYa && cbYa();
+      };
+      newSkip.onclick = function() {
+        overlay.classList.remove('active');
+        cbSkip && cbSkip();
+      };
+    }
+
+    function _selesaiMotivasi() {
+      window._jqMotivasiHandler = null;
+      isFlipped = false; showTips = false;
+      setText('play-err', '');
+    }
+
+    function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {
+      var drawer, srColl;
+      if (modeName === 'fakta') {
+        drawer = allDrawers.filter(function(d) { return d.id === drawerId; })[0];
+        srColl = 'fakta_sr_queue';
+      } else {
+        drawer = allBahasaDrawers.filter(function(d) { return d.id === drawerId; })[0];
+        srColl = 'bahasa_sr_queue';
+      }
+      if (!drawer) return Promise.resolve();
+
+      // Fakta: satu baris = satu SR (docId = drawerId_b{itemIndex})
+      var srDocId = drawerId;
+      if (modeName === 'fakta' && itemIndex !== undefined && itemIndex !== null) {
+        srDocId = drawerId + '_b' + itemIndex;
+      }
+
+      var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(srDocId);
+      return ref.get().then(function(snap) {
+        if (snap.exists) return;
+        var now = Date.now();
+        var srData = {
+          drawerId: drawerId,
+          drawerTitle: drawer.title || '',
+          hafalAt: now,
+          fasaSemasa: 0,
+          nextDueAt: now + SR_INTERVALS[0],
+          sejarahFasa: [],
+          createdAt: now,
+          mode: modeName,
+          srDocId: srDocId
+        };
+        if (modeName === 'bahasa') {
+          srData.perkataanId = drawer.perkataanId || '';
+          srData.jenisId = drawer.jenisId || '';
+        } else {
+          srData.topicId = drawer.topicId || '';
+          if (itemIndex !== undefined && itemIndex !== null) {
+            srData.itemIndex = itemIndex;
+            srData.barisText = (barisText || '').slice(0, 200);
+          }
+          // Bina pdfKod sama seperti app backup
+          var barisNo = (itemIndex !== null && itemIndex !== undefined) ? (itemIndex + 1) : 1;
+          var pdfKod = null;
+          var isSementara = false;
+          var topic = allTopics.filter(function(t) { return t.id === drawer.topicId; })[0];
+          var topicNama = (topic && topic.name) || 'Topik';
+          var tajukSlide = drawer.title || 'Slide';
+          if (drawer.pdfNombor && drawer.pdfTopik && drawer.pdfSubjek) {
+            pdfKod = drawer.pdfSubjek + '/' + drawer.pdfTopik + '/' + tajukSlide + '-' + drawer.pdfNombor + '-B' + barisNo;
+            isSementara = false;
+          } else {
+            var laciDalamTopik = allDrawers
+              .filter(function(d) { return d.topicId === drawer.topicId; })
+              .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+            var idxSementara = -1;
+            for (var si = 0; si < laciDalamTopik.length; si++) {
+              if (laciDalamTopik[si].id === drawerId) { idxSementara = si; break; }
+            }
+            var subjek = allSubjects.filter(function(s) { return s.id === (topic && topic.subjectId); })[0];
+            var subjekNama = (subjek && subjek.name) || topicNama;
+            pdfKod = subjekNama + '/' + topicNama + '/' + tajukSlide + '-T' + (idxSementara + 1) + '-B' + barisNo;
+            isSementara = true;
+          }
+          if (pdfKod) {
+            srData.pdfKod = pdfKod;
+            srData.isSementara = isSementara;
+          }
+        }
+        return ref.set(srData);
+      });
+    }
+
+    function selesaiSRUlangan(srDocId, modeName) {
+      var srColl = modeName === 'fakta' ? 'fakta_sr_queue' : 'bahasa_sr_queue';
+      var docId = srDocId || '';
+      var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(docId);
+      return ref.get().then(function(snap) {
+        if (!snap.exists) return;
+        var data = snap.data();
+        var fasaBaru = (data.fasaSemasa || 0) + 1;
+        var now = Date.now();
+        var sejarah = (data.sejarahFasa || []).slice();
+        sejarah.push({ fasa: data.fasaSemasa, selesaiAt: now, labelFasa: getLabelFasaSR(data.fasaSemasa) });
+        return ref.update({
+          fasaSemasa: fasaBaru,
+          nextDueAt: now + getSRInterval(fasaBaru),
+          sejarahFasa: sejarah,
+          updatedAt: now
+        });
+      });
+    }
+
+    function syncIndex(newIndex) {
+      if (!currentUser) return;
+      if (mode === 'bahasa' && activePerkataan) {
+        db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
+          .update({ lastIndex: newIndex }).catch(function() {});
+        activePerkataan.lastIndex = newIndex;
+      } else if (mode === 'fakta' && activeTopic) {
+        db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
+          .update({ lastIndex: newIndex }).catch(function() {});
+        activeTopic.lastIndex = newIndex;
+      }
+    }
+
+    function simpanLastDrawer(drawerId, itemIndex) {
+      if (!currentUser) return;
+      if (mode === 'bahasa' && activePerkataan) {
+        db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
+          .update({ lastDrawerId: drawerId || null }).catch(function() {});
+        activePerkataan.lastDrawerId = drawerId || null;
+      } else if (mode === 'fakta' && activeTopic) {
+        db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
+          .update({
+            lastDrawerId: drawerId || null,
+            lastItemIndex: (itemIndex !== undefined && itemIndex !== null) ? itemIndex : null
+          }).catch(function() {});
+        activeTopic.lastDrawerId = drawerId || null;
+        activeTopic.lastItemIndex = (itemIndex !== undefined && itemIndex !== null) ? itemIndex : null;
+      }
+    }
+
+    function resetLastDrawer() {
+      if (!currentUser) return;
+      if (mode === 'bahasa' && activePerkataan) {
+        db.collection('users').doc(currentUser.uid).collection('bahasa_perkataan').doc(activePerkataan.id)
+          .update({ lastDrawerId: null }).catch(function() {});
+        activePerkataan.lastDrawerId = null;
+      } else if (mode === 'fakta' && activeTopic) {
+        db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
+          .update({ lastDrawerId: null, lastItemIndex: null }).catch(function() {});
+        activeTopic.lastDrawerId = null;
+        activeTopic.lastItemIndex = null;
+      }
+    }
+
+    function cariCardIndexDariLastDrawer() {
+      // Bahasa: cari laci SELEPAS lastDrawerId
+      if (mode === 'bahasa' && activePerkataan && activePerkataan.lastDrawerId) {
+        var lastId = activePerkataan.lastDrawerId;
+        var foundLast = false;
+        for (var i = 0; i < cards.length; i++) {
+          if (foundLast && cards[i].drawerId !== lastId) {
+            if (cards[i].isGambar || cards[i].isF0) return i;
+          }
+          if (cards[i].drawerId === lastId) foundLast = true;
+        }
+        if (foundLast) return cards.length; // laci terakhir dah habis
+        return 0; // lastDrawerId tidak jumpa — mula dari awal
+      }
+
+      // Fakta: cari baris SELEPAS lastDrawerId + lastItemIndex
+      if (mode === 'fakta' && activeTopic && activeTopic.lastDrawerId) {
+        var lastDId = activeTopic.lastDrawerId;
+        var lastIdx = activeTopic.lastItemIndex;
+        var passedLastLaci = false;
+
+        for (var j = 0; j < cards.length; j++) {
+          var cj = cards[j];
+
+          // Dalam laci yang sama dengan lastDrawerId
+          if (cj.drawerId === lastDId) {
+            passedLastLaci = true;
+            // Cari baris seterusnya selepas lastItemIndex
+            if (lastIdx !== null && lastIdx !== undefined) {
+              if (cj.itemIndex > lastIdx && (cj.isGambar || cj.fasa === 1)) {
+                return j;
+              }
+            }
+            // lastItemIndex null — skip keseluruhan laci ini
+          } else if (passedLastLaci) {
+            // Dah lepas laci lastDrawerId — ini laci seterusnya
+            if (cj.isGambar || cj.fasa === 1) return j;
+          }
+        }
+        return cards.length; // semua habis
+      }
+
+      return 0; // tiada lastDrawerId — mula dari awal
+    }
+
+    function rebuildBahasaCards(cb) {    
+      activePerkataan = null;
+      for (var i = 0; i < allBahasaPerkataan.length; i++) {
+        if (allBahasaPerkataan[i].isActive) { activePerkataan = allBahasaPerkataan[i]; break; }
+      }
+      if (!activePerkataan) {
+        cards = []; cardIndex = 0;
+        setText('main-text', 'Tiada perkataan aktif.\nTick SATU perkataan di phone.');
+        setText('play-mode', 'BAHASA');
+        setText('play-status', 'Tiada perkataan aktif');
+        setText('play-progress', ''); setText('play-meta', '');
+        setCardImage('');
+        cb && cb(false); return false;
+      }
+      var uid = currentUser.uid;
+      var perkId = activePerkataan.id;
+      db.collection('users').doc(uid).collection('bahasa_drawers')
+        .where('perkataanId', '==', perkId).get()
+        .then(function(snap) {
+          allBahasaDrawers = allBahasaDrawers.filter(function(d) { return d.perkataanId !== perkId; });
+          snap.forEach(function(doc) { var x = doc.data(); x.id = doc.id; allBahasaDrawers.push(x); });
+          var activeDrawers = allBahasaDrawers
+            .filter(function(d) { return d.perkataanId === perkId; })
+            .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+          cards = [];
+          for (var j = 0; j < activeDrawers.length; j++) {
+            var d = activeDrawers[j];
+            if ((d.notes || '').trim()) cards = cards.concat(cardsFromBahasaDrawer(d, false));
+          }
+          cardIndex = cariCardIndexDariLastDrawer();
+          console.log('[DEBUG] lastDrawerId:', activePerkataan && activePerkataan.lastDrawerId, '| cardIndex:', cardIndex, '| cards.length:', cards.length, '| cards[cardIndex]:', cards[cardIndex] && cards[cardIndex].drawerId);
+          srModeAktif = false;
+          srLaciSemasa = null;
+          cb && cb(cards.length > 0);
+        }).catch(function(e) {
+          setText('play-err', 'Gagal load laci: ' + e.message);
+          cb && cb(false);
+        });
+      return true; // async, guna cb
+    }
+
+    function rebuildFaktaCards(cb) {
+      activeTopic = null;
+      for (var i = 0; i < allTopics.length; i++) {
+        if (allTopics[i].isActive) { activeTopic = allTopics[i]; break; }
+      }
+      if (!activeTopic) {
+        cards = []; cardIndex = 0;
+        setText('main-text', 'Tiada topik aktif.\nTick SATU topik di phone.');
+        setText('play-mode', 'FAKTA');
+        setText('play-status', 'Tiada topik aktif');
+        setText('play-progress', ''); setText('play-meta', '');
+        setCardImage('');
+        cb && cb(false); return false;
+      }
+      var uid = currentUser.uid;
+      var topicId = activeTopic.id;
+      db.collection('users').doc(uid).collection('drawer')
+        .where('topicId', '==', topicId).get()
+        .then(function(snap) {
+          allDrawers = allDrawers.filter(function(d) { return d.topicId !== topicId; });
+          snap.forEach(function(doc) { var x = doc.data(); x.id = doc.id; allDrawers.push(x); });
+          var activeDrawers = allDrawers
+            .filter(function(d) { return d.topicId === topicId; })
+            .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+          cards = [];
+          for (var j = 0; j < activeDrawers.length; j++) {
+            var d = activeDrawers[j];
+            var has = (d.items && d.items.length) || (d.notes || '').trim();
+            if (has) cards = cards.concat(cardsFromFaktaDrawer(d, false));
+          }
+          cardIndex = cariCardIndexDariLastDrawer();
+          srModeAktif = false;
+          srLaciSemasa = null;
+          cb && cb(cards.length > 0);
+        }).catch(function(e) {
+          setText('play-err', 'Gagal load laci: ' + e.message);
+          cb && cb(false);
+        });
+      return true; // async, guna cb
+    }
+
+    // Cache prefetch drawer terkini dari Firestore (background)
+    var _prefetchCache = {}; // { drawerId: drawerObj }
+
+    function prefetchDrawer(drawerId, colName) {
+      if (!currentUser || !drawerId) return;
+      db.collection('users').doc(currentUser.uid).collection(colName).doc(drawerId)
+        .get().then(function(snap) {
+          if (snap.exists) {
+            var d = snap.data(); d.id = snap.id;
+            _prefetchCache[drawerId] = d;
+            // Kemas kini cache utama juga
+            if (colName === 'bahasa_drawers') {
+              var ib = -1;
+              for (var i = 0; i < allBahasaDrawers.length; i++) {
+                if (allBahasaDrawers[i].id === drawerId) { ib = i; break; }
+              }
+              if (ib !== -1) allBahasaDrawers[ib] = d; else allBahasaDrawers.push(d);
+            } else {
+              var ifd = -1;
+              for (var j = 0; j < allDrawers.length; j++) {
+                if (allDrawers[j].id === drawerId) { ifd = j; break; }
+              }
+              if (ifd !== -1) allDrawers[ifd] = d; else allDrawers.push(d);
+            }
+          }
+        }).catch(function() {});
+    }
+
+    function getDrawerFresh(drawerId, colName) {
+      // Guna cache prefetch kalau ada, otherwise ambil dari memory
+      if (_prefetchCache[drawerId]) {
+        var d = _prefetchCache[drawerId];
+        delete _prefetchCache[drawerId];
+        return Promise.resolve(d);
+      }
+      return db.collection('users').doc(currentUser.uid).collection(colName).doc(drawerId)
+        .get().then(function(snap) {
+          if (!snap.exists) return null;
+          var d = snap.data(); d.id = snap.id;
+          return d;
+        });
+    }
+
+    function loadSRIntoCards(srData, modeName, cb) {
+      var drawerId = srData.drawerId || srData.id;
+      var colName = modeName === 'bahasa' ? 'bahasa_drawers' : 'drawer';
+      delete _prefetchCache[drawerId]; // buang cache lama, paksa fetch semula
+      db.collection('users').doc(currentUser.uid).collection(colName).doc(drawerId)
+        .get().then(function(snap) {
+          if (!snap.exists) { cb && cb(false); return; }
+          var drawer = snap.data(); drawer.id = snap.id;
+          if (modeName === 'bahasa') {
+            var ib = -1;
+            for (var i = 0; i < allBahasaDrawers.length; i++) {
+              if (allBahasaDrawers[i].id === drawerId) { ib = i; break; }
+            }
+            if (ib !== -1) allBahasaDrawers[ib] = drawer; else allBahasaDrawers.push(drawer);
+            cards = cardsFromBahasaDrawer(drawer, true);
+          } else {
+            var ifd = -1;
+            for (var j = 0; j < allDrawers.length; j++) {
+              if (allDrawers[j].id === drawerId) { ifd = j; break; }
+            }
+            if (ifd !== -1) allDrawers[ifd] = drawer; else allDrawers.push(drawer);
+            cards = cardsFromFaktaDrawer(drawer, true);
+          }
+          cardIndex = 0;
+          srModeAktif = true;
+          srLaciSemasa = srData;
+          cb && cb(true);
+        }).catch(function() { cb && cb(false); });
+    }
+
+
+    function startBahasa() {
+      if (isLoading) return;
+      isLoading = true;
+      _prefetchCache = {};
+      mode = 'bahasa';
+      isFlipped = false; showTips = false;
+      jqModeSemasa = ''; jqKadSemasa = null;
+      jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
+      _srAdaCache = false; // reset cache SR
+      setText('play-status', 'Memuat Bahasa + SR...');
+      setText('play-err', '');
+      showScreen('screen-play');
+
+      loadCollections(function() {
+        // ── JQ DULU sebelum SR (hanya kalau jqAktif) ──
+        function _terusKeSR() {
+          loadSROverdue('bahasa_sr_queue').then(function(overdue) {
+          // Ambil SATU SR sahaja
+          srQueue = overdue;
+          if (srQueue.length) {
+            srLaciSemasa = srQueue.shift();
+            srModeAktif = true;
+            _srAdaCache = true;
+            // Prefetch laci BIASA pertama (sebab selepas SR wajib laci biasa)
+            _prefetchLaciBiasaBahasa();
+            loadSRIntoCards(srLaciSemasa, 'bahasa', function(ok) {
+              if (ok) {
+                var srDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                if (srDrawer) {
+                  var srIssues = checkTipsBlock(srDrawer);
+                  if (srIssues.length) {
+                    isLoading = false;
+                    setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+                    renderBlockCard(srDrawer.title || '', srIssues);
+                    return;
+                  }
+                }
+                setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+                isLoading = false; clearBlockCard(); renderCard(); return;
+              }
+              // SR drawer tiada — reset dan terus ke laci biasa
+              srModeAktif = false; srLaciSemasa = null; _srAdaCache = false;
+              _mulaLaciBiasaBahasa();
+            });
+            return;
+          }
+          // Tiada SR — terus ke laci biasa
+          _srAdaCache = false;
+          _mulaLaciBiasaBahasa();
+        }).catch(function(e) {
+          isLoading = false;
+          srModeAktif = false; srLaciSemasa = null;
+          setText('play-err', e.message);
+          rebuildBahasaCards(function() { renderCard(); });
+        });
+        } // tutup _terusKeSR
+
+        function _mulaLaciBiasaBahasa() {
+          rebuildBahasaCards(function(ok) {
+            if (ok) {
+              setText('play-status', 'BAHASA · ' + (activePerkataan.name || ''));
+              var firstCard = cards[cardIndex] || cards[0];
+              var firstDrawerId = firstCard ? firstCard.drawerId : null;
+              var firstDrawer = firstDrawerId
+                ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+                : null;
+              // Prefetch laci selepas laci semasa
+              var secondDrawerId = null;
+              for (var si = cardIndex; si < cards.length; si++) {
+                if (cards[si].drawerId && cards[si].drawerId !== firstDrawerId) {
+                  secondDrawerId = cards[si].drawerId; break;
+                }
+              }
+              if (secondDrawerId) prefetchDrawer(secondDrawerId, 'bahasa_drawers');
+              if (firstDrawer) {
+                var firstIssues = checkTipsBlock(firstDrawer);
+                if (firstIssues.length) {
+                  isLoading = false;
+                  renderBlockCard(firstDrawer.title || '', firstIssues);
+                  return;
+                }
+              }
+            }
+            isLoading = false; clearBlockCard(); renderCard();
+          });
+        }
+
+        if (jqAktif && jqMotivasiList.length) {
+          tunjukMotivasiJQ(function() { _terusKeSR(); });
+        } else {
+          _terusKeSR();
+        }
+      });
+    }
+
+
+    // Helper: prefetch laci biasa bahasa pertama (untuk guna selepas SR)
+    function _prefetchLaciBiasaBahasa() {
+      var perk = activePerkataan;
+      if (!perk) {
+        for (var i = 0; i < allBahasaPerkataan.length; i++) {
+          if (allBahasaPerkataan[i].isActive) { perk = allBahasaPerkataan[i]; break; }
+        }
+      }
+      if (!perk) return;
+      var perkId = perk.id;
+      var sorted = allBahasaDrawers
+        .filter(function(d) { return d.perkataanId === perkId; })
+        .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+      if (!sorted.length) return;
+      var target = sorted[0];
+      if (perk.lastDrawerId) {
+        for (var pi = 0; pi < sorted.length; pi++) {
+          if (sorted[pi].id === perk.lastDrawerId) {
+            target = sorted[pi + 1] || null;
+            break;
+          }
+        }
+      }
+      if (target) prefetchDrawer(target.id, 'bahasa_drawers');
+    }
+
+
+    function startFakta() {
+      if (isLoading) return;
+      isLoading = true;
+      _prefetchCache = {};
+      mode = 'fakta';
+      isFlipped = false; showTips = false;
+      jqModeSemasa = ''; jqKadSemasa = null;
+      jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
+      _srAdaCache = false; // reset cache SR
+      setText('play-status', 'Memuat Fakta + SR...');
+      setText('play-err', '');
+      showScreen('screen-play');
+
+      loadCollections(function() {
+        // ── JQ DULU sebelum SR (hanya kalau jqAktif) ──
+        function _terusKeSR() {
+          loadSROverdue('fakta_sr_queue').then(function(overdue) {
+          // Ambil SATU SR sahaja — simpan baki dalam srQueue untuk check selepas laci biasa
+          srQueue = overdue;
+          if (srQueue.length) {
+            srLaciSemasa = srQueue.shift();
+            srModeAktif = true;
+            _srAdaCache = true;
+            // Prefetch laci BIASA pertama (sebab selepas SR wajib laci biasa)
+            _prefetchLaciBiasaFakta();
+            loadSRIntoCards(srLaciSemasa, 'fakta', function(ok) {
+              if (ok) {
+                setText('play-status', 'SR FAKTA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
+                isLoading = false; renderCard(); return;
+              }
+              // SR drawer tiada — reset dan terus ke laci biasa
+              srModeAktif = false; srLaciSemasa = null; _srAdaCache = false;
+              _mulaLaciBiasaFakta();
+            });
+            return;
+          }
+          // Tiada SR — terus ke laci biasa
+          _srAdaCache = false;
+          _mulaLaciBiasaFakta();
+        }).catch(function(e) {
+          isLoading = false;
+          srModeAktif = false; srLaciSemasa = null;
+          setText('play-err', e.message);
+          rebuildFaktaCards(function() { renderCard(); });
+        });
+        } // tutup _terusKeSR
+
+        function _mulaLaciBiasaFakta() {
+          rebuildFaktaCards(function(ok) {
+            if (ok) {
+              setText('play-status', 'FAKTA · ' + (activeTopic.name || ''));
+              // Prefetch laci selepas baris semasa
+              var fdNow = cards.length && cards[cardIndex] ? cards[cardIndex].drawerId : (cards.length ? cards[0].drawerId : null);
+              var fd2 = null;
+              for (var fi = cardIndex; fi < cards.length; fi++) {
+                if (cards[fi].drawerId && cards[fi].drawerId !== fdNow) { fd2 = cards[fi].drawerId; break; }
+              }
+              if (fd2) prefetchDrawer(fd2, 'drawer');
+            }
+            isLoading = false; renderCard();
+          });
+        }
+
+        if (jqAktif && jqMotivasiList.length) {
+          tunjukMotivasiJQ(function() { _terusKeSR(); });
+        } else {
+          _terusKeSR();
+        }
+      });
+    }
+
+
+    // Helper: prefetch laci biasa fakta pertama (untuk guna selepas SR)
+    function _prefetchLaciBiasaFakta() {
+      var topic = activeTopic;
+      if (!topic) {
+        for (var i = 0; i < allTopics.length; i++) {
+          if (allTopics[i].isActive) { topic = allTopics[i]; break; }
+        }
+      }
+      if (!topic) return;
+      var aktifId = topic.id;
+      var sorted = allDrawers
+        .filter(function(d) { return d.topicId === aktifId; })
+        .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+      if (!sorted.length) return;
+      var target = sorted[0];
+      if (topic.lastDrawerId) {
+        for (var fi = 0; fi < sorted.length; fi++) {
+          if (sorted[fi].id === topic.lastDrawerId) {
+            target = sorted[fi + 1] || null;
+            break;
+          }
+        }
+      }
+      if (target) prefetchDrawer(target.id, 'drawer');
+    }
+
+    function setCardImage(url, useGambarPlaceholder) {
+      var img = document.getElementById('card-img');
+      var placeholder = document.getElementById('card-img-placeholder');
+      if (!img) return;
+      if (url) {
+        img.src = url;
+        img.style.display = 'block';
+        if (placeholder) placeholder.style.display = 'none';
+        img.onerror = function() { img.style.display = 'none'; };
+        img.onload = function() {
+          autoFitImage((document.getElementById('main-text').textContent || '').length);
+          // Ambil tinggi sebenar yang dirender pada skrin
+          setTimeout(function() {
+            if (img.offsetHeight > 0) lastGambarHeight = img.offsetHeight;
+          }, 60);
+        };
+      } else if (useGambarPlaceholder) {
+        img.removeAttribute('src');
+        img.style.display = 'none';
+        if (placeholder) {
+          placeholder.style.display = 'block';
+          placeholder.style.height = lastGambarHeight + 'px';
+        }
+      } else {
+        img.removeAttribute('src');
+        img.style.display = 'none';
+        img.style.maxHeight = '';
+        if (placeholder) placeholder.style.display = 'none';
+      }
+    }
+
+    function checkTipsBlock(drawer) {
+      // drawer = objek laci dari allBahasaDrawers
+      var tipsF0 = (drawer.tipsFasa0 || '').trim();
+      var tipsF12 = (drawer.tips || '').trim();
+      var issues = [];
+      if (!tipsF0) {
+        issues.push('F0 Introductory Tips have not been configured. Please complete this field before proceeding.');
+      }
+      if (!tipsF12) {
+        issues.push('F1 & F2 Practice Tips have not been configured. Please complete this field before proceeding.');
+      }
+      return issues; // kosong = tiada block
+    }
+
+    function renderBlockCard(drawerTitle, issues) {
+      var mainEl = document.getElementById('main-text');
+      setText('play-mode', 'TIPS VERIFICATION');
+      setText('side-label', 'ACTION REQUIRED');
+      setText('play-progress', '');
+      setText('play-meta', '');
+      setText('play-err', '');
+      setCardImage('');
+
+      // Bina drawer location dari activePerkataan & allJenisKata
+      var perkataanNama = (activePerkataan && activePerkataan.name) ? activePerkataan.name : '—';
+      var jenisId = (activePerkataan && activePerkataan.jenisId) ? activePerkataan.jenisId : '';
+      var jenisObj = jenisId ? allJenisKata.filter(function(j) { return j.id === jenisId; })[0] : null;
+      var jenisNama = (jenisObj && jenisObj.name) ? jenisObj.name : '—';
+
+      var msg = '⚠️ The following issues have been detected and must be resolved before you may proceed:\n\n';
+      msg += 'Drawer  : ' + drawerTitle + '\n';
+      msg += 'Word    : ' + perkataanNama + '\n';
+      msg += 'Category: ' + jenisNama + '\n';
+      msg += '\n';
+      for (var i = 0; i < issues.length; i++) {
+        msg += (i + 1) + '. ' + issues[i] + '\n';
+      }
+      msg += '\nThis drawer has been blocked until all required tips are in place.';
+      setText('main-text', msg);
+      if (mainEl) mainEl.className = 'big-text tips-mode';
+
+      // Disable button SETERUSNYA
+      var btnNext = document.getElementById('btn-next');
+      if (btnNext) {
+        btnNext.disabled = true;
+        btnNext.textContent = 'BLOCKED';
+      }
+
+      // Hint reload di play-err
+      setText('play-err', 'Once the required tips have been added via your phone, please tap Reload to continue.');
+    }
+
+    function clearBlockCard() {
+      var btnNext = document.getElementById('btn-next');
+      if (btnNext) {
+        btnNext.disabled = false;
+        btnNext.textContent = 'SETERUSNYA';
+      }
+    }
+    
+    function renderCard() {
+      var mainEl = document.getElementById('main-text');
+      var counterBox = document.getElementById('counter-box');
+      if (counterBox) {
+        var isLastPerk = (mode === 'bahasa' && activePerkataan && activePerkataan.isLastPerkataan === true);
+        var isLast10Fakta = false;
+        if (mode === 'fakta' && !srModeAktif && activeTopic && activeTopic.totalBaris > 0) {
+          var c0 = cards[cardIndex];
+          if (c0 && !c0.isTamat && c0.itemIndex !== undefined && c0.itemIndex !== null) {
+            var totalB = activeTopic.totalBaris;
+            // Kira baris semasa secara global (merentasi semua laci dalam topik)
+            var barisGlobal = 0;
+            var activeDrawersSorted = allDrawers
+              .filter(function(d) { return d.topicId === activeTopic.id; })
+              .sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+            for (var adi = 0; adi < activeDrawersSorted.length; adi++) {
+              var ad = activeDrawersSorted[adi];
+              if (ad.id === c0.drawerId) {
+                barisGlobal += (c0.itemIndex + 1);
+                break;
+              }
+              if (ad.items && ad.items.length) {
+                ad.items.forEach(function(it) { if (it.ayat && it.ayat.trim()) barisGlobal++; });
+              }
+            }
+            isLast10Fakta = (totalB - barisGlobal) < 10;
+          }
+        }
+        if (isLastPerk || isLast10Fakta) counterBox.classList.add('last-perkataan');
+        else counterBox.classList.remove('last-perkataan');
+      }
+      if (!cards.length) {
+        setText('main-text', 'Tiada kad');
+        mainEl.className = 'big-text';
+        setCardImage('');
+        return;
+      }
+
+      if (cardIndex >= cards.length) {
+        if (mode === 'bahasa') {
+          lompatPerkataanSeterusnya().then(function(ok) {
+            if (!ok) resetBahasaKePerkataanPertama();
+          });
+        } else if (mode === 'fakta') {
+          resetLastDrawer();
+          rebuildFaktaCards(function(ok) {
+            if (ok) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            if (cardIndex < cards.length) renderCard();
+          });
+        }
+        return;
+      }      
+
+      var c = cards[cardIndex];
+      // F1 bahasa: tukar makna "depan/belakang" — maksud jadi default, perkataan jadi flip
+      var isF1Bahasa = (mode === 'bahasa' && !c.isF0 && c.fasa === 1 && !c.isTamat);
+      var fasaLabel = '';
+      if (c.isTamat) fasaLabel = 'TAMAT';
+      else if (c.isGambar) {
+        var gambarBarisLabel = (mode === 'fakta' && c.itemIndex !== undefined && c.itemIndex !== null) ? ' · Baris ' + (c.itemIndex + 1) : '';
+        fasaLabel = 'GAMBAR · ' + (c.title || '') + gambarBarisLabel;
+      }        
+      else if (mode === 'bahasa') {
+        if (c.isF0 || c.fasa === 0) fasaLabel = 'F0 · Pengenalan';
+        else if (c.fasa === 1) fasaLabel = 'F1 · Latihan';
+        else if (c.fasa === 2) fasaLabel = 'F2 · Ulangan';
+      } else {
+        fasaLabel = c.title || '';
+      }
+
+      // Fakta: tunjuk F1/F2 dalam label
+      if (mode === 'fakta' && !c.isTamat && !c.isF0 && !c.isGambar) {
+        var barisLabel = (c.itemIndex !== undefined && c.itemIndex !== null) ? ' · Baris ' + (c.itemIndex + 1) : '';
+        fasaLabel = (c.fasa === 1 ? 'F1' : 'F2') + ' · ' + (c.title || '') + barisLabel;
+      }
+      var label = (srModeAktif ? 'SR · ' : '') + fasaLabel;
+      setText('play-mode', label);
+
+      // Kira progress dalam fasa + laci semasa sahaja
+      var fasaSemasa = c.isGambar ? -1 : (c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1));
+      var fasaStart = cardIndex, fasaEnd = cardIndex;
+      for (var pi = 0; pi < cards.length; pi++) {
+        if (cards[pi].isTamat) continue;
+        var pf = cards[pi].isGambar ? -1 : (cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1));
+        var sameLaci = (cards[pi].drawerId === c.drawerId)
+          && (mode !== 'fakta' || cards[pi].itemIndex === c.itemIndex);
+        if (pf === fasaSemasa && sameLaci) {
+          if (pi < fasaStart) fasaStart = pi;
+          if (pi > fasaEnd) fasaEnd = pi;
+        }
+      }
+      var fasaPos = cardIndex - fasaStart + 1;
+      var fasaTotal = fasaEnd - fasaStart + 1;
+      setText('play-progress', c.isTamat ? '' : (fasaPos + ' / ' + fasaTotal));
+
+      setText('play-meta', '');
+
+      var displayText = '';
+      if (c.isGambar) {
+        var slotLabel = c.gambarSlot === 2 ? 'HAFAL GAMBAR · G2' : 'HAFAL GAMBAR · G1';
+        setText('side-label', c.imageUrl ? slotLabel : 'HAFAL GAMBAR · ' + (c.gambarSlot === 2 ? 'G2 Tiada' : 'G1'));
+        displayText = c.front;
+        setText('main-text', displayText);
+        mainEl.className = 'big-text tips-mode';
+        document.getElementById('btn-flip').className = 'btn-sm';
+        document.getElementById('btn-tips').className = 'btn-sm';
+        if (c.imageUrl) setCardImage(c.imageUrl, false);
+        else setCardImage('', c.gambarSlot === 2);        
+      } else if (showTips) {
+        setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
+        displayText = c.tips ? c.tips : '(Tiada tips)';
+        setText('main-text', displayText);
+        mainEl.className = 'big-text tips-mode';
+        document.getElementById('btn-tips').className = 'btn-sm on';
+        document.getElementById('btn-flip').className = 'btn-sm';
+        setCardImage('');
+        document.getElementById('tips-close-btn').classList.add('visible');
+      } else if (isFlipped) {
+        // F1 bahasa: flip → tunjuk perkataan (depan)
+        var flipText = isF1Bahasa ? (c.front || '(kosong)') : (c.back || '(Tiada terjemahan)');
+        var flipLabel = isF1Bahasa ? 'PERKATAAN' : 'MUKA BELAKANG';
+        setText('side-label', flipLabel);
+        displayText = flipText;
+        setText('main-text', displayText);
+        mainEl.className = displayText.length > 80 ? 'big-text long-text' : 'big-text';
+        document.getElementById('btn-flip').className = 'btn-sm on';
+        document.getElementById('btn-tips').className = 'btn-sm';
+        if (c.imageUrl) setCardImage(c.imageUrl);
+        else setCardImage('');
+      } else {
+        // F1 bahasa: default → tunjuk maksud (belakang)
+        var defaultText = isF1Bahasa ? (c.back || '(Tiada maksud)') : (c.front || '(kosong)');
+        var defaultLabel = isF1Bahasa ? 'MAKSUD' : 'MUKA DEPAN';
+        setText('side-label', defaultLabel);
+        displayText = defaultText;
+        setText('main-text', displayText);
+        mainEl.className = displayText.length > 80 ? 'big-text long-text' : 'big-text';
+        document.getElementById('btn-flip').className = 'btn-sm';
+        document.getElementById('btn-tips').className = 'btn-sm';
+        if (c.imageUrl) setCardImage(c.imageUrl);
+        else setCardImage('');
+      }
+      // Sembunyikan tips-close-btn kalau bukan dalam tips mode
+      if (!showTips) {
+        document.getElementById('tips-close-btn').classList.remove('visible');
+      }
+
+      // Auto-fit selepas render (image mungkin belum load)
+      setTimeout(function() {
+        autoFitImage(displayText.length);
+      }, 50);
+    }
+
+    function findNextDrawerStart(fromIdx) {
+      var i = fromIdx + 1;
+      while (i < cards.length && !cards[i].isF0 && !cards[i].isGambar && !cards[i].isTamat) i++;
+      if (i < cards.length && cards[i].isTamat) i++;
+      return i;
+    }
+
+    function resetBahasaKePerkataanPertama() {
+      if (!currentUser) return;
+      var jenisId = activePerkataan ? activePerkataan.jenisId : null;
+      var sorted = allBahasaPerkataan
+        .filter(function(p) { return !jenisId || p.jenisId === jenisId; })
+        .sort(function(a, b) {
+          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+        });
+      var pertama = sorted[0];
+      if (!pertama) { isBusy = false; startBahasa(); return; }
+      var batch2 = db.batch();
+      var uid = currentUser.uid;
+      for (var k = 0; k < allBahasaPerkataan.length; k++) {
+        if (allBahasaPerkataan[k].isActive) {
+          batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
+          allBahasaPerkataan[k].isActive = false;
+        }
+      }
+      batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+      pertama.isActive = true;
+      pertama.lastIndex = 0;
+      pertama.lastDrawerId = null;
+      batch2.commit().then(function() {
+        activePerkataan = pertama;
+        rebuildBahasaCards(function(ok) {
+          isBusy = false;
+          if (!ok) return;
+          setText('play-status', 'BAHASA · ' + (pertama.name || ''));
+          var firstCard = cards[cardIndex] || cards[0];
+          var firstDrawerId = firstCard ? firstCard.drawerId : null;
+          var firstDrawerObj = firstDrawerId
+            ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+            : null;
+          if (firstDrawerObj) {
+            var issues = checkTipsBlock(firstDrawerObj);
+            if (issues.length) {
+              renderBlockCard(firstDrawerObj.title || '', issues);
+              return;
+            }
+          }
+          renderCard();
+        });
+      }).catch(function() { isBusy = false; startBahasa(); });
+    }
+
+    function lompatPerkataanSeterusnya() {    
+      if (!activePerkataan) return Promise.resolve(false);
+      var sorted = allBahasaPerkataan
+        .filter(function(p) { return p.jenisId === activePerkataan.jenisId; })
+        .sort(function(a, b) {
+          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+        });
+      var idx = -1;
+      for (var i = 0; i < sorted.length; i++) {
+        if (sorted[i].id === activePerkataan.id) { idx = i; break; }
+      }
+
+      // Ada perkataan seterusnya — lompat ke sana
+      if (idx >= 0 && idx < sorted.length - 1) {
+        var next = sorted[idx + 1];
+        var batch = db.batch();
+        var uid = currentUser.uid;
+        for (var j = 0; j < allBahasaPerkataan.length; j++) {
+          if (allBahasaPerkataan[j].isActive) {
+            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
+            allBahasaPerkataan[j].isActive = false;
+          }
+        }
+        batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+        next.isActive = true;
+        next.lastIndex = 0;
+        next.lastDrawerId = null;
+
+        return batch.commit().then(function() {
+          activePerkataan = next;
+          rebuildBahasaCards(function(ok) {
+            setText('play-status', 'BAHASA · ' + (next.name || ''));
+            if (jqAktif && jqMotivasiList.length) {
+              tunjukMotivasiJQ(function() { renderCard(); });
+            } else {
+              renderCard();
+            }
+          });
+          return true;
+        }).catch(function() { return false; });
+      }
+
+      // Habis semua perkataan — tunjuk JQ dulu, kemudian kad "selesai"
+      // Tunjuk JQ pertama, kemudian kad "selesai"
+      function _tunjukKadSelesai() {
+        // Cari jenis kata seterusnya (sort sama seperti releasestress — localeCompare numeric)
+        var jenisSemasaId = activePerkataan ? activePerkataan.jenisId : null;
+        var allJenisSorted = allJenisKata.slice().sort(function(a, b) {
+          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+        });
+        var idxJenis = -1;
+        for (var ji = 0; ji < allJenisSorted.length; ji++) {
+          if (allJenisSorted[ji].id === jenisSemasaId) { idxJenis = ji; break; }
+        }
+        var jenisBerikut = (idxJenis >= 0 && idxJenis < allJenisSorted.length - 1)
+          ? allJenisSorted[idxJenis + 1] : null;
+
+        // Tunjuk button float — kekal sampai user tekan
+        var btnFloat = document.getElementById('btn-jenis-seterusnya-float');
+        if (btnFloat) {
+          btnFloat.className = jenisBerikut ? 'active' : 'active tiada';
+          btnFloat._jenisBerikutId = jenisBerikut ? jenisBerikut.id : null;
+          btnFloat.textContent = jenisBerikut
+            ? '→ Jenis Kata Seterusnya'
+            : '→ Tiada Jenis Kata Seterusnya, sila tambah di app phone dan reset kindle semula.';
+          // Adjust posisi kalau badge notif aktif
+          var badge = document.getElementById('ws-notif-badge');
+          if (badge && badge.classList.contains('active')) {
+            btnFloat.style.top = '50px';
+          } else {
+            btnFloat.style.top = '8px';
+          }
+          // Simpan state ke Firebase
+          simpanJenisState(jenisBerikut ? jenisBerikut.id : null);
+        }
+
+        cards = [{
+          front: 'Semua perkataan dalam jenis kata ini telah selesai.',
+          back: '', tips: '', imageUrl: '',
+          title: '', drawerId: null,
+          isF0: false, isTamat: false, isSR: false,
+          isKadSelesai: true
+        }];
+        cardIndex = 0;
+        setText('play-status', 'BAHASA · Selesai');
+        setText('play-mode', 'TAMAT SEMUA');
+        setText('side-label', '');
+        setText('main-text', cards[0].front);
+        var mainEl = document.getElementById('main-text');
+        if (mainEl) mainEl.className = 'big-text tips-mode';
+        setText('play-progress', '');
+        setText('play-meta', '');
+        setText('play-err', '');
+        setCardImage('');
+        clearBlockCard();
+      }
+
+      isBusy = false;
+      setText('play-err', '');
+      if (jqAktif && jqMotivasiList.length) {
+        tunjukMotivasiJQ(function() {
+          isBusy = false;
+          _tunjukKadSelesai();
+        });
+      } else {
+        _tunjukKadSelesai();
+      }
+
+      return Promise.resolve(true);
+    }
+
+    function afterTamat(c) {
+      isBusy = true;
+      setText('play-err', 'Menyimpan...');
+      var drawerId = c.drawerId;
+      var isSR = c.isSR || srModeAktif;
+      var nextIdx = findNextDrawerStart(cardIndex);
+      var isLast = nextIdx >= cards.length;
+      var srCol = mode === 'fakta' ? 'fakta_sr_queue' : 'bahasa_sr_queue';
+
+      // isTamat fakta: SR sudah didaftar per-baris; jangan daftar semula whole-laci
+      var srId = (srLaciSemasa && (srLaciSemasa.srDocId || srLaciSemasa.id)) || drawerId;
+      // Simpan lastDrawerId sebelum SR atau laci seterusnya
+      if (!isSR) simpanLastDrawer(drawerId, mode === 'fakta' && c.itemIndex !== undefined ? c.itemIndex : null);      
+      var p = isSR
+        ? selesaiSRUlangan(srId, mode)
+        : (mode === 'fakta' ? Promise.resolve() : daftarSRBaru(drawerId, mode));
+
+      p.then(function() {
+        if (isSR) {
+          // ── SELEPAS SR: WAJIB ke laci biasa dulu ──
+          // Jangan tulis lastDrawerId = laci SR. Guna posisi biasa yang sedia ada.
+          srModeAktif = false;
+          srLaciSemasa = null;
+
+          if (mode === 'bahasa' && !activePerkataan) {
+            for (var ai = 0; ai < allBahasaPerkataan.length; ai++) {
+              if (allBahasaPerkataan[ai].isActive) { activePerkataan = allBahasaPerkataan[ai]; break; }
+            }
+          } else if (mode === 'fakta' && !activeTopic) {
+            for (var ti = 0; ti < allTopics.length; ti++) {
+              if (allTopics[ti].isActive) { activeTopic = allTopics[ti]; break; }
+            }
+          }
+
+          var _rebuildFn = mode === 'bahasa' ? rebuildBahasaCards : rebuildFaktaCards;
+          _rebuildFn(function(ok) {
+            if (!ok) { isBusy = false; setText('play-err', ''); return; }
+            isFlipped = false; showTips = false;
+            clearBlockCard();
+
+            var _statusSR = mode === 'bahasa'
+              ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            setText('play-status', _statusSR);
+            isBusy = false; setText('play-err', '');
+
+            if (mode === 'bahasa' && cardIndex >= cards.length) {
+              lompatPerkataanSeterusnya();
+              return;
+            }
+            if (mode === 'fakta' && cardIndex >= cards.length) {
+              resetLastDrawer();
+              rebuildFaktaCards(function(ok2) {
+                if (ok2) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+                renderCard();
+              });
+              return;
+            }
+
+            if (jqAktif && jqMotivasiList.length) {
+              tunjukMotivasiJQ(function() {
+                setText('play-status', _statusSR);
+                if (mode === 'bahasa' && cardIndex >= cards.length) {
+                  lompatPerkataanSeterusnya();
+                  return;
+                }
+                if (mode === 'fakta' && cardIndex >= cards.length) {
+                  resetLastDrawer();
+                  rebuildFaktaCards(function(ok2) {
+                    if (ok2) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+                    if (cardIndex < cards.length) renderCard();
+                  });
+                  return;
+                }
+                // Block check bahasa selepas JQ
+                if (mode === 'bahasa') {
+                  var resumeCard = cards[cardIndex] || cards[0];
+                  var resumeDrawerId = resumeCard ? resumeCard.drawerId : null;
+                  var firstDrawerObj = resumeDrawerId
+                    ? allBahasaDrawers.filter(function(d) { return d.id === resumeDrawerId; })[0]
+                    : null;
+                  if (firstDrawerObj) {
+                    var blockIssuesSR = checkTipsBlock(firstDrawerObj);
+                    if (blockIssuesSR.length) {
+                      isBusy = true;
+                      renderBlockCard(firstDrawerObj.title || '', blockIssuesSR);
+                      isBusy = false;
+                      return;
+                    }
+                  }
+                }
+                renderCard();
+              });
+            } else {
+              // Block check bahasa (tiada JQ)
+              if (mode === 'bahasa') {
+                var resumeCard = cards[cardIndex] || cards[0];
+                var resumeDrawerId = resumeCard ? resumeCard.drawerId : null;
+                var firstDrawerObj = resumeDrawerId
+                  ? allBahasaDrawers.filter(function(d) { return d.id === resumeDrawerId; })[0]
+                  : null;
+                if (firstDrawerObj) {
+                  var blockIssuesSR = checkTipsBlock(firstDrawerObj);
+                  if (blockIssuesSR.length) {
+                    renderBlockCard(firstDrawerObj.title || '', blockIssuesSR);
+                    return;
+                  }
+                }
+              }
+              renderCard();
+            }
+          });
+
+        } else {
+          // ── SELEPAS LACI BIASA: check SR dulu sebelum ke laci seterusnya ──
+          loadSROverdue(srCol).then(function(overdue) {
+            srQueue = overdue || [];
+            _srAdaCache = srQueue.length > 0;
+
+            if (srQueue.length) {
+              // Ada SR — load SATU SR, prefetch laci biasa seterusnya
+              srLaciSemasa = srQueue.shift();
+              srModeAktif = true;
+              // Prefetch laci biasa yang akan datang selepas SR ini
+              if (mode === 'bahasa') _prefetchLaciBiasaBahasa();
+              else _prefetchLaciBiasaFakta();
+
+              loadSRIntoCards(srLaciSemasa, mode, function(ok) {
+                if (ok) {
+                  var srStatusLabel = (mode === 'bahasa' ? 'SR BAHASA' : 'SR FAKTA') + ' · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0);
+                  setText('play-status', srStatusLabel);
+                  isFlipped = false; showTips = false; isBusy = false;
+                  setText('play-err', '');
+                  // Block check untuk SR bahasa
+                  if (mode === 'bahasa') {
+                    var srNextDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                    if (srNextDrawer) {
+                      var srNextIssues = checkTipsBlock(srNextDrawer);
+                      if (srNextIssues.length) {
+                        renderBlockCard(srNextDrawer.title || '', srNextIssues);
+                        return;
+                      }
+                    }
+                  }
+                  clearBlockCard();
+                  if (jqAktif && jqMotivasiList.length) {
+                    tunjukMotivasiJQ(function() {
+                      setText('play-status', srStatusLabel);
+                      // Block check selepas JQ untuk SR bahasa sahaja
+                      if (mode === 'bahasa') {
+                        var srDrawerjq = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                        if (srDrawerjq) {
+                          var srIssuesjq = checkTipsBlock(srDrawerjq);
+                          if (srIssuesjq.length) {
+                            renderBlockCard(srDrawerjq.title || '', srIssuesjq);
+                            return;
+                          }
+                        }
+                      }
+                      renderCard();
+                    });
+                  } else {
+                    renderCard();
+                  }
+                  return;
+                }
+                // SR drawer tiada — reset dan terus ke laci biasa seterusnya
+                srModeAktif = false; srLaciSemasa = null; _srAdaCache = false;
+                _terusLaciSeterusnya();
+              });
+              return;
+            }
+
+            // Tiada SR — terus ke laci biasa seterusnya
+            _terusLaciSeterusnya();
+
+          }).catch(function(e) {
+            isBusy = false; setText('play-err', e.message || 'Gagal check SR');
+          });
+
+          function _terusLaciSeterusnya() {
+            if (isLast && mode === 'bahasa') {
+              lompatPerkataanSeterusnya().then(function(ok) {
+                if (!ok) {
+                  isBusy = false; setText('play-err', '');
+                  setText('main-text', 'Tiada perkataan dalam jenis kata ini.');
+                  setText('side-label', ''); setCardImage('');
+                }
+                // ok = true: lompatPerkataanSeterusnya handle sendiri
+              });
+              return;
+            }
+            if (isLast && mode === 'fakta') {
+              isBusy = false; setText('play-err', '');
+              function _tunjukKadSelesaiFakta() {
+                cards = [{
+                  front: 'Semua laci dalam topik ini telah selesai.\nTekan SETERUSNYA untuk ulang dari awal.',
+                  back: '', tips: '', imageUrl: '',
+                  title: '', drawerId: null,
+                  isF0: false, isTamat: false, isSR: false,
+                  isKadSelesaiFakta: true
+                }];
+                cardIndex = 0;
+                setText('play-status', 'FAKTA · Selesai');
+                setText('play-mode', 'TAMAT SEMUA');
+                setText('side-label', '');
+                setText('main-text', cards[0].front);
+                var mainEl = document.getElementById('main-text');
+                if (mainEl) mainEl.className = 'big-text tips-mode';
+                setText('play-progress', '');
+                setText('play-meta', '');
+                setText('play-err', '');
+                setCardImage('');
+                clearBlockCard();
+              }
+              if (jqAktif && jqMotivasiList.length) {
+                tunjukMotivasiJQ(function() { _tunjukKadSelesaiFakta(); });
+              } else {
+                _tunjukKadSelesaiFakta();
+              }
+              return;
+            }
+            // Block check bahasa untuk laci seterusnya
+            if (mode === 'bahasa') {
+              var nextCard0 = cards[nextIdx];
+              var nextDrawerId = nextCard0 ? nextCard0.drawerId : null;
+              var nextDrawerObj = nextDrawerId
+                ? allBahasaDrawers.filter(function(d) { return d.id === nextDrawerId; })[0]
+                : null;
+              if (nextDrawerObj) {
+                var blockIssues = checkTipsBlock(nextDrawerObj);
+                if (blockIssues.length) {
+                  cardIndex = nextIdx; syncIndex(cardIndex);
+                  isFlipped = false; showTips = false; isBusy = false;
+                  setText('play-status', 'BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''));
+                  renderBlockCard(nextDrawerObj.title || '', blockIssues);
+                  return;
+                }
+              }
+            }
+            cardIndex = nextIdx; syncIndex(cardIndex);
+            isFlipped = false; showTips = false; isBusy = false;
+            clearBlockCard();
+            setText('play-err', '');
+            if (jqAktif && jqMotivasiList.length) {
+              tunjukMotivasiJQ(function() {
+                setText('play-status', mode === 'bahasa'
+                  ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+                  : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
+                // Block check selepas JQ
+                if (mode === 'bahasa') {
+                  var nextCard0jq = cards[cardIndex];
+                  var nextDrawerIdjq = nextCard0jq ? nextCard0jq.drawerId : null;
+                  var nextDrawerObjjq = nextDrawerIdjq
+                    ? allBahasaDrawers.filter(function(d) { return d.id === nextDrawerIdjq; })[0]
+                    : null;
+                  if (nextDrawerObjjq) {
+                    var blockIssuesjq = checkTipsBlock(nextDrawerObjjq);
+                    if (blockIssuesjq.length) {
+                      renderBlockCard(nextDrawerObjjq.title || '', blockIssuesjq);
+                      return;
+                    }
+                  }
+                }
+                renderCard();
+              });
+              return;
+            }
+            setText('play-status', mode === 'bahasa'
+              ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
+            renderCard();
+          }
+        }
+      }).catch(function(e) {
+        isBusy = false; setText('play-err', e.message || 'Gagal simpan');
+      });
+    }
+
+    function nextCard() {
+      if (isBusy) return;
+
+      // Mode motivasi JQ — tekan SETERUSNYA → ikut cara app pertama
+      if (window._jqMotivasiHandler) {
+        var h = window._jqMotivasiHandler;
+        if (h.adaFlip && !h.flipped) {
+          // Tap pertama — tunjuk belakang
+          h.flipped = true;
+          setText('side-label', 'MUKA BELAKANG');
+          setText('main-text', h.belakang);
+          setText('play-progress', '(Tekan SETERUSNYA untuk teruskan)');
+          var mainElM = document.getElementById('main-text');
+          if (mainElM) mainElM.className = h.belakang.length > 80 ? 'big-text long-text' : 'big-text';
+          document.getElementById('btn-flip').className = 'btn-sm on';
+          return;
+        }
+        // Tap terakhir — selesai motivasi, sambung
+        var cbM = h.cb;
+
+        // Supplement atau Water — tunjuk overlay confirm dulu
+        if ((h.source === 'supplement' || h.source === 'water') && currentUser) {
+          var hSnap = h; // simpan rujukan
+          champShowConfirm(hSnap,
+            // Ya — rekod + commit index
+            function() {
+              if (hSnap.source === 'water' && hSnap.waterItem) {
+                var wi = hSnap.waterItem;
+                var todayKey = (function() {
+                  var d = new Date();
+                  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                })();
+                var mlMinum = (wi.kindleMl && wi.kindleMl >= 50) ? wi.kindleMl : 100;
+                var newMinum = (wi.minum || 0) + mlMinum;
+                db.collection('users').doc(currentUser.uid).collection('water_tracker').doc(todayKey)
+                  .set({ minum: newMinum, log: [{ ml: mlMinum, ts: Date.now(), src: 'kindle' }], dateKey: todayKey, updatedAt: Date.now() }, { merge: true })
+                  .catch(function() {});
+                var goal = wi.goal || 2000;
+                var baki = Math.max(0, goal - newMinum);
+                var pct = Math.min(100, Math.round(newMinum / goal * 100));
+                db.collection('users').doc(currentUser.uid).collection('water_tracker').doc('champion_item')
+                  .set({
+                    title: '💧 Air: ' + newMinum + 'ml / ' + goal + 'ml (' + pct + '%)',
+                    text: baki > 0 ? 'Baki ' + baki + 'ml lagi untuk capai goal hari ini.' : '✅ Goal air hari ini dah tercapai!',
+                    minum: newMinum, goal: goal, baki: baki, pct: pct, updatedAt: Date.now()
+                  }, { merge: true }).catch(function() {});
+              }
+              // Commit index — baru naikkan selepas user sahkan
+              if (hSnap.champSourceKey) champCommitItem(hSnap.champSourceKey, hSnap.champActiveLen);
+              _selesaiMotivasi();
+              if (cbM) cbM();
+            },
+            // Skip — naikkan giliran sumber sahaja, item kekal untuk kitaran seterusnya
+            function() {
+              // champIdx[sourceKey] TIDAK naik — item sama akan muncul semula pada gilirannya
+              // champLastIdx naik — supaya sumber lain dapat giliran dulu
+              if (hSnap.champSourceKey && hSnap.champActiveLen) {
+                champLastIdx = (champLastIdx + 1) % hSnap.champActiveLen;
+                db.collection('users').doc(currentUser.uid)
+                  .collection('kindle_settings').doc('champion')
+                  .update({ lastSourceIndex: champLastIdx }).catch(function() {});
+              }
+              _selesaiMotivasi();
+              if (cbM) cbM();
+            }
+          );
+          return;
+        }
+
+        // Motivasi / Perjanjian / Rutin — commit index terus (tiada confirm)
+        if (h.champSourceKey) champCommitItem(h.champSourceKey, h.champActiveLen);
+        _selesaiMotivasi();
+        if (cbM) cbM();
+        return;
+      }
+
+      if (!cards.length || cardIndex >= cards.length) {
+        if (mode === 'bahasa') {
+          lompatPerkataanSeterusnya().then(function(ok) {
+            if (!ok) resetBahasaKePerkataanPertama();
+          });
+        } else if (mode === 'fakta') {
+          resetLastDrawer();
+          rebuildFaktaCards(function(ok) {
+            if (ok) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            renderCard();
+          });
+        }
+        return;
+      }
+      var c = cards[cardIndex];
+      if (c.isTamat) { afterTamat(c); return; }
+
+      // Kad selesai fakta — tekan SETERUSNYA → kitar semula dari awal
+      if (c.isKadSelesaiFakta) {
+        resetLastDrawer();
+        rebuildFaktaCards(function(ok) {
+          if (ok) {
+            setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+          }
+          renderCard();
+        });
+        return;
+      }
+
+      // Kad selesai bahasa — terus ke perkataan pertama (jangan JQ semula)
+      if (c.isKadSelesai) {
+        resetBahasaKePerkataanPertama();
+        return;
+      }
+
+      // Fasa Gambar — terus ke kad seterusnya sahaja
+      if (c.isGambar) {
+        isFlipped = false; showTips = false;
+        // Prefetch: kad Gambar G1 ke-5 (index r=4, iaitu kad Gambar ke-5 dalam blok 10)
+        // Kira berapa kad Gambar dalam blok semasa
+        if (c.gambarSlot === 1) {
+          var gCount = 0;
+          for (var gi = cardIndex; gi >= 0 && cards[gi] && cards[gi].isGambar && cards[gi].drawerId === c.drawerId; gi--) gCount++;
+          if (gCount === 5) {
+            // Ini kad G1 ke-5 — masa terbaik prefetch
+            if (srModeAktif) {
+              // Dalam SR → prefetch laci BIASA (sebab selepas SR wajib laci biasa)
+              if (mode === 'bahasa') _prefetchLaciBiasaBahasa();
+              else _prefetchLaciBiasaFakta();
+            } else {
+              // Dalam laci biasa → prefetch ikut ada SR atau tidak (_srAdaCache)
+              if (_srAdaCache) {
+                // Ada SR akan datang → prefetch SR seterusnya dari srQueue
+                if (srQueue.length) prefetchDrawer(srQueue[0].drawerId, mode === 'bahasa' ? 'bahasa_drawers' : 'drawer');
+              } else {
+                // Tiada SR → prefetch laci biasa seterusnya
+                var nextLaciId = null;
+                for (var ni = cardIndex + 1; ni < cards.length; ni++) {
+                  if (cards[ni].drawerId && cards[ni].drawerId !== c.drawerId) { nextLaciId = cards[ni].drawerId; break; }
+                }
+                if (nextLaciId) prefetchDrawer(nextLaciId, mode === 'bahasa' ? 'bahasa_drawers' : 'drawer');
+              }
+            }
+          }
+        }
+        cardIndex++;
+        if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
+        else renderCard();
+        return;
+      }
+
+      // Fakta F1 habis (isEndF1) → tunjuk motivasi JQ, kemudian sambung ke F2
+      if (mode === 'fakta' && c.isEndF1) {
+        isFlipped = false; showTips = false;
+        // Prefetch ikut konteks semasa
+        if (srModeAktif) {
+          // Dalam SR → prefetch laci BIASA (sebab selepas SR wajib laci biasa)
+          _prefetchLaciBiasaFakta();
+        }
+        // Dalam laci biasa isEndF1 — tiada prefetch (G1 ke-5 dah buat)
+        cardIndex++;
+        syncIndex(cardIndex);
+        if (jqAktif && jqMotivasiList.length) {
+          var f2Index = cardIndex;
+          tunjukMotivasiJQ(function() {
+            cardIndex = f2Index;
+            var statusLabel = srModeAktif
+              ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
+              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            setText('play-status', statusLabel);
+            renderCard();
+          });
+        } else {
+          renderCard();
+        }
+        return;
+      }
+
+      // Fakta F2 habis (isLastOfBaris) → daftar SR untuk baris ini
+      if (mode === 'fakta' && !srModeAktif && c.isLastOfBaris && c.drawerId != null && c.itemIndex != null) {
+        isBusy = true;
+        setText('play-err', 'Daftar SR baris...');
+        simpanLastDrawer(c.drawerId, c.itemIndex);
+        daftarSRBaru(c.drawerId, 'fakta', c.itemIndex, c.front).then(function() {
+          isBusy = false;
+          setText('play-err', '');
+          isFlipped = false; showTips = false;
+          cardIndex++;
+          if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
+          else renderCard();
+        }).catch(function(e) {
+          isBusy = false;
+          setText('play-err', e.message || 'Gagal SR');
+        });
+        return;
+      }
+
+      // Reset flip hanya bila tukar fasa, kekal flip dalam fasa yang sama
+      var fasaSebelum = c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1);
+      var nextC = cards[cardIndex + 1];
+      var fasaSelepas = nextC ? (nextC.isF0 ? 0 : (nextC.fasa !== undefined ? nextC.fasa : -1)) : -1;
+      if (fasaSelepas !== fasaSebelum) { isFlipped = false; showTips = false; }
+
+      cardIndex++;
+      if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
+      else renderCard();
+    }
+
+    function cubaLoginPin() {
+      var pin = document.getElementById('pin-input').value.trim();
+      if (!pin || !/^\d{4,6}$/.test(pin)) {
+        setText('login-msg', 'PIN mesti 4-6 digit'); return;
+      }
+      setText('login-msg', 'Mengesahkan...');
+      document.getElementById('btn-login').disabled = true;
+      auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
+        .then(function() {
+          document.getElementById('pin-input').value = '';
+          setText('login-msg', '');
+        })
+        .catch(function(e) {
+          document.getElementById('btn-login').disabled = false;
+          if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') {
+            setText('login-msg', 'PIN salah');
+          } else if (e.code === 'auth/user-not-found') {
+            setText('login-msg', 'PIN belum setup di phone');
+          } else {
+            setText('login-msg', e.message || e.code);
+          }
+        });
+    }
+
+    // ── JQ BUTTON HANDLER ──
+    document.getElementById('btn-jq').onclick = function() {
+      if (isLoading) return;
+      if (jqAktif) {
+        // Terus OFF tanpa PIN
+        jqAktif = false;
+        simpanJQStatus(false);
+        updateJQButton();
+      } else {
+        // Perlukan PIN untuk ON
+        document.getElementById('jq-pin-input').value = '';
+        setText('jq-pin-msg', '');
+        var overlay = document.getElementById('jq-overlay');
+        overlay.style.display = 'none';
+        overlay.style.display = 'block';
+        setTimeout(function() { document.getElementById('jq-pin-input').focus(); }, 100);
+      }
+    };
+
+    document.getElementById('jq-pin-ok').onclick = function() {
+      var pin = document.getElementById('jq-pin-input').value.trim();
+      if (!pin || !/^\d{4,6}$/.test(pin)) {
+        setText('jq-pin-msg', 'PIN mesti 4-6 digit'); return;
+      }
+      setText('jq-pin-msg', 'Mengesahkan...');
+      document.getElementById('jq-pin-ok').disabled = true;
+      auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
+        .then(function() {
+          document.getElementById('jq-overlay').style.display = 'none';
+          document.getElementById('jq-pin-ok').disabled = false;
+          jqAktif = true;
+          simpanJQStatus(true);
+          updateJQButton();
+        })
+        .catch(function(e) {
+          document.getElementById('jq-pin-ok').disabled = false;
+          if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') {
+            setText('jq-pin-msg', 'PIN salah');
+          } else {
+            setText('jq-pin-msg', e.message || e.code);
+          }
+        });
+    };
+
+    document.getElementById('jq-pin-batal').onclick = function() {
+      document.getElementById('jq-overlay').style.display = 'none';
+    };
+
+    document.getElementById('jq-pin-input').onkeydown = function(e) {
+      if (e.key === 'Enter') document.getElementById('jq-pin-ok').click();
+    };
+
+    document.getElementById('btn-login').onclick = cubaLoginPin;    
+    document.getElementById('pin-input').onkeydown = function(e) {
+      if (e.key === 'Enter') cubaLoginPin();
+    };
+    document.getElementById('btn-logout').onclick = function() { auth.signOut(); };
+    document.getElementById('btn-go-bahasa').onclick = startBahasa;
+    document.getElementById('btn-go-fakta').onclick = startFakta;
+    document.getElementById('btn-back-menu').onclick = function() { showScreen('screen-menu'); };
+
+    // ══════════════════════════════════════════
+    // OTHER MOTIVATION
+    // ══════════════════════════════════════════
+    var allOtherMotivation = [];
+    var _omUnsub = null;
+
+    document.getElementById('btn-go-other-motivation').onclick = function() {
+      showScreen('screen-other-motivation');
+      loadOtherMotivation();
+    };
+
+    document.getElementById('btn-om-back').onclick = function() {
+      showScreen('screen-menu');
+    };
+
+    document.getElementById('btn-om-tambah').onclick = async function() {
+      if (!currentUser) return;
+      var maxOrder = allOtherMotivation.reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
+      await db.collection('users').doc(currentUser.uid).collection('other_motivation').add({
+        title: '', text: '', imageUrl: '', order: maxOrder + 1, createdAt: Date.now()
+      });
+      setText('om-status', '✅ Motivasi berjaya ditambah!');
+      setTimeout(function() { setText('om-status', 'OTHER MOTIVATION'); }, 2000);
+    };
+
+    function loadOtherMotivation() {
+      if (!currentUser) return;
+      if (_omUnsub) return; // dah subscribe
+      console.log('📥 Cache miss — other_motivation diload dari Firestore');
+      _omUnsub = db.collection('users').doc(currentUser.uid)
+        .collection('other_motivation')
+        .orderBy('order', 'asc')
+        .onSnapshot(function(snap) {
+          allOtherMotivation = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allOtherMotivation.push(x); });
+          console.log('✅ Cache hit — other_motivation (' + allOtherMotivation.length + ' item)');
+          renderOtherMotivation();
+        }, function(e) {
+          console.error('❌ Gagal load other_motivation:', e);
+        });
+    }
+
+    var omEditId = null; // ID laci yang sedang diedit
+
+    function renderOtherMotivation() {
+      var list = document.getElementById('om-list');
+      if (!list) return;
+      list.innerHTML = '';
+
+      if (!allOtherMotivation.length) {
+        list.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Tiada motivasi. Tekan + Tambah.</div>';
+        return;
+      }
+
+      allOtherMotivation.forEach(function(data) {
+        var div = document.createElement('div');
+        div.style.cssText = 'border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:10px;';        
+
+        var imgHtml = data.imageUrl
+          ? '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;margin-bottom:6px;object-fit:cover;">'
+          : '<div style="font-size:0.7rem;color:#888;margin-bottom:6px;font-style:italic;">Tiada gambar lagi</div>';
+
+        var dataCapture = data;
+        div.innerHTML = imgHtml +
+          '<div style="font-weight:bold;font-size:0.9rem;margin-bottom:4px;">' + (data.title || '(Tiada tajuk)') + '</div>' +
+          '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>' +
+          '<div class="om-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;margin-top:8px;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;display:inline-block;">Tekan untuk edit →</div>';
+
+        div.querySelector('.om-edit-btn').addEventListener('click', function(e) {
+          e.stopPropagation();
+          bukaEditOM(dataCapture);
+        });
+
+        list.appendChild(div);
+      });
+    }
+
+    function bukaEditOM(data) {
+      omEditId = data.id;
+      document.getElementById('om-edit-title').value = data.title || '';
+      document.getElementById('om-edit-text').value = data.text || '';
+      document.getElementById('om-edit-msg').textContent = '';
+      setText('om-edit-status', 'EDIT — ' + (data.title || 'Tanpa Tajuk'));
+
+      // Papar gambar atau nota tiada gambar
+      var imgWrap = document.getElementById('om-edit-img-wrap');
+      if (data.imageUrl) {
+        imgWrap.innerHTML = '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;object-fit:cover;">';
+      } else {
+        imgWrap.innerHTML = 'Tiada gambar lagi — tambah melalui app phone';
+        imgWrap.style.cssText = 'margin-top:8px;text-align:center;font-size:0.72rem;color:#888;font-style:italic;';
+      }
+
+      showScreen('screen-om-edit');
+      // Focus textarea selepas screen muncul supaya keyboard muncul dengan betul
+      setTimeout(function() { document.getElementById('om-edit-title').focus(); }, 300);
+    }
+
+    document.getElementById('btn-om-edit-back').onclick = function() {
+      showScreen('screen-other-motivation');
+    };
+
+    document.getElementById('btn-om-edit-del').onclick = function() {
+      if (!currentUser || !omEditId) return;
+      document.getElementById('om-del-input').value = '';
+      document.getElementById('om-del-err').textContent = '';
+      document.getElementById('om-del-overlay').style.display = 'flex';
+      setTimeout(function() { document.getElementById('om-del-input').focus(); }, 100);
+    };
+
+    document.getElementById('btn-om-del-cancel').onclick = function() {
+      document.getElementById('om-del-overlay').style.display = 'none';
+    };
+
+    document.getElementById('btn-om-del-ok').onclick = function() {
+      var val = document.getElementById('om-del-input').value.trim().toLowerCase();
+      if (val !== 'padam') {
+        document.getElementById('om-del-err').textContent = 'Taip "padam" untuk confirm.';
+        return;
+      }
+      document.getElementById('om-del-overlay').style.display = 'none';
+      db.collection('users').doc(currentUser.uid)
+        .collection('other_motivation').doc(omEditId)
+        .delete()
+        .then(function() {
+          showScreen('screen-other-motivation');
+        })
+        .catch(function(e) {
+          setText('om-edit-msg', '❌ Gagal padam: ' + (e.message || e));
+        });
+    };
+
+    document.getElementById('om-del-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('btn-om-del-ok').click();
+    });
+
+    document.getElementById('btn-om-edit-save').onclick = function() {
+      if (!currentUser || !omEditId) return;
+      var title = document.getElementById('om-edit-title').value.trim();
+      var text = document.getElementById('om-edit-text').value.trim();
+      var btn = document.getElementById('btn-om-edit-save');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+
+      db.collection('users').doc(currentUser.uid)
+        .collection('other_motivation').doc(omEditId)
+        .set({ title: title, text: text, updatedAt: Date.now() }, { merge: true })
+        .then(function() {
+          btn.disabled = false;
+          btn.textContent = 'Simpan ✓';
+          setText('om-edit-msg', '✅ Tersimpan!');
+          setText('om-edit-status', 'EDIT — ' + (title || 'Tanpa Tajuk'));
+          setTimeout(function() { setText('om-edit-msg', ''); }, 2000);
+        })
+        .catch(function(e) {
+          btn.disabled = false;
+          btn.textContent = 'Simpan ✓';
+          setText('om-edit-msg', '❌ Gagal: ' + (e.message || e));
+        });
+    };
+
+    // Clear cache bila logout
+    var _origLogout = document.getElementById('btn-logout').onclick;    
+    document.getElementById('btn-reload').onclick = function() {
+      isLoading = false;
+      clearBlockCard();
+      if (mode === 'bahasa') {
+        // Refresh jenis_kata dari Firebase dulu
+        db.collection('users').doc(currentUser.uid).collection('jenis_kata').get()
+          .then(function(snap) {
+            allJenisKata = [];
+            snap.forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
+            if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesai) {
+              resetBahasaKePerkataanPertama();
+            } else {
+              startBahasa();
+            }
+          }).catch(function() {
+            if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesai) {
+              resetBahasaKePerkataanPertama();
+            } else {
+              startBahasa();
+            }
+          });
+      } else if (mode === 'fakta') {
+        if (cards.length && cards[cardIndex] && cards[cardIndex].isKadSelesaiFakta) {
+          resetLastDrawer();
+          rebuildFaktaCards(function(ok) {
+            if (ok) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            renderCard();
+          });
+        } else {
+          startFakta();
+        }
+      }
+    };
+    document.getElementById('btn-next').onclick = nextCard;
+
+    document.getElementById('btn-jenis-seterusnya-float').addEventListener('click', function() {
+      var jenisBerikutId = this._jenisBerikutId;
+      if (!jenisBerikutId || !currentUser) return;
+      var uid = currentUser.uid;
+      var self = this;
+
+      // Sembunyi button — hanya bila user tekan
+      self.className = '';
+
+      // Cari perkataan pertama dalam jenis kata berikut
+      var perkataanDlmJenis = allBahasaPerkataan
+        .filter(function(p) { return p.jenisId === jenisBerikutId; })
+        .sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }); });
+
+      if (!perkataanDlmJenis.length) {
+        setText('play-err', 'Tiada perkataan dalam jenis kata ini.');
+        return;
+      }
+
+      var pertama = perkataanDlmJenis[0];
+      var batch = db.batch();
+
+      // Buang isActive semua perkataan
+      for (var k = 0; k < allBahasaPerkataan.length; k++) {
+        if (allBahasaPerkataan[k].isActive) {
+          batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
+          allBahasaPerkataan[k].isActive = false;
+        }
+      }
+
+      // Tick perkataan pertama jenis kata berikut
+      batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+      pertama.isActive = true;
+      pertama.lastIndex = 0;
+      pertama.lastDrawerId = null;
+
+      batch.commit().then(function() {
+        activePerkataan = pertama;
+        // Padam state dari Firebase — button dah digunakan
+        simpanJenisState(null);
+        rebuildBahasaCards(function(ok) {
+          isBusy = false;
+          if (!ok) return;
+          setText('play-status', 'BAHASA · ' + (pertama.name || ''));
+          renderCard();
+        });
+      }).catch(function(e) {
+        setText('play-err', 'Ralat: ' + (e.message || e));
+        self.className = 'active';
+      });
+    });
+    document.getElementById('counter-box').onclick = nextCard;
+    document.getElementById('btn-flip').onclick = function() {
+      if (window._jqMotivasiHandler) {
+        var h = window._jqMotivasiHandler;
+        if (!h.adaFlip) return;
+        h.flipped = !h.flipped;
+        setText('side-label', h.flipped ? 'MUKA BELAKANG' : 'MUKA DEPAN');
+        var txt = h.flipped ? h.belakang : h.depan;
+        setText('main-text', txt);
+        setText('play-progress', h.flipped ? '(Tekan SETERUSNYA untuk teruskan)' : '(Flip untuk penerangan)');
+        var mainEl = document.getElementById('main-text');
+        if (mainEl) mainEl.className = txt.length > 80 ? 'big-text long-text' : 'big-text';
+        document.getElementById('btn-flip').className = h.flipped ? 'btn-sm on' : 'btn-sm';
+        return;
+      }
+      if (!cards.length || cardIndex >= cards.length) return;
+      if (cards[cardIndex].isTamat) return;
+      if (cards[cardIndex].isGambar) {
+        alert('Fasa gambar tidak boleh dibalik.\nSila hafal gambar dan tekan SETERUSNYA.');
+        return;
+      }
+      showTips = false; isFlipped = !isFlipped; renderCard();
+    };
+    document.getElementById('btn-tips').onclick = function() {
+      if (!cards.length || cardIndex >= cards.length) return;
+      if (cards[cardIndex].isTamat) return;
+      if (cards[cardIndex].isGambar) return;
+      isFlipped = false; showTips = !showTips; renderCard();
+    };
+
+    document.getElementById('tips-close-btn').onclick = function() {
+      showTips = false;
+      document.getElementById('tips-close-btn').classList.remove('visible');
+      renderCard();
+    };
+
+    window.addEventListener('resize', function() {
+      var t = (document.getElementById('main-text').textContent || '').length;
+      autoFitImage(t);
+    });
+
+    // ══════════════════════════════════════════
+    // GO-TICK
+    // ══════════════════════════════════════════
+    var gtAllTajuk = [];
+    var gtActiveTajuk = null;
+    var _gtUnsub = null;
+
+    function gtSubscribe() {
+      if (!currentUser) return;
+      if (_gtUnsub) _gtUnsub();
+      _gtUnsub = db.collection('users').doc(currentUser.uid)
+        .collection('go_tick_tajuk')
+        .onSnapshot(function(snap) {
+          gtAllTajuk = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; gtAllTajuk.push(x); });
+          gtAllTajuk.sort(function(a, b) {
+            if (a.isEmergency && !b.isEmergency) return -1;
+            if (!a.isEmergency && b.isEmergency) return 1;
+            return (a.order || 0) - (b.order || 0);
+          });
+          // Update active tajuk kalau sedang dalam checklist
+          if (gtActiveTajuk) {
+            var updated = gtAllTajuk.filter(function(t) { return t.id === gtActiveTajuk.id; })[0];
+            if (updated) { gtActiveTajuk = updated; gtRenderChecklist(); }
+          }
+          gtRenderTajukList();
+        }, function(e) { setText('gt-list-err', 'Gagal load: ' + e.message); });
+    }
+
+    function gtRenderTajukList() {
+      var list = document.getElementById('gt-tajuk-list');
+      if (!list) return;
+      if (!gtAllTajuk.length) {
+        list.innerHTML = '<div class="msg">Tiada destinasi. Tambah dari telefon.</div>';
+        return;
+      }
+      list.innerHTML = '';
+      var totalItems = 0, totalTicked = 0;
+      gtAllTajuk.forEach(function(t) {
+        (t.items || []).forEach(function(it) { totalItems++; if (it.ticked) totalTicked++; });
+      });
+      setText('gt-list-status', 'Go-Tick · ' + totalTicked + '/' + totalItems);
+
+      gtAllTajuk.forEach(function(t) {
+        var items = t.items || [];
+        var ticked = items.filter(function(it) { return it.ticked; }).length;
+        var allDone = items.length > 0 && ticked === items.length;
+        var btn = document.createElement('button');
+        btn.className = 'gt-tajuk-item' + (t.isEmergency ? ' emergency' : '');
+        var badge = t.isEmergency ? ' 🚨' : '';
+        var prog = ' (' + ticked + '/' + items.length + (allDone ? ' ✓' : '') + ')';
+        btn.textContent = (t.title || 'Tanpa Tajuk') + badge + prog;
+        btn.onclick = function() { gtOpenDestinasi(t); };
+        list.appendChild(btn);
+      });
+    }
+
+    function gtOpenDestinasi(t) {
+      gtActiveTajuk = t;
+      var items = t.items || [];
+      var ticked = items.filter(function(it) { return it.ticked; }).length;
+      setText('gt-check-status', (t.isEmergency ? '🚨 ' : '') + (t.title || '') + ' · ' + ticked + '/' + items.length);
+      gtRenderChecklist();
+      showScreen('screen-gotick-check');
+    }
+
+    function gtRenderChecklist() {
+      var el = document.getElementById('gt-checklist');
+      if (!el || !gtActiveTajuk) return;
+      var items = gtActiveTajuk.items || [];
+
+      if (!items.length) {
+        el.innerHTML = '<div class="msg">Tiada item. Tambah dari telefon.</div>';
+        return;
+      }
+      el.innerHTML = '';
+
+      // Kumpulkan ikut group
+      var groups = [];
+      var groupMap = {};
+      items.forEach(function(it, idx) {
+        var g = it.group || '';
+        if (!groupMap.hasOwnProperty(g)) {
+          groupMap[g] = groups.length;
+          groups.push({ name: g, items: [], isEmergency: !!it.isEmergency });
+        }
+        groups[groupMap[g]].items.push({ item: it, idx: idx });
+      });
+
+      // Kumpulan kecemasan naik ke atas
+      groups.sort(function(a, b) {
+        if (a.isEmergency && !b.isEmergency) return -1;
+        if (!a.isEmergency && b.isEmergency) return 1;
+        return 0;
+      });
+
+      groups.forEach(function(grp) {
+        if (grp.name) {
+          var gl = document.createElement('div');
+          gl.className = 'gt-group-label';
+          gl.style.cssText = grp.isEmergency ? 'color:#800;border-bottom-color:#800;' : '';
+          gl.textContent = (grp.isEmergency ? '🚨 ' : '') + grp.name;
+          el.appendChild(gl);
+        }
+        grp.items.forEach(function(entry) {
+          var it = entry.item;
+          var idx = entry.idx;
+          var row = document.createElement('div');
+          row.className = 'gt-item-row';
+          var cb = document.createElement('div');
+          cb.className = 'gt-checkbox' + (it.ticked ? ' ticked' : '');
+          cb.textContent = it.ticked ? '✓' : '';
+          var nm = document.createElement('div');
+          nm.className = 'gt-item-name' + (it.ticked ? ' ticked' : '');
+          nm.textContent = it.name || '';
+          row.appendChild(cb);
+          row.appendChild(nm);
+          row.onclick = function() { gtToggleItem(idx); };
+          el.appendChild(row);
+        });
+      });
+
+      // Update status
+      var ticked = items.filter(function(it) { return it.ticked; }).length;
+      setText('gt-check-status', (gtActiveTajuk.isEmergency ? '🚨 ' : '') + (gtActiveTajuk.title || '') + ' · ' + ticked + '/' + items.length + (ticked === items.length && items.length > 0 ? ' ✓' : ''));
+    }
+
+    function gtToggleItem(idx) {
+      if (!gtActiveTajuk || !currentUser) return;
+      var items = (gtActiveTajuk.items || []).slice();
+      if (idx < 0 || idx >= items.length) return;
+      items[idx] = { group: items[idx].group || '', name: items[idx].name || '', ticked: !items[idx].ticked };
+      gtActiveTajuk.items = items;
+      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
+        .update({ items: items, updatedAt: Date.now() })
+        .catch(function(e) { setText('gt-check-err', 'Gagal simpan: ' + e.message); });
+      gtRenderChecklist();
+    }
+
+    function gtUntickSemua() {
+      if (!gtActiveTajuk || !currentUser) return;
+      if (!confirm('Untick semua item dalam "' + (gtActiveTajuk.title || '') + '"?')) return;
+      var items = (gtActiveTajuk.items || []).map(function(it) {
+        return { group: it.group || '', name: it.name || '', ticked: false };
+      });
+      gtActiveTajuk.items = items;
+      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
+        .update({ items: items, updatedAt: Date.now() })
+        .catch(function(e) { setText('gt-check-err', 'Gagal simpan: ' + e.message); });
+      gtRenderChecklist();
+    }
+
+    document.getElementById('btn-go-gotick').onclick = function() {
+      gtSubscribe();
+      showScreen('screen-gotick-list');
+    };
+    document.getElementById('btn-gt-back-menu').onclick = function() {
+      if (_gtUnsub) { _gtUnsub(); _gtUnsub = null; }
+      showScreen('screen-menu');
+    };
+    document.getElementById('btn-gt-back-list').onclick = function() {
+      gtRenderTajukList();
+      showScreen('screen-gotick-list');
+    };
+    document.getElementById('btn-gt-untick-all-global').onclick = gtUntickSemua;
+    // ══════════════════════════════════════════
+
+    // ══════════════════════════════════════════
+    // LOCK OVERLAY
+    // ══════════════════════════════════════════
+    (function() {
+      var lockOverlay = document.getElementById('lock-overlay');
+      var lockPinInput = document.getElementById('lock-pin-input');
+      var lockPinOk = document.getElementById('lock-pin-ok');
+      var lockPinMsg = document.getElementById('lock-pin-msg');
+      var btnLockFloat = document.getElementById('btn-lock-float');
+
+      // Tunjuk lock overlay
+      function activateLock() {
+        lockOverlay.style.display = 'flex';
+        lockPinInput.value = '';
+        lockPinMsg.textContent = '';
+        setTimeout(function() { lockPinInput.focus(); }, 100);
+      }
+
+      // Cuba unlock dengan PIN Firebase
+      function cubaUnlock() {
+        var pin = lockPinInput.value.trim();
+        if (!pin || !/^\d{4,6}$/.test(pin)) {
+          lockPinMsg.textContent = 'PIN mesti 4-6 digit';
+          return;
+        }
+        lockPinMsg.textContent = 'Mengesahkan...';
+        lockPinOk.disabled = true;
+        auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
+          .then(function() {
+            lockOverlay.style.display = 'none';
+            lockPinOk.disabled = false;
+            lockPinInput.value = '';
+            lockPinMsg.textContent = '';
+          })
+          .catch(function(e) {
+            lockPinOk.disabled = false;
+            if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') {
+              lockPinMsg.textContent = 'PIN salah';
+            } else {
+              lockPinMsg.textContent = e.message || e.code;
+            }
+          });
+      }
+
+        if (btnLockFloat) btnLockFloat.onclick = activateLock;
+      if (lockPinOk) lockPinOk.onclick = cubaUnlock;
+      if (lockPinInput) lockPinInput.onkeydown = function(e) {
+        if (e.key === 'Enter') cubaUnlock();
+      };
+    })();
+    // ══════════════════════════════════════════
+    // WS NOTIFICATION — REALTIME SUBSCRIBE
+    // ══════════════════════════════════════════
+    var _wsNotifUnsub = null;
+    var _wsNotifDocs  = [];
+
+    function subscribeWsNotif(uid) {
+      if (_wsNotifUnsub) { _wsNotifUnsub(); _wsNotifUnsub = null; }
+      _wsNotifUnsub = db.collection('users').doc(uid)
+        .collection('ws_notification')
+        .onSnapshot(function(snap) {
+          var raw = [];
+          snap.forEach(function(d) {
+            var x = d.data();
+            if (x.active === true) {
+              // Normalize: trim + buang double-space + lowercase untuk key, original untuk display
+              var rawFrom = (x.from || '').replace(/\s+/g, ' ').trim();
+              var displayFrom = rawFrom || '—';
+              var keyFrom = displayFrom.toLowerCase();
+              raw.push({ id: d.id, from: displayFrom, fromKey: keyFrom, message: x.message || '', ts: x.ts || 0 });
+            }
+          });
+          raw.sort(function(a,b) { return b.ts - a.ts; });
+
+          // Dedupe — buang doc dari from sama dalam masa 500ms
+          // Guna fromKey (lowercase) untuk compare, display guna from (original)
+          var seen = {}; // fromKey -> ts terbaru
+          _wsNotifDocs = [];
+          raw.forEach(function(d) {
+            var key = d.fromKey;
+            if (seen[key] === undefined) {
+              seen[key] = d.ts;
+              _wsNotifDocs.push(d);
+            } else {
+              var diff = Math.abs(seen[key] - d.ts);
+              if (diff > 1500) {
+                // Beza lebih 500ms — ini mesej berlainan, masuk
+                _wsNotifDocs.push(d);
+                seen[key] = d.ts;
+              }
+              // Beza kurang 500ms — buang (sticker duplicate)
+            }
+          });
+
+          updateWsNotifBadge();
+        }, function(e) { console.warn('wsNotif error:', e); });
+    }
+
+    function stopWsNotif() {
+      if (_wsNotifUnsub) { _wsNotifUnsub(); _wsNotifUnsub = null; }
+      _wsNotifDocs = [];
+      updateWsNotifBadge();
+    }
+
+    function updateWsNotifBadge() {
+      var badge = document.getElementById('ws-notif-badge');
+      var namesEl = document.getElementById('ws-notif-names');
+      if (!badge) return;
+
+      // Kira bilangan nama unik
+      var seen = {};
+      var uniqueCount = 0;
+      _wsNotifDocs.forEach(function(d) {
+        var key = d.fromKey || d.from.toLowerCase();
+        if (!seen[key]) { seen[key] = true; uniqueCount++; }
+      });
+
+      if (uniqueCount > 0) {
+        badge.className = 'active';
+        if (namesEl) namesEl.textContent = '🔔 Noti : ' + uniqueCount;
+      } else {
+        badge.className = '';
+        if (namesEl) namesEl.textContent = '';
+      }
+    }
+
+    function openWsNotifOverlay() {
+      var n = _wsNotifDocs.length;
+      var el2 = document.getElementById('ws-notif-count2');
+      if (el2) el2.textContent = '';
+      var list = document.getElementById('ws-notif-list');
+      list.innerHTML = '';
+
+      // Groupkan by 'fromKey' (lowercase) — display guna 'from' (original)
+      var grouped = {};   // fromKey -> { display, count }
+      var groupOrder = [];
+      _wsNotifDocs.forEach(function(d) {
+        var key = d.fromKey || d.from.toLowerCase();
+        if (!grouped[key]) {
+          grouped[key] = { display: d.from, count: 0 };
+          groupOrder.push(key);
+        }
+        grouped[key].count++;
+      });
+
+      groupOrder.forEach(function(key) {
+        var displayFrom = grouped[key].display;
+        var count = grouped[key].count;
+        var div = document.createElement('div');
+        div.className = 'ws-notif-item';
+        var fromDiv = document.createElement('div');
+        fromDiv.className = 'ws-notif-from';
+        fromDiv.textContent = displayFrom + ' : ' + count;
+
+        // Input "dibaca" satu per contact
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.placeholder = 'Taip: dibaca';
+        inp.setAttribute('data-fromkey', key);
+        inp.style.cssText = 'display:block;width:100%;padding:6px;font-size:0.85rem;border:1px solid #ccc;border-radius:4px;margin-top:6px;box-sizing:border-box;';
+
+        var errDiv = document.createElement('div');
+        errDiv.style.cssText = 'color:#c00;font-size:0.72rem;min-height:1em;';
+
+        var btn = document.createElement('button');
+        btn.textContent = '✓ Dibaca';
+        btn.setAttribute('data-fromkey', key);
+        btn.style.cssText = 'margin-top:4px;width:100%;padding:7px;background:#000;color:#fff;border:none;border-radius:4px;font-size:0.82rem;font-weight:bold;cursor:pointer;';
+        btn.addEventListener('click', function() {
+          var fk = this.getAttribute('data-fromkey');
+          var inputEl = list.querySelector('input[data-fromkey="' + fk + '"]');
+          var errEl = inputEl ? inputEl.nextElementSibling : null;
+          if (!inputEl || inputEl.value.trim().toLowerCase() !== 'dibaca') {
+            if (errEl) errEl.textContent = 'Taip "dibaca"';
+            return;
+          }
+          if (!currentUser) return;
+          var uid = currentUser.uid;
+          var toDelete = _wsNotifDocs.filter(function(d) { return d.fromKey === fk; });
+          var promises = toDelete.map(function(d) {
+            return db.collection('users').doc(uid).collection('ws_notification').doc(d.id).delete();
+          });
+          Promise.all(promises).then(function() {
+            // Remove dari _wsNotifDocs
+            _wsNotifDocs = _wsNotifDocs.filter(function(d) { return d.fromKey !== fk; });
+            updateWsNotifBadge();
+            // Kalau semua dah clear, tutup overlay
+            if (_wsNotifDocs.length === 0) {
+              document.getElementById('ws-notif-overlay').className = '';
+            } else {
+              openWsNotifOverlay(); // refresh senarai
+            }
+          }).catch(function(e) {
+            if (errEl) errEl.textContent = 'Ralat: ' + (e.message || e);
+          });
+        });
+
+        div.appendChild(fromDiv);
+        div.appendChild(inp);
+        div.appendChild(errDiv);
+        div.appendChild(btn);
+        list.appendChild(div);
+      });
+
+      document.getElementById('ws-notif-input').style.display = 'none';
+      document.getElementById('ws-notif-err').textContent = '';
+      document.getElementById('ws-notif-overlay').className = 'active';
+    }
+
+    document.getElementById('ws-notif-badge').addEventListener('click', openWsNotifOverlay);
+
+    document.getElementById('btn-ws-notif-batal').addEventListener('click', function() {
+      document.getElementById('ws-notif-overlay').className = '';
+    });
+
+    document.getElementById('btn-ws-notif-ok').addEventListener('click', function() {
+      var val = document.getElementById('ws-notif-input').value.trim().toLowerCase();
+      if (val !== 'dibaca') {
+        document.getElementById('ws-notif-err').textContent = 'Taip "dibaca" untuk padam semua notifikasi.';
+        return;
+      }
+      if (!currentUser || !_wsNotifDocs.length) {
+        document.getElementById('ws-notif-overlay').className = '';
+        return;
+      }
+      var uid = currentUser.uid;
+      // Guna delete setiap doc terus — lebih selamat dari batch.update
+      var promises = _wsNotifDocs.map(function(d) {
+        return db.collection('users').doc(uid)
+          .collection('ws_notification').doc(d.id)
+          .delete();
+      });
+      Promise.all(promises).then(function() {
+        _wsNotifDocs = [];
+        updateWsNotifBadge();
+        document.getElementById('ws-notif-overlay').className = '';
+      }).catch(function(e) {
+        document.getElementById('ws-notif-err').textContent = 'Ralat: ' + (e.message || e);
+      });
+    });
+
+    auth.onAuthStateChanged(function(user) {
+      document.body.classList.remove('auth-checking');
+      currentUser = user;
+      document.getElementById('btn-login').disabled = false;
+      if (user) {
+        setText('menu-user', 'Linked · Login OK');
+        loadJQStatus();
+        subscribeJoggingMotivasi();
+        subscribeChampion();
+        subscribeWsNotif(user.uid);
+        // Load state button jenis seterusnya selepas collections diload
+        loadCollections(function() {
+          loadJenisState();
+        });
+        showScreen('screen-menu');
+      } else {
+        if (_jqMotivasiUnsubscribe) { _jqMotivasiUnsubscribe(); _jqMotivasiUnsubscribe = null; }
+        _champUnsubs.forEach(function(u) { try { u(); } catch(e) {} }); _champUnsubs = [];
+        champSources = []; champLastIdx = 0;
+        champData = { motivasi: [], perjanjian: [], rutin: [], supplement: [], water: [] };
+        window._jqMotivasiHandler = null;
+        jqAktif = false;
+        jqMotivasiList = [];
+        jqPendingCardIndex = -1;
+        updateJQButton();
+        if (_omUnsub) { _omUnsub(); _omUnsub = null; }
+        allOtherMotivation = [];
+        console.log('🧹 Cache other_motivation dibersihkan — logout');
+        stopWsNotif();
+        showScreen('screen-login');
+        setText('login-msg', '');
+      }
+    });
   </script>
-</body>
+
+  <!-- CHAMPION CONFIRM OVERLAY -->
+  <div class="champ-overlay" id="champ-overlay">
+    <div class="champ-overlay-box">
+      <div class="champ-overlay-title" id="champ-overlay-title">—</div>
+      <div class="champ-overlay-name" id="champ-overlay-name">—</div>
+      <button class="champ-overlay-btn-yes" id="champ-overlay-yes">✓ Ya, rekod</button>
+      <div class="champ-overlay-q" id="champ-overlay-q" style="margin:0;padding:8px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;">Sudah diambil / dilaksanakan?</div>
+      <button class="champ-overlay-btn-skip" id="champ-overlay-skip">⏭ Terlalu awal — ambil pada kitaran seterusnya</button>
+    </div>
+  </div>
+</body>  
 </html>
