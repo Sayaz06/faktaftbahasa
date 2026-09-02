@@ -879,6 +879,33 @@
         .set({ aktif: aktif, updatedAt: Date.now() }).catch(function() {});
     }
 
+    // ── JENIS SETERUSNYA STATE ──
+    function simpanJenisState(jenisBerikutId) {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('bahasa_jenis')
+        .set({ jenisBerikutId: jenisBerikutId || null, aktif: jenisBerikutId ? true : false, updatedAt: Date.now() })
+        .catch(function() {});
+    }
+
+    function loadJenisState() {
+      if (!currentUser) return Promise.resolve();
+      return db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('bahasa_jenis')
+        .get().then(function(snap) {
+          if (!snap.exists || !snap.data().aktif) return;
+          var jenisBerikutId = snap.data().jenisBerikutId;
+          if (!jenisBerikutId) return;
+          // Cari nama jenis kata
+          var jenisObj = allJenisKata.filter(function(j) { return j.id === jenisBerikutId; })[0];
+          var btnFloat = document.getElementById('btn-jenis-seterusnya-float');
+          if (!btnFloat) return;
+          btnFloat.className = 'active';
+          btnFloat._jenisBerikutId = jenisBerikutId;
+          btnFloat.textContent = '→ Jenis Kata Seterusnya';
+          var badge = document.getElementById('ws-notif-badge');
+          btnFloat.style.top = (badge && badge.classList.contains('active')) ? '50px' : '8px';
+        }).catch(function() {});
+    }
+
     function updateJQButton() {
       var btn = document.getElementById('btn-jq');
       if (!btn) return;
@@ -2117,6 +2144,8 @@
           } else {
             btnFloat.style.top = '8px';
           }
+          // Simpan state ke Firebase
+          simpanJenisState(jenisBerikut ? jenisBerikut.id : null);
         }
 
         cards = [{
@@ -2946,6 +2975,8 @@
 
       batch.commit().then(function() {
         activePerkataan = pertama;
+        // Padam state dari Firebase — button dah digunakan
+        simpanJenisState(null);
         rebuildBahasaCards(function(ok) {
           isBusy = false;
           if (!ok) return;
@@ -3416,6 +3447,10 @@
         subscribeJoggingMotivasi();
         subscribeChampion();
         subscribeWsNotif(user.uid);
+        // Load state button jenis seterusnya selepas collections diload
+        loadCollections(function() {
+          loadJenisState();
+        });
         showScreen('screen-menu');
       } else {
         if (_jqMotivasiUnsubscribe) { _jqMotivasiUnsubscribe(); _jqMotivasiUnsubscribe = null; }
