@@ -3941,17 +3941,17 @@
 
       function jalanAzanPinCd1() {
         var n = 5;
-        elAzan('azan-pin-cd-num').textContent = n;
-        elAzan('azan-pin-cd-label').textContent = '';
-        elAzan('azan-pin-nafas-label').textContent = '';
-        elAzan('azan-pin-nafas-bar-wrap').style.display = 'none';
+        elAzan('azan-cd-num').textContent = n;
+        elAzan('azan-cd-label').textContent = '';
+        elAzan('azan-nafas-label').textContent = '';
+        elAzan('azan-nafas-bar-wrap').style.display = 'none';
         _azanCdTimer = setInterval(function() {
           n--;
-          if (n > 0) { elAzan('azan-pin-cd-num').textContent = n; }
+          if (n > 0) { elAzan('azan-cd-num').textContent = n; }
           else {
             clearInterval(_azanCdTimer);
-            elAzan('azan-pin-cd-num').textContent = '';
-            elAzan('azan-pin-cd-label').textContent = 'Duduk';
+            elAzan('azan-cd-num').textContent = '';
+            elAzan('azan-cd-label').textContent = 'Duduk';
             setTimeout(function() { jalanAzanPinNafas(3, function() { jalanAzanPinCd2(); }); }, 800);
           }
         }, 1000);
@@ -3959,11 +3959,11 @@
 
       function jalanAzanPinNafas(pusingan, selepas) {
         if (pusingan <= 0) { selepas(); return; }
-        elAzan('azan-pin-cd-label').textContent = 'Pusingan ' + (4 - pusingan) + '/3';
-        elAzan('azan-pin-nafas-bar-wrap').style.display = 'block';
-        elAzan('azan-pin-nafas-label').textContent = 'Tarik Nafas...';
+        elAzan('azan-cd-label').textContent = 'Pusingan ' + (4 - pusingan) + '/3';
+        elAzan('azan-nafas-bar-wrap').style.display = 'block';
+        elAzan('azan-nafas-label').textContent = 'Tarik Nafas...';
         animasiBar(5000, '#6366f1, #8b5cf6', function() {
-          elAzan('azan-pin-nafas-label').textContent = 'Hempus Nafas...';
+          elAzan('azan-nafas-label').textContent = 'Hempus Nafas...';
           animasiBar(5000, '#059669, #34d399', function() {
             jalanAzanPinNafas(pusingan - 1, selepas);
           });
