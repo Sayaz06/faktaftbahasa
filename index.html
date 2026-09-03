@@ -266,6 +266,10 @@
       padding: 24px; text-align: center;
     }
     #lock-overlay.active { display: flex; }
+    #lock-fasa-countdown { display: none; }
+    #lock-fasa-countdown.active { display: flex; }
+    #azan-cd-overlay { display: none; }
+    #azan-cd-overlay.active { display: flex; }
     #azan-lock {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%; z-index: 99998;
@@ -563,15 +567,13 @@
   <!-- LOCK OVERLAY MANUAL -->
   <div id="lock-overlay">
     <div style="color:#fff;font-size:1.1rem;font-weight:bold;letter-spacing:0.15em;margin-bottom:24px;opacity:0.5;">🔒 LOCKED</div>
-    <!-- Fasa PIN -->
-    <div id="lock-fasa-pin">
-      <input id="lock-pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off" style="max-width:200px;background:#111;color:#fff;border-color:#444;">
-      <button id="lock-pin-ok" class="btn btn-primary" style="max-width:200px;margin-top:8px;padding:10px;">Unlock</button>
-      <div id="lock-pin-msg" style="color:#f44;font-size:0.8rem;margin-top:8px;min-height:1.2em;"></div>
-      <button id="lock-cd-start" class="azan-btn azan-btn-green" style="margin-top:16px;max-width:200px;">▶ Mula Countdown</button>
-    </div>
-    <!-- Fasa Countdown -->
-    <div id="lock-fasa-countdown" style="display:none;">
+    <!-- PIN sentiasa nampak -->
+    <input id="lock-pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off" style="max-width:200px;background:#111;color:#fff;border-color:#444;">
+    <button id="lock-pin-ok" class="btn btn-primary" style="max-width:200px;margin-top:8px;padding:10px;">Unlock</button>
+    <div id="lock-pin-msg" style="color:#f44;font-size:0.8rem;margin-top:8px;min-height:1.2em;"></div>
+    <button id="lock-cd-start" class="azan-btn azan-btn-green" style="margin-top:16px;max-width:200px;">▶ Mula Countdown</button>
+    <!-- Countdown overlay di atas PIN -->
+    <div id="lock-fasa-countdown" style="position:absolute;top:0;left:0;width:100%;height:100%;background:#000;flex-direction:column;align-items:center;justify-content:center;z-index:2;">
       <div class="azan-countdown-num" id="lock-cd-num">5</div>
       <div class="azan-countdown-label" id="lock-cd-label"></div>
       <div class="azan-nafas-label" id="lock-nafas-label"></div>
@@ -597,43 +599,31 @@
     <div class="azan-waktu-nama" id="azan-waktu-nama">—</div>
     <div class="azan-waktu-jam" id="azan-waktu-jam">—</div>
     <div class="azan-lokasi" id="azan-lokasi">—</div>
-    <div id="azan-fasa-pin">
-      <div style="font-size:0.82rem;color:#9ca3af;margin-bottom:16px;">Sila selesaikan urusan mandi anda.</div>
-      <div class="azan-pin-wrap">
-        <input class="azan-pin-input" id="azan-pin-input" type="password"
-               inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
-        <button class="azan-btn azan-btn-primary" id="azan-pin-ok">Unlock</button>
-        <div class="azan-msg" id="azan-pin-msg"></div>
-        <button class="azan-btn azan-btn-green" id="azan-pin-cd-start" style="margin-top:12px;">▶ Mula Countdown</button>
-      </div>
+    <!-- PIN sentiasa nampak -->
+    <div class="azan-pin-wrap" style="margin-bottom:12px;">
+      <input class="azan-pin-input" id="azan-pin-input" type="password"
+             inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
+      <button class="azan-btn azan-btn-primary" id="azan-pin-ok">Unlock</button>
+      <div class="azan-msg" id="azan-pin-msg"></div>
     </div>
-    <!-- Fasa countdown dalam azan pin -->
-    <div id="azan-fasa-pin-countdown" style="display:none;">
-      <div class="azan-countdown-num" id="azan-pin-cd-num">5</div>
-      <div class="azan-countdown-label" id="azan-pin-cd-label"></div>
-      <div class="azan-nafas-label" id="azan-pin-nafas-label"></div>
-      <div class="azan-nafas-bar-wrap" id="azan-pin-nafas-bar-wrap" style="display:none;">
-        <div class="azan-nafas-bar" id="azan-pin-nafas-bar"></div>
-      </div>
-    </div>
-    <div id="azan-fasa-countdown" style="display:none;">
-      <div style="font-size:0.82rem;color:#9ca3af;margin-bottom:16px;">Sedia untuk mengambil wudhu.</div>
+    <!-- Button countdown — bertukar ikut fasa -->
+    <button class="azan-btn azan-btn-green" id="azan-pin-cd-start">▶ Mula Countdown</button>
+    <button class="azan-btn azan-btn-green" id="azan-cd-start" style="display:none;">Saya Sedia — Mula Countdown</button>
+    <!-- Countdown overlay di atas semua -->
+    <div id="azan-cd-overlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at top left,#020617 0,#030712 45%,#000 100%);flex-direction:column;align-items:center;justify-content:center;z-index:2;">
       <div class="azan-countdown-num" id="azan-cd-num">5</div>
       <div class="azan-countdown-label" id="azan-cd-label"></div>
       <div class="azan-nafas-label" id="azan-nafas-label"></div>
       <div class="azan-nafas-bar-wrap" id="azan-nafas-bar-wrap" style="display:none;">
         <div class="azan-nafas-bar" id="azan-nafas-bar"></div>
       </div>
-      <button class="azan-btn azan-btn-green" id="azan-cd-start" style="display:none;">Saya Sedia — Mula Countdown</button>
-      <!-- PIN unlock sentiasa nampak dalam fasa countdown -->
-      <div style="margin-top:20px;border-top:1px solid #1f2937;padding-top:16px;">
-        <div style="font-size:0.72rem;color:#6b7280;margin-bottom:8px;">Atau unlock terus:</div>
-        <div class="azan-pin-wrap">
-          <input class="azan-pin-input" id="azan-cd-pin-input" type="password"
-                 inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
-          <button class="azan-btn azan-btn-primary" id="azan-cd-pin-ok">Unlock</button>
-          <div class="azan-msg" id="azan-cd-pin-msg"></div>
-        </div>
+      <!-- PIN dalam overlay countdown juga -->
+      <div style="margin-top:20px;border-top:1px solid #1f2937;padding-top:16px;width:100%;max-width:240px;">
+        <div style="font-size:0.72rem;color:#6b7280;margin-bottom:8px;">Unlock terus:</div>
+        <input class="azan-pin-input" id="azan-cd-pin-input" type="password"
+               inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
+        <button class="azan-btn azan-btn-primary" id="azan-cd-pin-ok">Unlock</button>
+        <div class="azan-msg" id="azan-cd-pin-msg"></div>
       </div>
     </div>
   </div>
@@ -3607,7 +3597,6 @@
       var lockPinOk    = document.getElementById('lock-pin-ok');
       var lockPinMsg   = document.getElementById('lock-pin-msg');
       var btnLockFloat = document.getElementById('btn-lock-float');
-      var lockFasaPin  = document.getElementById('lock-fasa-pin');
       var lockFasaCd   = document.getElementById('lock-fasa-countdown');
       var _lockCdTimer = null;
 
@@ -3618,8 +3607,7 @@
       }
 
       function activateLock() {
-        lockFasaPin.style.display = 'block';
-        lockFasaCd.style.display = 'none';
+        lockFasaCd.className = '';
         lockOverlay.className = 'active';
         lockPinInput.value = '';
         lockPinMsg.textContent = '';
@@ -3629,9 +3617,10 @@
 
       function deactivateLock() {
         lockOverlay.className = '';
+        lockFasaCd.className = '';
         if (_lockCdTimer) { clearInterval(_lockCdTimer); _lockCdTimer = null; }
-        lockFasaPin.style.display = 'block';
-        lockFasaCd.style.display = 'none';
+        lockPinInput.value = '';
+        lockPinMsg.textContent = '';
         simpanLockState(false);
       }
 
@@ -3654,8 +3643,7 @@
       }
 
       function mulaLockCountdown() {
-        lockFasaPin.style.display = 'none';
-        lockFasaCd.style.display = 'block';
+        lockFasaCd.className = 'active';
         jalanLockCd1();
       }
 
@@ -3716,8 +3704,12 @@
           else {
             clearInterval(_lockCdTimer);
             document.getElementById('lock-cd-num').textContent = 'GO!';
-            document.getElementById('lock-cd-label').textContent = 'Pergi ambil wudhu sekarang';
-            setTimeout(function() { deactivateLock(); }, 3000);
+            document.getElementById('lock-cd-label').textContent = 'Sentiasa Maju Ke Hadapan!';
+            setTimeout(function() {
+              lockFasaCd.className = '';
+              lockPinInput.value = '';
+              lockPinMsg.textContent = '';
+            }, 3000);
           }
         }, 1000);
       }
@@ -3826,25 +3818,31 @@
         elAzan('azan-waktu-nama').textContent = namaWaktu;
         elAzan('azan-waktu-jam').textContent = jamStr;
         elAzan('azan-lokasi').textContent = '📍 ' + (lokasiNama || '—');
-        elAzan('azan-fasa-pin').style.display = fasa === 'pin' ? 'block' : 'none';
-        elAzan('azan-fasa-pin-countdown').style.display = 'none';
-        elAzan('azan-fasa-countdown').style.display = fasa === 'countdown' ? 'block' : 'none';
-        if (fasa === 'countdown') {
-          elAzan('azan-cd-num').textContent = '';
-          elAzan('azan-cd-label').textContent = '';
-          elAzan('azan-nafas-label').textContent = '';
-          elAzan('azan-nafas-bar-wrap').style.display = 'none';
-          elAzan('azan-cd-start').style.display = 'block';
-        }
+        // Reset semua
+        elAzan('azan-cd-overlay').className = '';
+        elAzan('azan-pin-input').value = '';
+        elAzan('azan-pin-msg').textContent = '';
+        elAzan('azan-cd-pin-input').value = '';
+        elAzan('azan-cd-pin-msg').textContent = '';
+        // Tunjuk button countdown ikut fasa
+        elAzan('azan-pin-cd-start').style.display = fasa === 'pin' ? 'block' : 'none';
+        elAzan('azan-cd-start').style.display = fasa === 'countdown' ? 'block' : 'none';
         elAzan('azan-lock').className = 'active';
         simpanAzanLockState(true, fasa, namaWaktu, jamStr, lokasiNama);
       }
 
       function cubaUnlockAzan() {
-        var pin = elAzan('azan-pin-input').value.trim();
-        if (!pin || !/^\d{4,6}$/.test(pin)) { elAzan('azan-pin-msg').textContent = 'PIN mesti 4-6 digit'; return; }
+        // Ambil PIN dari mana-mana input yang ada nilai
+        var pin = (elAzan('azan-pin-input').value || elAzan('azan-cd-pin-input').value || '').trim();
+        if (!pin || !/^\d{4,6}$/.test(pin)) {
+          elAzan('azan-pin-msg').textContent = 'PIN mesti 4-6 digit';
+          elAzan('azan-cd-pin-msg').textContent = 'PIN mesti 4-6 digit';
+          return;
+        }
         elAzan('azan-pin-msg').textContent = 'Mengesahkan...';
+        elAzan('azan-cd-pin-msg').textContent = 'Mengesahkan...';
         elAzan('azan-pin-ok').disabled = true;
+        elAzan('azan-cd-pin-ok').disabled = true;
         auth.signInWithEmailAndPassword(ADMIN_EMAIL, pin)
           .then(function() {
             elAzan('azan-pin-input').value = '';
@@ -3852,18 +3850,26 @@
             elAzan('azan-cd-pin-input').value = '';
             elAzan('azan-cd-pin-msg').textContent = '';
             elAzan('azan-pin-ok').disabled = false;
+            elAzan('azan-cd-pin-ok').disabled = false;
+            elAzan('azan-cd-overlay').className = '';
             elAzan('azan-lock').className = '';
             simpanAzanLockState(false);
           })
           .catch(function(e) {
             elAzan('azan-pin-ok').disabled = false;
-            elAzan('azan-pin-msg').textContent = (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') ? 'PIN salah' : (e.message || e.code);
+            elAzan('azan-cd-pin-ok').disabled = false;
+            var msg = (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.code === 'auth/invalid-login-credentials') ? 'PIN salah' : (e.message || e.code);
+            elAzan('azan-pin-msg').textContent = msg;
+            elAzan('azan-cd-pin-msg').textContent = msg;
           });
       }
 
       function mulaAzanPinCountdown() {
-        elAzan('azan-fasa-pin').style.display = 'none';
-        elAzan('azan-fasa-pin-countdown').style.display = 'block';
+        elAzan('azan-cd-overlay').className = 'active';
+        elAzan('azan-cd-num').textContent = '';
+        elAzan('azan-cd-label').textContent = '';
+        elAzan('azan-nafas-label').textContent = '';
+        elAzan('azan-nafas-bar-wrap').style.display = 'none';
         jalanAzanPinCd1();
       }
 
@@ -3899,23 +3905,25 @@
       }
 
       function jalanAzanPinCd2() {
-        elAzan('azan-pin-nafas-bar-wrap').style.display = 'none';
-        elAzan('azan-pin-nafas-label').textContent = '';
+        elAzan('azan-nafas-bar-wrap').style.display = 'none';
+        elAzan('azan-nafas-label').textContent = '';
         var n = 5;
-        elAzan('azan-pin-cd-num').textContent = n;
-        elAzan('azan-pin-cd-label').textContent = '';
+        elAzan('azan-cd-num').textContent = n;
+        elAzan('azan-cd-label').textContent = '';
         _azanCdTimer = setInterval(function() {
           n--;
-          if (n > 0) { elAzan('azan-pin-cd-num').textContent = n; }
+          if (n > 0) { elAzan('azan-cd-num').textContent = n; }
           else {
             clearInterval(_azanCdTimer);
-            elAzan('azan-pin-cd-num').textContent = 'GO!';
-            elAzan('azan-pin-cd-label').textContent = 'Pergi ambil wudhu sekarang';
+            elAzan('azan-cd-num').textContent = 'GO!';
+            elAzan('azan-cd-label').textContent = 'Pergi ambil wudhu sekarang';
+            // Tutup countdown overlay sahaja — PIN masih nampak
             setTimeout(function() {
-              elAzan('azan-fasa-pin-countdown').style.display = 'none';
-              elAzan('azan-fasa-pin').style.display = 'block';
+              elAzan('azan-cd-overlay').className = '';
               elAzan('azan-pin-input').value = '';
               elAzan('azan-pin-msg').textContent = '';
+              elAzan('azan-cd-pin-input').value = '';
+              elAzan('azan-cd-pin-msg').textContent = '';
             }, 3000);
           }
         }, 1000);
@@ -3923,6 +3931,11 @@
 
       function mulaCountdown() {
         elAzan('azan-cd-start').style.display = 'none';
+        elAzan('azan-cd-overlay').className = 'active';
+        elAzan('azan-cd-num').textContent = '';
+        elAzan('azan-cd-label').textContent = '';
+        elAzan('azan-nafas-label').textContent = '';
+        elAzan('azan-nafas-bar-wrap').style.display = 'none';
         jalankanCountdownFasa1();
       }
 
@@ -3981,12 +3994,14 @@
             clearInterval(_azanCdTimer);
             elAzan('azan-cd-num').textContent = 'GO!';
             elAzan('azan-cd-label').textContent = 'Pergi ambil wudhu sekarang';
+            // Tutup countdown overlay sahaja — PIN masih nampak
             setTimeout(function() {
-              elAzan('azan-fasa-countdown').style.display = 'none';
-              elAzan('azan-fasa-pin').style.display = 'block';
-              elAzan('azan-cd-start').style.display = 'none';
+              elAzan('azan-cd-overlay').className = '';
+              elAzan('azan-cd-start').style.display = 'block';
               elAzan('azan-pin-input').value = '';
               elAzan('azan-pin-msg').textContent = '';
+              elAzan('azan-cd-pin-input').value = '';
+              elAzan('azan-cd-pin-msg').textContent = '';
             }, 3000);
           }
         }, 1000);
