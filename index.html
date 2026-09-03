@@ -527,7 +527,21 @@
     <button class="azan-test-btn" id="btn-azan-test">🧪 Test Azan</button>
     <div class="azan-test-panel" id="azan-test-panel">
       <div style="font-size:0.72rem;color:#9ca3af;margin-bottom:6px;">Set waktu azan</div>
-      <input type="time" id="azan-test-input" style="display:block;width:100%;padding:8px;background:#0f172a;color:#e5e7eb;border:1px solid #334155;border-radius:6px;font-size:1rem;text-align:center;margin:8px 0;outline:none;">
+      <div style="display:flex;gap:8px;align-items:center;justify-content:center;margin:10px 0;">
+        <!-- Picker Jam -->
+        <div style="position:relative;width:60px;height:100px;overflow:hidden;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+          <div style="position:absolute;top:50%;left:0;right:0;height:32px;transform:translateY(-50%);border-top:1px solid #6366f1;border-bottom:1px solid #6366f1;pointer-events:none;z-index:1;"></div>
+          <div id="azan-test-jam-list" style="position:absolute;width:100%;text-align:center;transition:transform 0.2s;cursor:grab;"></div>
+        </div>
+        <div style="color:#9ca3af;font-size:1.2rem;font-weight:bold;">:</div>
+        <!-- Picker Minit -->
+        <div style="position:relative;width:60px;height:100px;overflow:hidden;border:1px solid #334155;border-radius:8px;background:#0f172a;">
+          <div style="position:absolute;top:50%;left:0;right:0;height:32px;transform:translateY(-50%);border-top:1px solid #6366f1;border-bottom:1px solid #6366f1;pointer-events:none;z-index:1;"></div>
+          <div id="azan-test-minit-list" style="position:absolute;width:100%;text-align:center;transition:transform 0.2s;cursor:grab;"></div>
+        </div>
+      </div>
+      <div id="azan-test-preview" style="font-size:0.85rem;color:#34d399;text-align:center;margin-bottom:8px;min-height:1.2em;"></div>
+      <input type="hidden" id="azan-test-input">
       <button id="btn-azan-test-set">Set & Aktifkan</button>
       <button class="azan-test-cancel" id="btn-azan-test-cancel">Batal</button>
     </div>
@@ -1921,6 +1935,81 @@
       elAzan('azan-pin-cd-start').onclick = mulaAzanPinCountdown;
       // Halang event bubble dari azan lock ke counter-box
       elAzan('azan-lock').addEventListener('click', function(e) { e.stopPropagation(); });
+      // ── Scroll Picker Jam & Minit ──
+      (function() {
+        var ITEM_H = 32;
+        var selJam = 0, selMinit = 0;
+
+        function buatPicker(elId, max, onPilih) {
+          var el = document.getElementById(elId);
+          var items = [];
+          for (var i = 0; i < max; i++) items.push(i);
+          // Render 3x untuk infinite feel
+          var html = '';
+          [items, items, items].forEach(function(arr) {
+            arr.forEach(function(v) {
+              html += '<div style="height:' + ITEM_H + 'px;line-height:' + ITEM_H + 'px;font-size:1rem;color:#e5e7eb;">' + (v < 10 ? '0' + v : v) + '</div>';
+            });
+          });
+          el.innerHTML = html;
+
+          var total = max * 3;
+          var startY = 0, startTop = 0, isDrag = false;
+          var offsetTop = -max * ITEM_H; // mulai di set tengah
+
+          function getTop() { return parseInt(el.style.transform ? el.style.transform.replace('translateY(', '').replace('px)', '') : offsetTop) || offsetTop; }
+          function setTop(y, animate) {
+            el.style.transition = animate ? 'transform 0.2s' : 'none';
+            el.style.transform = 'translateY(' + y + 'px)';
+          }
+          function snapToIndex(y) {
+            var idx = Math.round(-y / ITEM_H) % max;
+            if (idx < 0) idx += max;
+            onPilih(idx);
+            return -((Math.round(-y / ITEM_H) / max | 0) * max + idx) * ITEM_H;
+          }
+
+          setTop(offsetTop, false);
+
+          el.parentElement.addEventListener('mousedown', function(e) { isDrag = true; startY = e.clientY; startTop = getTop(); e.preventDefault(); });
+          el.parentElement.addEventListener('touchstart', function(e) { isDrag = true; startY = e.touches[0].clientY; startTop = getTop(); }, { passive: true });
+          el.parentElement.addEventListener('mousemove', function(e) {
+            if (!isDrag) return;
+            setTop(startTop + (e.clientY - startY), false);
+          });
+          el.parentElement.addEventListener('touchmove', function(e) {
+            if (!isDrag) return;
+            setTop(startTop + (e.touches[0].clientY - startY), false);
+          }, { passive: true });
+          function endDrag() {
+            if (!isDrag) return;
+            isDrag = false;
+            var cur = getTop();
+            var snapped = snapToIndex(cur);
+            setTop(snapped, true);
+            kemaskiniPreview();
+          }
+          el.parentElement.addEventListener('mouseup', endDrag);
+          el.parentElement.addEventListener('touchend', endDrag);
+        }
+
+        function kemaskiniPreview() {
+          var jamStr = (selJam < 10 ? '0' : '') + selJam;
+          var minitStr = (selMinit < 10 ? '0' : '') + selMinit;
+          document.getElementById('azan-test-preview').textContent = jamStr + ':' + minitStr;
+          document.getElementById('azan-test-input').value = jamStr + ':' + minitStr;
+        }
+
+        // Init picker dengan masa semasa
+        var now = new Date();
+        selJam = now.getHours();
+        selMinit = now.getMinutes();
+
+        buatPicker('azan-test-jam-list', 24, function(v) { selJam = v; });
+        buatPicker('azan-test-minit-list', 60, function(v) { selMinit = v; });
+        kemaskiniPreview();
+      })();
+
       elAzan('btn-azan-test').onclick = function() { elAzan('azan-test-panel').className = 'azan-test-panel active'; };
       elAzan('btn-azan-test-cancel').onclick = function() { elAzan('azan-test-panel').className = 'azan-test-panel'; };
       elAzan('btn-azan-test-set').onclick = function() {
