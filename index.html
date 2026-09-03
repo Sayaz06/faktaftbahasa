@@ -3733,8 +3733,7 @@
     // AZAN LOCK SYSTEM
     // ══════════════════════════════════════════
     (function() {
-      var _azanTimer20 = null;
-      var _azanTimer5  = null;
+      var _azanTimers  = [];
       var _azanCdTimer = null;
       var _azanFasa    = null;
       var _lokasiNama  = '';
@@ -3802,14 +3801,16 @@
           var waktuMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0).getTime();
           var ms20 = waktuMs - 20 * 60 * 1000 - now.getTime();
           var ms5  = waktuMs - 5  * 60 * 1000 - now.getTime();
-          if (ms20 > 0) { _azanTimer20 = setTimeout(function() { triggerLock('pin', nama, jamStr, lokasiNama); }, ms20); }
-          if (ms5 > 0)  { _azanTimer5  = setTimeout(function() { triggerLock('countdown', nama, jamStr, lokasiNama); }, ms5); }
+          (function(n, j) {
+            if (ms20 > 0) { _azanTimers.push(setTimeout(function() { triggerLock('pin', n, j, lokasiNama); }, ms20)); }
+            if (ms5 > 0)  { _azanTimers.push(setTimeout(function() { triggerLock('countdown', n, j, lokasiNama); }, ms5)); }
+          })(nama, jamStr);
         });
       }
 
       function clearAzanTimers() {
-        if (_azanTimer20) { clearTimeout(_azanTimer20); _azanTimer20 = null; }
-        if (_azanTimer5)  { clearTimeout(_azanTimer5);  _azanTimer5  = null; }
+        _azanTimers.forEach(function(t) { clearTimeout(t); });
+        _azanTimers = [];
         if (_azanCdTimer) { clearInterval(_azanCdTimer); _azanCdTimer = null; }
       }
 
@@ -4121,9 +4122,9 @@
         var azanMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0).getTime();
         var ms20 = azanMs - 20 * 60 * 1000 - now.getTime();
         var ms5  = azanMs - 5  * 60 * 1000 - now.getTime();
-        if (ms20 > 0) { _azanTimer20 = setTimeout(function() { triggerLock('pin', 'Test Azan', val, _lokasiNama || 'Test'); }, ms20); }
+        if (ms20 > 0) { _azanTimers.push(setTimeout(function() { triggerLock('pin', 'Test Azan', val, _lokasiNama || 'Test'); }, ms20)); }
         else if (ms5 > 0) { triggerLock('pin', 'Test Azan', val, _lokasiNama || 'Test'); }
-        if (ms5 > 0) { _azanTimer5 = setTimeout(function() { triggerLock('countdown', 'Test Azan', val, _lokasiNama || 'Test'); }, ms5); }
+        if (ms5 > 0) { _azanTimers.push(setTimeout(function() { triggerLock('countdown', 'Test Azan', val, _lokasiNama || 'Test'); }, ms5)); }
         else if (ms20 <= 0 && ms5 <= 0) { triggerLock('countdown', 'Test Azan', val, _lokasiNama || 'Test'); }
         elAzan('azan-test-panel').className = 'azan-test-panel';
       };
