@@ -3680,15 +3680,7 @@
             clearInterval(_lockCdTimer);
             document.getElementById('lock-cd-num').textContent = 'GO!';
             document.getElementById('lock-cd-label').textContent = 'Pergi ambil wudhu sekarang';
-            // Selepas GO! — balik ke fasa PIN untuk user unlock
-            setTimeout(function() {
-              lockFasaCd.style.display = 'none';
-              lockFasaPin.style.display = 'block';
-              document.getElementById('lock-cd-num').textContent = '5';
-              document.getElementById('lock-cd-label').textContent = '';
-              lockPinInput.value = '';
-              lockPinMsg.textContent = '';
-            }, 2000);
+            setTimeout(function() { deactivateLock(); }, 3000);
           }
         }, 1000);
       }
@@ -3880,15 +3872,10 @@
             clearInterval(_azanCdTimer);
             elAzan('azan-pin-cd-num').textContent = 'GO!';
             elAzan('azan-pin-cd-label').textContent = 'Pergi ambil wudhu sekarang';
-            // Selepas GO! — balik ke fasa PIN untuk user unlock
             setTimeout(function() {
-              elAzan('azan-fasa-pin-countdown').style.display = 'none';
-              elAzan('azan-fasa-pin').style.display = 'block';
-              elAzan('azan-pin-cd-num').textContent = '5';
-              elAzan('azan-pin-cd-label').textContent = '';
-              elAzan('azan-pin-input').value = '';
-              elAzan('azan-pin-msg').textContent = '';
-            }, 2000);
+              elAzan('azan-lock').className = '';
+              simpanAzanLockState(false);
+            }, 3000);
           }
         }, 1000);
       }
