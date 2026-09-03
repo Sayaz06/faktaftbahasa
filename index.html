@@ -519,6 +519,16 @@
         <div class="azan-nafas-bar" id="azan-nafas-bar"></div>
       </div>
       <button class="azan-btn azan-btn-green" id="azan-cd-start" style="display:none;">Saya Sedia — Mula Countdown</button>
+      <!-- PIN unlock sentiasa nampak dalam fasa countdown -->
+      <div style="margin-top:20px;border-top:1px solid #1f2937;padding-top:16px;">
+        <div style="font-size:0.72rem;color:#6b7280;margin-bottom:8px;">Atau unlock terus:</div>
+        <div class="azan-pin-wrap">
+          <input class="azan-pin-input" id="azan-cd-pin-input" type="password"
+                 inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
+          <button class="azan-btn azan-btn-primary" id="azan-cd-pin-ok">Unlock</button>
+          <div class="azan-msg" id="azan-cd-pin-msg"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1660,7 +1670,7 @@
           else {
             clearInterval(_lockCdTimer);
             document.getElementById('lock-cd-num').textContent = 'GO!';
-            document.getElementById('lock-cd-label').textContent = 'Pergi ambil wudhu sekarang';
+            document.getElementById('lock-cd-label').textContent = 'Sentiasa Maju Ke Hadapan!';
             // Kembali ke page PIN — jangan tutup lock
             setTimeout(function() {
               document.getElementById('lock-fasa-countdown').style.display = 'none';
@@ -1807,6 +1817,8 @@
           .then(function() {
             elAzan('azan-pin-input').value = '';
             elAzan('azan-pin-msg').textContent = '';
+            elAzan('azan-cd-pin-input').value = '';
+            elAzan('azan-cd-pin-msg').textContent = '';
             elAzan('azan-pin-ok').disabled = false;
             elAzan('azan-lock').className = '';
             simpanAzanLockState(false);
@@ -1952,6 +1964,10 @@
       elAzan('azan-pin-input').onkeydown = function(e) { if (e.key === 'Enter') cubaUnlockAzan(); };
       elAzan('azan-cd-start').onclick = mulaCountdown;
       elAzan('azan-pin-cd-start').onclick = mulaAzanPinCountdown;
+
+      // PIN unlock dalam fasa countdown
+      elAzan('azan-cd-pin-ok').onclick = cubaUnlockAzan;
+      elAzan('azan-cd-pin-input').onkeydown = function(e) { if (e.key === 'Enter') cubaUnlockAzan(); };
       // Halang event bubble dari azan lock ke counter-box
       elAzan('azan-lock').addEventListener('click', function(e) { e.stopPropagation(); });
       // ── Scroll Picker Jam & Minit ──
