@@ -4025,7 +4025,7 @@
         // Format baru: timestamp number
         if (typeof ts === 'number') {
           if (_subuhEsokMs > 0) {
-            return ts > (_subuhEsokMs - 24*60*60*1000) && ts < _subuhEsokMs;
+            return ts > (_subuhEsokMs - 48*60*60*1000) && ts < _subuhEsokMs;
           }
           var tsDarikh = new Date(ts);
           var unlock_tarikh = tsDarikh.getFullYear() + '-' + (tsDarikh.getMonth()+1 < 10 ? '0' : '') + (tsDarikh.getMonth()+1) + '-' + (tsDarikh.getDate() < 10 ? '0' : '') + tsDarikh.getDate();
@@ -4103,11 +4103,20 @@
 
       function setAzanTimers(waktu, lokasiNama) {
         clearAzanTimers();
-      window._reminderBolehCheck = false;
-      window._azanFasaSemasa = '';
+        window._reminderBolehCheck = false;
+        window._azanFasaSemasa = '';
         var waktuSolat = ['Subuh','Zohor','Asar','Maghrib','Isyak'];
         var now = new Date();
         var nowMs = now.getTime();
+
+        // Kira Subuh hari ini untuk detect tempoh 12am-Subuh
+        var subuhHariIniMs = 0;
+        if (waktu['Subuh']) {
+          var subuhParts = waktu['Subuh'].split(':');
+          subuhHariIniMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parseInt(subuhParts[0]), parseInt(subuhParts[1]), 0).getTime();
+        }
+        // Detect sama ada kita dalam tempoh 12am hingga Subuh
+        var lepasTenahMalam = subuhHariIniMs > 0 && nowMs < subuhHariIniMs;
 
         // Bina array waktu dengan timestamp
         var waktuList = [];
@@ -4117,6 +4126,11 @@
           var parts = jamStr.split(':');
           var h = parseInt(parts[0]); var m = parseInt(parts[1]);
           var waktuMs = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0).getTime();
+          // Kalau 12am hingga Subuh dan waktu ini nampak "belum sampai"
+          // tapi sebenarnya ia waktu SEMALAM yang dah lepas
+          if (lepasTenahMalam && waktuMs > nowMs && nama !== 'Subuh') {
+            waktuMs = waktuMs - 24 * 60 * 60 * 1000;
+          }
           waktuList.push({ nama: nama, jamStr: jamStr, waktuMs: waktuMs });
         });
         // Tambah Subuh esok untuk kiraan timeout isyak
