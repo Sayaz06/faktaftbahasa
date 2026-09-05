@@ -429,9 +429,49 @@
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
     <button id="btn-go-gotick" class="btn">Go-Tick ✓</button>
+    <button id="btn-go-main-motivation" class="btn">⭐ Main Motivation</button>
     <button id="btn-go-other-motivation" class="btn">✨ Other Motivation</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
+  </div>
+
+  <!-- SCREEN: MAIN MOTIVATION -->
+  <div id="screen-main-motivation" class="screen">
+    <div class="status-bar" id="mm-status">MAIN MOTIVATION</div>
+    <button id="btn-mm-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Motivasi</button>
+    <div id="mm-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
+    <button id="btn-mm-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Senarai</button>
+  </div>
+
+  <!-- PADAM MAIN MOTIVATION OVERLAY -->
+  <div id="mm-del-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border:3px solid #c00;border-radius:10px;padding:20px;width:85%;max-width:320px;text-align:center;">
+      <div style="font-size:0.9rem;font-weight:bold;margin-bottom:10px;">Taip "padam" untuk confirm:</div>
+      <input id="mm-del-input" type="text" placeholder="padam" style="width:100%;padding:10px;font-size:1rem;border:2px solid #c00;border-radius:6px;text-align:center;box-sizing:border-box;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button id="btn-mm-del-cancel" style="flex:1;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Batal</button>
+        <button id="btn-mm-del-ok" style="flex:1;padding:10px;border:2px solid #c00;background:#c00;color:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Padam</button>
+      </div>
+      <div id="mm-del-err" style="color:#c00;font-size:0.78rem;margin-top:8px;min-height:1em;"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: MAIN MOTIVATION EDIT -->
+  <div id="screen-mm-edit" class="screen" style="flex-direction:column;height:100vh;padding:8px;box-sizing:border-box;">
+    <div class="status-bar" id="mm-edit-status">EDIT MAIN MOTIVASI</div>
+    <div style="font-size:0.72rem;color:#555;margin:6px 0 2px;">Tajuk:</div>
+    <input id="mm-edit-title" type="text" placeholder="Tajuk motivasi..."
+      style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;margin-bottom:8px;">
+    <div style="font-size:0.72rem;color:#555;margin-bottom:2px;">Teks:</div>
+    <textarea id="mm-edit-text" placeholder="Teks motivasi..."
+      style="width:100%;flex:1;padding:10px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;resize:none;line-height:1.6;min-height:200px;"></textarea>
+    <div id="mm-edit-img-wrap" style="margin-top:8px;text-align:center;font-size:0.72rem;color:#888;font-style:italic;">Tiada gambar lagi</div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button id="btn-mm-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Balik</button>
+      <button id="btn-mm-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Simpan ✓</button>
+    </div>
+    <button id="btn-mm-edit-del" style="width:100%;margin-top:8px;padding:10px;border:2px solid #c00;background:#fff;color:#c00;font-weight:bold;border-radius:8px;cursor:pointer;">🗑️ Padam Laci Ini</button>
+    <div id="mm-edit-msg" style="text-align:center;font-size:0.75rem;color:#555;margin-top:6px;min-height:1em;"></div>
   </div>
 
   <!-- SCREEN: OTHER MOTIVATION -->
@@ -734,10 +774,11 @@
       rutin: [],
       supplement: [],
       water: [],
+      mainMotivation: [],
       otherMotivation: []
     };
     var champIdx = {       // index item semasa dalam setiap sumber
-      motivasi: 0, perjanjian: 0, rutin: 0, supplement: 0, water: 0, otherMotivation: 0
+      motivasi: 0, perjanjian: 0, rutin: 0, supplement: 0, water: 0, mainMotivation: 0, otherMotivation: 0
     };
     var allOtherMotivation = [];
     var _champUnsubs = []; // cleanup onSnapshot
@@ -1138,6 +1179,7 @@
             champIdx.rutin = savedIdx.rutin || 0;
             champIdx.supplement = savedIdx.supplement || 0;
             champIdx.water = savedIdx.water || 0;
+            champIdx.mainMotivation = savedIdx.mainMotivation || 0;
             champIdx.otherMotivation = savedIdx.otherMotivation || 0;
           } else {
             champSources = ['motivasi'];
@@ -1172,6 +1214,21 @@
             snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.title) champData.supplement.push(x); });
             champData.supplement.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
           }, function() { champData.supplement = []; })
+      );
+
+      // Subscribe Main Motivation
+      _champUnsubs.push(
+        db.collection('users').doc(currentUser.uid)
+          .collection('main_motivation')
+          .orderBy('order', 'asc')
+          .onSnapshot(function(snap) {
+            var list = [];
+            snap.forEach(function(d) {
+              var x = d.data(); x.id = d.id;
+              if (x.title || x.text) list.push(x);
+            });
+            champData.mainMotivation = list;
+          }, function() { champData.mainMotivation = []; })
       );
 
       // Subscribe Other Motivation
@@ -1219,7 +1276,20 @@
 
       // Bentuk output standard — sertakan _champSourceKey dan _champActiveLen terus dalam objek return
       // Index BELUM dinaikkan — hanya dinaikkan bila user sahkan (champCommitItem)
-      if (sourceKey === 'otherMotivation') {
+      if (sourceKey === 'mainMotivation') {
+        return {
+          source: 'mainMotivation',
+          title: item.title || '',
+          depan: item.text || item.title || '',
+          belakang: '',
+          adaFlip: false,
+          imageUrl: item.imageUrl || '',
+          imgRatioW: item.imgRatioW || 16,
+          imgRatioH: item.imgRatioH || 9,
+          _champSourceKey: sourceKey,
+          _champActiveLen: activeLen
+        };
+      } else if (sourceKey === 'otherMotivation') {
         return {
           source: 'otherMotivation',
           title: item.title || '',
@@ -1307,16 +1377,17 @@
         };
       }
 
-      var sourceLabel = { motivasi: 'MOTIVASI', perjanjian: 'PERJANJIAN', rutin: 'RUTIN', supplement: 'SUPLEMEN', water: 'AIR', otherMotivation: 'MOTIVASI LAIN' };      
+      var sourceLabel = { motivasi: 'MOTIVASI', perjanjian: 'PERJANJIAN', rutin: 'RUTIN', supplement: 'SUPLEMEN', water: 'AIR', mainMotivation: 'MAIN MOTIVASI', otherMotivation: 'MOTIVASI LAIN' };      
       isFlipped = false; showTips = false;
-      // otherMotivation — tajuk tidak dipapar di status bar
-      setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + (item.source === 'otherMotivation' ? '' : ' · ' + item.title));
+      // mainMotivation dan otherMotivation — tajuk tidak dipapar di status bar
+      var hideTajuk = (item.source === 'mainMotivation' || item.source === 'otherMotivation');
+      setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + (hideTajuk ? '' : ' · ' + item.title));
       setText('play-mode', 'CHAMPION · ' + (sourceLabel[item.source] || item.source));
       setText('side-label', 'MUKA DEPAN');
 
-      // otherMotivation: tajuk dipapar dalam kotak — bawah gambar, atas teks
+      // mainMotivation dan otherMotivation: tajuk dipapar dalam kotak
       var kandungan;
-      if (item.source === 'otherMotivation') {
+      if (item.source === 'mainMotivation' || item.source === 'otherMotivation') {
         kandungan = (item.title ? item.title + '\n\n' : '') + (item.depan || '');
       } else {
         kandungan = item.depan;
@@ -1328,7 +1399,7 @@
 
       setText('play-err', '');
       // Papar gambar untuk otherMotivation — kena letak selepas setCardImage
-      if (item.source === 'otherMotivation' && item.imageUrl) {
+      if ((item.source === 'mainMotivation' || item.source === 'otherMotivation') && item.imageUrl) {
         setCardImage(item.imageUrl);
         autoFitImage(kandungan.length);
       } else {
@@ -1338,8 +1409,8 @@
       var mainEl = document.getElementById('main-text');
       if (mainEl) {
         var pjg = kandungan.length;
-        if (item.source === 'otherMotivation') {
-          // Auto-kecil ikut panjang kandungan untuk otherMotivation
+        if (item.source === 'mainMotivation' || item.source === 'otherMotivation') {
+          // Auto-kecil ikut panjang kandungan
           mainEl.className = pjg > 300 ? 'big-text ultra-long'
                            : pjg > 150 ? 'big-text extra-long'
                            : pjg > 80  ? 'big-text long-text'
@@ -2936,8 +3007,164 @@
     // ══════════════════════════════════════════
     // OTHER MOTIVATION
     // ══════════════════════════════════════════
+    var allMainMotivation = [];
+    var _mmUnsub = null;
+    var mmEditId = null;
+
     var allOtherMotivation = [];
     var _omUnsub = null;
+
+    // ══════════════════════════════════════════
+    // MAIN MOTIVATION (KINDLE)
+    // ══════════════════════════════════════════
+    document.getElementById('btn-go-main-motivation').onclick = function() {
+      showScreen('screen-main-motivation');
+      loadMainMotivation();
+    };
+
+    document.getElementById('btn-mm-back').onclick = function() {
+      showScreen('screen-menu');
+    };
+
+    document.getElementById('btn-mm-tambah').onclick = async function() {
+      if (!currentUser) return;
+      var maxOrder = allMainMotivation.reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
+      await db.collection('users').doc(currentUser.uid).collection('main_motivation').add({
+        title: '', text: '', imageUrl: '', order: maxOrder + 1, createdAt: Date.now()
+      });
+      setText('mm-status', '✅ Motivasi berjaya ditambah!');
+      setTimeout(function() { setText('mm-status', 'MAIN MOTIVATION'); }, 2000);
+    };
+
+    function loadMainMotivation() {
+      if (!currentUser) return;
+      if (_mmUnsub) return;
+      _mmUnsub = db.collection('users').doc(currentUser.uid)
+        .collection('main_motivation')
+        .orderBy('order', 'asc')
+        .onSnapshot(function(snap) {
+          allMainMotivation = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allMainMotivation.push(x); });
+          renderMainMotivation();
+        }, function(e) {
+          console.error('Gagal load main_motivation:', e);
+        });
+    }
+
+    function renderMainMotivation() {
+      var list = document.getElementById('mm-list');
+      if (!list) return;
+      list.innerHTML = '';
+
+      if (!allMainMotivation.length) {
+        list.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Tiada motivasi. Tekan + Tambah.</div>';
+        return;
+      }
+
+      allMainMotivation.forEach(function(data) {
+        var div = document.createElement('div');
+        div.style.cssText = 'border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:10px;';
+
+        var imgHtml = data.imageUrl
+          ? '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;margin-bottom:6px;object-fit:cover;">'
+          : '<div style="font-size:0.7rem;color:#888;margin-bottom:6px;font-style:italic;">Tiada gambar lagi</div>';
+
+        var dataCapture = data;
+        div.innerHTML = imgHtml +
+          '<div style="font-weight:bold;font-size:0.9rem;margin-bottom:4px;">' + (data.title || '(Tiada tajuk)') + '</div>' +
+          '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>' +
+          '<div class="mm-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;margin-top:8px;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;display:inline-block;">Tekan untuk edit →</div>';
+
+        div.querySelector('.mm-edit-btn').addEventListener('click', function(e) {
+          e.stopPropagation();
+          bukaEditMM(dataCapture);
+        });
+
+        list.appendChild(div);
+      });
+    }
+
+    function bukaEditMM(data) {
+      mmEditId = data.id;
+      document.getElementById('mm-edit-title').value = data.title || '';
+      document.getElementById('mm-edit-text').value = data.text || '';
+      document.getElementById('mm-edit-msg').textContent = '';
+      setText('mm-edit-status', 'EDIT — ' + (data.title || 'Tanpa Tajuk'));
+
+      var imgWrap = document.getElementById('mm-edit-img-wrap');
+      if (data.imageUrl) {
+        imgWrap.innerHTML = '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;object-fit:cover;">';
+      } else {
+        imgWrap.innerHTML = 'Tiada gambar lagi — tambah melalui app phone';
+        imgWrap.style.cssText = 'margin-top:8px;text-align:center;font-size:0.72rem;color:#888;font-style:italic;';
+      }
+
+      showScreen('screen-mm-edit');
+      setTimeout(function() { document.getElementById('mm-edit-title').focus(); }, 300);
+    }
+
+    document.getElementById('btn-mm-edit-back').onclick = function() {
+      showScreen('screen-main-motivation');
+    };
+
+    document.getElementById('btn-mm-edit-del').onclick = function() {
+      if (!currentUser || !mmEditId) return;
+      document.getElementById('mm-del-input').value = '';
+      document.getElementById('mm-del-err').textContent = '';
+      document.getElementById('mm-del-overlay').style.display = 'flex';
+      setTimeout(function() { document.getElementById('mm-del-input').focus(); }, 100);
+    };
+
+    document.getElementById('btn-mm-del-cancel').onclick = function() {
+      document.getElementById('mm-del-overlay').style.display = 'none';
+    };
+
+    document.getElementById('btn-mm-del-ok').onclick = function() {
+      var val = document.getElementById('mm-del-input').value.trim().toLowerCase();
+      if (val !== 'padam') {
+        document.getElementById('mm-del-err').textContent = 'Taip "padam" untuk confirm.';
+        return;
+      }
+      document.getElementById('mm-del-overlay').style.display = 'none';
+      db.collection('users').doc(currentUser.uid)
+        .collection('main_motivation').doc(mmEditId)
+        .delete()
+        .then(function() {
+          showScreen('screen-main-motivation');
+        })
+        .catch(function(e) {
+          setText('mm-edit-msg', '❌ Gagal padam: ' + (e.message || e));
+        });
+    };
+
+    document.getElementById('mm-del-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') document.getElementById('btn-mm-del-ok').click();
+    });
+
+    document.getElementById('btn-mm-edit-save').onclick = function() {
+      if (!currentUser || !mmEditId) return;
+      var title = document.getElementById('mm-edit-title').value.trim();
+      var text = document.getElementById('mm-edit-text').value.trim();
+      var btn = document.getElementById('btn-mm-edit-save');
+      btn.disabled = true;
+      btn.textContent = 'Menyimpan...';
+
+      db.collection('users').doc(currentUser.uid)
+        .collection('main_motivation').doc(mmEditId)
+        .set({ title: title, text: text, updatedAt: Date.now() }, { merge: true })
+        .then(function() {
+          btn.disabled = false;
+          btn.textContent = 'Simpan ✓';
+          setText('mm-edit-msg', '✅ Tersimpan!');
+          setText('mm-edit-status', 'EDIT — ' + (title || 'Tanpa Tajuk'));
+          setTimeout(function() { setText('mm-edit-msg', ''); }, 2000);
+        })
+        .catch(function(e) {
+          btn.disabled = false;
+          btn.textContent = 'Simpan ✓';
+          setText('mm-edit-msg', '❌ Gagal: ' + (e.message || e));
+        });
+    };
 
     document.getElementById('btn-go-other-motivation').onclick = function() {
       showScreen('screen-other-motivation');
@@ -3095,6 +3322,27 @@
     };
 
     // Clear cache bila logout
+    // ── SUBSCRIBE MAIN MOTIVATION UNTUK CHAMPION ──
+    (function() {
+      function subscribeMainMotivationChamp() {
+        if (!currentUser) return;
+        db.collection('users').doc(currentUser.uid)
+          .collection('main_motivation')
+          .onSnapshot(function(snap) {
+            var list = [];
+            snap.forEach(function(d) {
+              var x = d.data(); x.id = d.id;
+              if (x.title || x.text) list.push(x);
+            });
+            list.sort(function(a, b) {
+              return (a.order || 0) - (b.order || 0);
+            });
+            champData.mainMotivation = list;
+          }, function() { champData.mainMotivation = []; });
+      }
+      window._subscribeMainMotivationChamp = subscribeMainMotivationChamp;
+    })();
+
     var _origLogout = document.getElementById('btn-logout').onclick;    
     document.getElementById('btn-reload').onclick = function() {
       isLoading = false;
@@ -4190,7 +4438,7 @@
         if (_jqMotivasiUnsubscribe) { _jqMotivasiUnsubscribe(); _jqMotivasiUnsubscribe = null; }
         _champUnsubs.forEach(function(u) { try { u(); } catch(e) {} }); _champUnsubs = [];
         champSources = []; champLastIdx = 0;
-        champData = { motivasi: [], perjanjian: [], rutin: [], supplement: [], water: [] };
+        champData = { motivasi: [], perjanjian: [], rutin: [], supplement: [], water: [], mainMotivation: [], otherMotivation: [] };
         window._jqMotivasiHandler = null;
         jqAktif = false;
         jqMotivasiList = [];
