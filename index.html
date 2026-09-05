@@ -430,9 +430,48 @@
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
     <button id="btn-go-gotick" class="btn">Go-Tick ✓</button>
     <button id="btn-go-main-motivation" class="btn">⭐ Main Motivation</button>
+    <button id="btn-go-reminder" class="btn" style="border:2px solid #f59e0b;color:#d97706;">⏰ Reminder</button>
     <button id="btn-go-other-motivation" class="btn">✨ Other Motivation</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
+  </div>
+
+  <!-- REMINDER OVERLAY -->
+  <div id="reminder-overlay" style="display:none;position:fixed;inset:0;z-index:999999999;background:rgba(0,0,0,0.96);flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px;">
+    <div id="reminder-overlay-hari" style="font-size:0.75rem;background:rgba(245,158,11,0.2);color:#fcd34d;padding:4px 14px;border-radius:999px;font-weight:700;"></div>
+    <div id="reminder-overlay-nama" style="font-size:1.3rem;font-weight:700;color:#fff;text-align:center;line-height:1.4;"></div>
+    <div id="reminder-overlay-tarikh" style="font-size:0.85rem;color:#9ca3af;text-align:center;"></div>
+    <div id="reminder-overlay-nota" style="display:none;font-size:0.82rem;color:#e5e7eb;text-align:center;line-height:1.6;background:rgba(0,0,0,0.3);border-radius:10px;padding:10px 14px;width:100%;"></div>
+    <input id="reminder-overlay-input" type="text" placeholder='Taip "saya ingat" untuk tutup...' style="width:100%;background:rgba(0,0,0,0.3);border:1px solid #f59e0b;border-radius:10px;color:#fff;padding:12px;font-size:1rem;text-align:center;outline:none;">
+    <div id="reminder-overlay-pesan" style="font-size:0.72rem;color:#f87171;min-height:16px;text-align:center;"></div>
+    <button id="btn-reminder-tidur" style="width:100%;padding:10px;border-radius:999px;background:rgba(99,102,241,0.15);border:1px solid #6366f1;color:#a5b4fc;font-size:0.82rem;font-weight:600;cursor:pointer;">😴 Tidur 2 Jam — Jangan Ganggu</button>
+    <div id="reminder-overlay-countdown" style="font-size:0.7rem;color:#6b7280;text-align:center;"></div>
+  </div>
+
+  <!-- SCREEN: REMINDER -->
+  <div id="screen-reminder" class="screen">
+    <div class="status-bar" id="reminder-status">⏰ REMINDER</div>
+    <button id="btn-reminder-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Temu Janji</button>
+    <div id="reminder-list-kindle" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
+    <button id="btn-reminder-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Senarai</button>
+  </div>
+
+  <!-- SCREEN: REMINDER TAMBAH -->
+  <div id="screen-reminder-tambah" class="screen" style="flex-direction:column;height:100vh;padding:8px;box-sizing:border-box;">
+    <div class="status-bar">TEMU JANJI BARU</div>
+    <div style="font-size:0.72rem;color:#555;margin:6px 0 2px;">Nama / Perkara:</div>
+    <input id="rk-nama" type="text" placeholder="Cth: Appointment Doktor..." style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;margin-bottom:8px;">
+    <div style="font-size:0.72rem;color:#f59e0b;margin-bottom:2px;font-weight:600;">Tarikh:</div>
+    <input id="rk-tarikh" type="date" style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;margin-bottom:8px;background:#fff;color:#000;">
+    <div style="font-size:0.72rem;color:#555;margin-bottom:2px;">Masa (pilihan):</div>
+    <input id="rk-masa" type="time" style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;margin-bottom:8px;background:#fff;color:#000;">
+    <div style="font-size:0.72rem;color:#555;margin-bottom:2px;">Nota (pilihan):</div>
+    <textarea id="rk-nota" placeholder="Alamat, perkara perlu dibawa..." style="width:100%;flex:1;padding:10px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;resize:none;min-height:100px;"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button id="btn-rk-batal" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Batal</button>
+      <button id="btn-rk-simpan" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Simpan ✓</button>
+    </div>
+    <div id="rk-msg" style="text-align:center;font-size:0.75rem;color:#555;margin-top:6px;min-height:1em;"></div>
   </div>
 
   <!-- SCREEN: MAIN MOTIVATION -->
@@ -3015,6 +3054,250 @@
     var _omUnsub = null;
 
     // ══════════════════════════════════════════
+    // REMINDER (KINDLE)
+    // ══════════════════════════════════════════
+    var allRemindersKindle = [];
+    var _reminderUnsub = null;
+    var reminderSnoozedUntil = 0;
+    var reminderCheckInterval = null;
+    var reminderCountdownInterval = null;
+
+    document.getElementById('btn-go-reminder').onclick = function() {
+      showScreen('screen-reminder');
+      renderReminderKindle();
+    };
+
+    document.getElementById('btn-reminder-back').onclick = function() {
+      showScreen('screen-menu');
+    };
+
+    document.getElementById('btn-reminder-tambah').onclick = function() {
+      document.getElementById('rk-nama').value = '';
+      document.getElementById('rk-tarikh').value = '';
+      document.getElementById('rk-masa').value = '';
+      document.getElementById('rk-nota').value = '';
+      document.getElementById('rk-msg').textContent = '';
+      showScreen('screen-reminder-tambah');
+      setTimeout(function() { document.getElementById('rk-nama').focus(); }, 300);
+    };
+
+    document.getElementById('btn-rk-batal').onclick = function() {
+      showScreen('screen-reminder');
+    };
+
+    document.getElementById('btn-rk-simpan').onclick = async function() {
+      if (!currentUser) return;
+      var nama = document.getElementById('rk-nama').value.trim();
+      var tarikh = document.getElementById('rk-tarikh').value;
+      var masa = document.getElementById('rk-masa').value;
+      var nota = document.getElementById('rk-nota').value.trim();
+      var msg = document.getElementById('rk-msg');
+      if (!nama) { msg.textContent = '⚠️ Sila masukkan nama temu janji.'; return; }
+      if (!tarikh) { msg.textContent = '⚠️ Sila pilih tarikh.'; return; }
+      msg.textContent = '⏳ Menyimpan...';
+      var btn = document.getElementById('btn-rk-simpan');
+      btn.disabled = true;
+      try {
+        await db.collection('users').doc(currentUser.uid).collection('reminders').add({
+          nama: nama, tarikh: tarikh, masa: masa, nota: nota,
+          aktif: true, harian: false, harianFasa: [], createdAt: Date.now()
+        });
+        msg.textContent = '✅ Tersimpan!';
+        setTimeout(function() { showScreen('screen-reminder'); renderReminderKindle(); }, 1000);
+      } catch(e) {
+        msg.textContent = '❌ Gagal: ' + (e.message || e);
+        btn.disabled = false;
+      }
+    };
+
+    function renderReminderKindle() {
+      var list = document.getElementById('reminder-list-kindle');
+      if (!list) return;
+      list.innerHTML = '';
+
+      if (!allRemindersKindle.length) {
+        list.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Tiada temu janji. Tekan + Tambah.</div>';
+        return;
+      }
+
+      var today = new Date(); today.setHours(0,0,0,0);
+
+      var sorted = allRemindersKindle.slice().sort(function(a,b) {
+        if (!a.tarikh) return 1; if (!b.tarikh) return -1;
+        return new Date(a.tarikh) - new Date(b.tarikh);
+      });
+
+      sorted.forEach(function(data) {
+        var tarikhObj = data.tarikh ? new Date(data.tarikh + 'T00:00:00') : null;
+        var diffHari = tarikhObj ? Math.round((tarikhObj - today) / (1000*60*60*24)) : null;
+        var statusWarna = '#9ca3af', statusLabel = 'Tiada tarikh';
+        if (diffHari !== null) {
+          if (diffHari < 0) { statusWarna='#6b7280'; statusLabel=Math.abs(diffHari)+' hari lepas'; }
+          else if (diffHari===0) { statusWarna='#f87171'; statusLabel='🔴 HARI INI!'; }
+          else if (diffHari===1) { statusWarna='#fb923c'; statusLabel='🟠 Esok'; }
+          else if (diffHari<=3) { statusWarna='#fcd34d'; statusLabel='🟡 '+diffHari+' hari lagi'; }
+          else { statusWarna='#34d399'; statusLabel=diffHari+' hari lagi'; }
+        }
+        if (data.harian) { statusWarna='#a78bfa'; statusLabel='🔁 Harian'; }
+
+        var tarikhLabel = tarikhObj ? tarikhObj.toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '';
+        var masaLabel = data.masa ? ' — '+data.masa : '';
+
+        var div = document.createElement('div');
+        div.style.cssText = 'border:2px solid '+(diffHari===0?'#f87171':diffHari!==null&&diffHari<=3?'#f59e0b':'#ccc')+';border-radius:8px;padding:10px;margin-bottom:10px;';
+        div.innerHTML =
+          '<div style="font-size:0.7rem;color:'+statusWarna+';font-weight:700;margin-bottom:4px;">'+statusLabel+'</div>'+
+          '<div style="font-weight:bold;font-size:0.95rem;margin-bottom:2px;">'+(data.nama||'(Tiada nama)')+'</div>'+
+          '<div style="font-size:0.75rem;color:#555;">'+tarikhLabel+masaLabel+'</div>'+
+          (data.nota?'<div style="font-size:0.72rem;color:#777;margin-top:4px;">'+data.nota.substring(0,60)+(data.nota.length>60?'...':'')+'</div>':'')+
+          '<div style="display:flex;gap:6px;margin-top:8px;">'+
+            '<div class="rk-padam-btn" style="font-size:0.75rem;color:#c00;border:1.5px solid #c00;padding:5px 10px;border-radius:6px;cursor:pointer;">🗑️ Padam</div>'+
+          '</div>';
+
+        var captured = data;
+        div.querySelector('.rk-padam-btn').addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (!confirm('Padam "'+(captured.nama||'temu janji ini')+'"?')) return;
+          db.collection('users').doc(currentUser.uid).collection('reminders').doc(captured.id).delete()
+            .then(function() { setText('reminder-status','🗑️ Dipadam!'); setTimeout(function(){setText('reminder-status','⏰ REMINDER');},2000); })
+            .catch(function(err) { setText('reminder-status','❌ Gagal: '+(err.message||err)); });
+        });
+
+        list.appendChild(div);
+      });
+    }
+
+    function subscribeReminderKindle() {
+      if (!currentUser) return;
+      if (_reminderUnsub) return;
+      _reminderUnsub = db.collection('users').doc(currentUser.uid)
+        .collection('reminders')
+        .orderBy('createdAt','asc')
+        .onSnapshot(function(snap) {
+          allRemindersKindle = [];
+          snap.forEach(function(d) { var x=d.data(); x.id=d.id; allRemindersKindle.push(x); });
+          var scr = document.getElementById('screen-reminder');
+          if (scr && scr.classList && scr.classList.contains('active')) renderReminderKindle();
+          else if (scr && scr.style && scr.style.display==='flex') renderReminderKindle();
+        }, function(e) { console.error('reminder:', e); });
+    }
+
+    function semakReminderKindle() {
+      if (!allRemindersKindle.length) return;
+      var overlay = document.getElementById('reminder-overlay');
+      if (overlay && overlay.style.display==='flex') return;
+      if (Date.now() < reminderSnoozedUntil) return;
+
+      var now = new Date();
+      var today = new Date(); today.setHours(0,0,0,0);
+      var nowJam = now.getHours()*60 + now.getMinutes();
+
+      for (var i=0; i<allRemindersKindle.length; i++) {
+        var reminder = allRemindersKindle[i];
+        if (!reminder.aktif) continue;
+
+        if (reminder.harian) {
+          var fasaList = reminder.harianFasa || [];
+          var fasaAktif = null;
+          for (var j=0; j<fasaList.length; j++) {
+            var fasa = fasaList[j];
+            if (!fasa.mula || !fasa.tamat) continue;
+            var mulaMinit = parseInt(fasa.mula.split(':')[0])*60 + parseInt(fasa.mula.split(':')[1]);
+            var tamatMinit = parseInt(fasa.tamat.split(':')[0])*60 + parseInt(fasa.tamat.split(':')[1]);
+            if (nowJam >= mulaMinit && nowJam < tamatMinit) { fasaAktif = fasa; break; }
+          }
+          if (!fasaAktif) continue;
+          var jamMula = parseInt(fasaAktif.mula.split(':')[0]);
+          var minitMula = parseInt(fasaAktif.mula.split(':')[1]);
+          var masaMula = new Date(); masaMula.setHours(jamMula, minitMula, 0, 0);
+          var freqMs = (fasaAktif.freq||10)*60*1000;
+          var selang = now.getTime() - masaMula.getTime();
+          var kitarMs = masaMula.getTime() + (Math.floor(selang/freqMs)*freqMs);
+          if ((now.getTime()-kitarMs) < 60000) { tunjukReminderKindle(reminder, null, true, fasaAktif); return; }
+          continue;
+        }
+
+        if (!reminder.tarikh) continue;
+        var tarikhR = new Date(reminder.tarikh+'T00:00:00'); tarikhR.setHours(0,0,0,0);
+        var diffHari = Math.ceil((tarikhR-today)/(1000*60*60*24));
+        if (diffHari===0 || diffHari===1 || diffHari===3) { tunjukReminderKindle(reminder, diffHari, false); return; }
+      }
+    }
+
+    function tunjukReminderKindle(reminder, diffHari, isHarian, fasaAktif) {
+      var overlay = document.getElementById('reminder-overlay');
+      if (!overlay) return;
+      var labelHari = '';
+      if (isHarian) {
+        var h = new Date(); var hh=h.getHours(); var mm=String(h.getMinutes()).padStart(2,'0');
+        labelHari = '🔁 HARIAN — '+(hh%12||12)+':'+mm+(hh>=12?'pm':'am');
+      } else if (diffHari===0) labelHari='⏰ HARI INI!';
+      else if (diffHari===1) labelHari='⚠️ ESOK';
+      else if (diffHari===3) labelHari='📅 3 HARI LAGI';
+
+      var tarikhObj = reminder.tarikh ? new Date(reminder.tarikh+'T00:00:00') : null;
+      var tarikhLabel = tarikhObj ? tarikhObj.toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '';
+      var masaLabel = reminder.masa ? ' • '+reminder.masa : '';
+
+      setText('reminder-overlay-hari', labelHari);
+      setText('reminder-overlay-nama', reminder.nama || 'Temu Janji');
+      setText('reminder-overlay-tarikh', tarikhLabel+masaLabel);
+
+      var notaEl = document.getElementById('reminder-overlay-nota');
+      if (reminder.nota) { notaEl.textContent=reminder.nota; notaEl.style.display='block'; }
+      else { notaEl.style.display='none'; }
+
+      var intervalMinit = isHarian ? (fasaAktif?fasaAktif.freq||10:10) : (diffHari===0?5:10);
+      var snoozeMs = intervalMinit*60*1000;
+
+      var input = document.getElementById('reminder-overlay-input');
+      var pesan = document.getElementById('reminder-overlay-pesan');
+      if (input) input.value='';
+      if (pesan) pesan.textContent='';
+      overlay.style.display='flex';
+
+      var btnTidur = document.getElementById('btn-reminder-tidur');
+      var btnTidurClone = btnTidur.cloneNode(true);
+      btnTidur.parentNode.replaceChild(btnTidurClone, btnTidur);
+      btnTidurClone.addEventListener('click', function() {
+        overlay.style.display='none';
+        reminderSnoozedUntil = Date.now()+(2*60*60*1000);
+        if(reminderCountdownInterval) clearInterval(reminderCountdownInterval);
+      });
+
+      if(reminderCountdownInterval) clearInterval(reminderCountdownInterval);
+      var countdownEl = document.getElementById('reminder-overlay-countdown');
+      reminderCountdownInterval = setInterval(function() {
+        var baki = Math.max(0, reminderSnoozedUntil-Date.now());
+        if (!baki) { clearInterval(reminderCountdownInterval); if(countdownEl) countdownEl.textContent=''; return; }
+        var minit=Math.floor(baki/60000), saat=Math.floor((baki%60000)/1000);
+        if(countdownEl) countdownEl.textContent='Keluar semula dalam '+minit+':'+String(saat).padStart(2,'0')+' minit';
+      }, 1000);
+
+      var newInput = input.cloneNode(true);
+      input.parentNode.replaceChild(newInput, input);
+      function cubaIngat() {
+        if (newInput.value.trim().toLowerCase()==='saya ingat') {
+          overlay.style.display='none';
+          reminderSnoozedUntil=Date.now()+snoozeMs;
+          newInput.value=''; if(pesan) pesan.textContent='';
+          if(reminderCountdownInterval) clearInterval(reminderCountdownInterval);
+        } else {
+          if(pesan) pesan.textContent='⚠️ Sila taip "saya ingat" untuk tutup.';
+          newInput.focus();
+        }
+      }
+      newInput.addEventListener('keydown', function(e) { if(e.key==='Enter') cubaIngat(); });
+      newInput.addEventListener('input', function() { if(newInput.value.trim().toLowerCase()==='saya ingat') cubaIngat(); });
+    }
+
+    function mulakanReminderCheckKindle() {
+      if(reminderCheckInterval) clearInterval(reminderCheckInterval);
+      reminderCheckInterval = setInterval(function() { semakReminderKindle(); }, 60*1000);
+      setTimeout(function() { semakReminderKindle(); }, 3000);
+    }
+
+    // ══════════════════════════════════════════
     // MAIN MOTIVATION (KINDLE)
     // ══════════════════════════════════════════
     document.getElementById('btn-go-main-motivation').onclick = function() {
@@ -3385,7 +3668,10 @@
       window._subscribeMainMotivationChamp = subscribeMainMotivationChamp;
     })();
 
-    var _origLogout = document.getElementById('btn-logout').onclick;    
+    subscribeReminderKindle();
+    mulakanReminderCheckKindle();
+
+    var _origLogout = document.getElementById('btn-logout').onclick;
     document.getElementById('btn-reload').onclick = function() {
       isLoading = false;
       clearBlockCard();
