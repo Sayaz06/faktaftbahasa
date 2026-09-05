@@ -3668,9 +3668,6 @@
       window._subscribeMainMotivationChamp = subscribeMainMotivationChamp;
     })();
 
-    subscribeReminderKindle();
-    mulakanReminderCheckKindle();
-
     var _origLogout = document.getElementById('btn-logout').onclick;
     document.getElementById('btn-reload').onclick = function() {
       isLoading = false;
@@ -4757,12 +4754,16 @@
         subscribeWsNotif(user.uid);
         window._azanInit(user.uid);
         if (window._loadManualLockState) window._loadManualLockState();
+        subscribeReminderKindle();
+        mulakanReminderCheckKindle();
         // Load state button jenis seterusnya selepas collections diload
         loadCollections(function() {
           loadJenisState();
         });
         showScreen('screen-menu');
       } else {
+        if (_reminderUnsub) { _reminderUnsub(); _reminderUnsub = null; }
+        if (reminderCheckInterval) clearInterval(reminderCheckInterval);
         if (_jqMotivasiUnsubscribe) { _jqMotivasiUnsubscribe(); _jqMotivasiUnsubscribe = null; }
         _champUnsubs.forEach(function(u) { try { u(); } catch(e) {} }); _champUnsubs = [];
         champSources = []; champLastIdx = 0;
