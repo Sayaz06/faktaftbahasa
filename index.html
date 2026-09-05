@@ -429,31 +429,31 @@
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
     <button id="btn-go-gotick" class="btn">Go-Tick ✓</button>
-    <button id="btn-go-main-motivation" class="btn" style="border:2px solid #d97706;color:#92400e;">⭐ Main Motivation</button>
-    <button id="btn-go-reminder" class="btn" style="border:2px solid #f59e0b;color:#d97706;">⏰ Reminder</button>
-    <button id="btn-go-other-motivation" class="btn" style="border:2px solid #7c3aed;color:#4c1d95;">✨ Other Motivation</button>
+    <button id="btn-go-main-motivation" class="btn">[ MAIN MOTIVATION ]</button>
+    <button id="btn-go-reminder" class="btn">[ REMINDER ]</button>
+    <button id="btn-go-other-motivation" class="btn">[ OTHER MOTIVATION ]</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
   </div>
 
   <!-- REMINDER OVERLAY -->
-  <div id="reminder-overlay" style="display:none;position:fixed;inset:0;z-index:999999999;background:rgba(0,0,0,0.96);flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px;">
-    <div id="reminder-overlay-hari" style="font-size:0.75rem;background:rgba(245,158,11,0.2);color:#fcd34d;padding:4px 14px;border-radius:999px;font-weight:700;"></div>
-    <div id="reminder-overlay-nama" style="font-size:1.3rem;font-weight:700;color:#fff;text-align:center;line-height:1.4;"></div>
-    <div id="reminder-overlay-tarikh" style="font-size:0.85rem;color:#9ca3af;text-align:center;"></div>
-    <div id="reminder-overlay-nota" style="display:none;font-size:0.82rem;color:#e5e7eb;text-align:center;line-height:1.6;background:rgba(0,0,0,0.3);border-radius:10px;padding:10px 14px;width:100%;"></div>
-    <input id="reminder-overlay-input" type="text" placeholder='Taip "saya ingat" untuk tutup...' style="width:100%;background:rgba(0,0,0,0.3);border:1px solid #f59e0b;border-radius:10px;color:#fff;padding:12px;font-size:1rem;text-align:center;outline:none;">
-    <div id="reminder-overlay-pesan" style="font-size:0.72rem;color:#f87171;min-height:16px;text-align:center;"></div>
-    <button id="btn-reminder-tidur" style="width:100%;padding:10px;border-radius:999px;background:rgba(99,102,241,0.15);border:1px solid #6366f1;color:#a5b4fc;font-size:0.82rem;font-weight:600;cursor:pointer;">😴 Tidur 2 Jam — Jangan Ganggu</button>
-    <div id="reminder-overlay-countdown" style="font-size:0.7rem;color:#6b7280;text-align:center;"></div>
+  <div id="reminder-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999999999;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px;border:4px solid #000;">
+    <div id="reminder-overlay-hari" style="font-size:0.8rem;font-weight:700;border:2px solid #000;padding:4px 14px;border-radius:4px;color:#000;"></div>
+    <div id="reminder-overlay-nama" style="font-size:1.3rem;font-weight:700;color:#000;text-align:center;line-height:1.4;"></div>
+    <div id="reminder-overlay-tarikh" style="font-size:0.85rem;color:#000;text-align:center;"></div>
+    <div id="reminder-overlay-nota" style="display:none;font-size:0.82rem;color:#000;text-align:center;line-height:1.6;border:2px solid #000;border-radius:4px;padding:10px 14px;width:100%;box-sizing:border-box;"></div>
+    <input id="reminder-overlay-input" type="text" placeholder='Taip "saya ingat" untuk tutup...' style="width:100%;background:#fff;border:2px solid #000;border-radius:4px;color:#000;padding:12px;font-size:1rem;text-align:center;outline:none;box-sizing:border-box;">
+    <div id="reminder-overlay-pesan" style="font-size:0.75rem;font-weight:bold;min-height:16px;text-align:center;color:#000;"></div>
+    <button id="btn-reminder-tidur" style="width:100%;padding:12px;border:2px solid #000;background:#000;color:#fff;font-size:0.9rem;font-weight:bold;cursor:pointer;border-radius:4px;">Tidur 2 Jam - Jangan Ganggu</button>
+    <div id="reminder-overlay-countdown" style="font-size:0.75rem;color:#000;text-align:center;"></div>
   </div>
 
   <!-- SCREEN: REMINDER -->
   <div id="screen-reminder" class="screen">
-    <div class="status-bar" id="reminder-status">⏰ REMINDER</div>
+    <div class="status-bar" id="reminder-status">REMINDER</div>
     <button id="btn-reminder-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Temu Janji</button>
     <div id="reminder-list-kindle" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
-    <button id="btn-reminder-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Senarai</button>
+    <button id="btn-reminder-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Balik ke Menu</button>
   </div>
 
   <!-- SCREEN: REMINDER TAMBAH -->
@@ -506,10 +506,10 @@
       style="width:100%;flex:1;padding:10px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;resize:none;line-height:1.6;min-height:200px;"></textarea>
     <div id="mm-edit-img-wrap" style="margin-top:8px;text-align:center;font-size:0.72rem;color:#888;font-style:italic;">Tiada gambar lagi</div>
     <div style="display:flex;gap:8px;margin-top:8px;">
-      <button id="btn-mm-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Balik</button>
-      <button id="btn-mm-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Simpan ✓</button>
+      <button id="btn-mm-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Balik</button>
+      <button id="btn-mm-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Simpan</button>
     </div>
-    <button id="btn-mm-edit-del" style="width:100%;margin-top:8px;padding:10px;border:2px solid #c00;background:#fff;color:#c00;font-weight:bold;border-radius:8px;cursor:pointer;">🗑️ Padam Laci Ini</button>
+    <button id="btn-mm-edit-del" style="width:100%;margin-top:8px;padding:10px;border:2px solid #000;background:#fff;color:#000;font-weight:bold;border-radius:4px;cursor:pointer;">Padam Laci Ini</button>
     <div id="mm-edit-msg" style="text-align:center;font-size:0.75rem;color:#555;margin-top:6px;min-height:1em;"></div>
   </div>
 
@@ -553,10 +553,10 @@
 
     <!-- Buttons -->
     <div style="display:flex;gap:8px;margin-top:8px;">
-      <button id="btn-om-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">← Balik</button>
-      <button id="btn-om-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Simpan ✓</button>
+      <button id="btn-om-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Balik</button>
+      <button id="btn-om-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Simpan</button>
     </div>
-    <button id="btn-om-edit-del" style="width:100%;margin-top:8px;padding:10px;border:2px solid #c00;background:#fff;color:#c00;font-weight:bold;border-radius:8px;cursor:pointer;">🗑️ Padam Laci Ini</button>
+    <button id="btn-om-edit-del" style="width:100%;margin-top:8px;padding:10px;border:2px solid #000;background:#fff;color:#000;font-weight:bold;border-radius:4px;cursor:pointer;">Padam Laci Ini</button>
     <div id="om-edit-msg" style="text-align:center;font-size:0.75rem;color:#555;margin-top:6px;min-height:1em;"></div>
   </div>
   
@@ -3092,9 +3092,9 @@
       var masa = document.getElementById('rk-masa').value;
       var nota = document.getElementById('rk-nota').value.trim();
       var msg = document.getElementById('rk-msg');
-      if (!nama) { msg.textContent = '⚠️ Sila masukkan nama temu janji.'; return; }
-      if (!tarikh) { msg.textContent = '⚠️ Sila pilih tarikh.'; return; }
-      msg.textContent = '⏳ Menyimpan...';
+      if (!nama) { msg.textContent = 'Sila masukkan nama temu janji.'; return; }
+      if (!tarikh) { msg.textContent = 'Sila pilih tarikh.'; return; }
+      msg.textContent = 'Menyimpan...';
       var btn = document.getElementById('btn-rk-simpan');
       btn.disabled = true;
       try {
@@ -3102,10 +3102,10 @@
           nama: nama, tarikh: tarikh, masa: masa, nota: nota,
           aktif: true, harian: false, harianFasa: [], createdAt: Date.now()
         });
-        msg.textContent = '✅ Tersimpan!';
+        msg.textContent = 'Tersimpan!';
         setTimeout(function() { showScreen('screen-reminder'); renderReminderKindle(); }, 1000);
       } catch(e) {
-        msg.textContent = '❌ Gagal: ' + (e.message || e);
+        msg.textContent = 'Gagal: ' + (e.message || e);
         btn.disabled = false;
       }
     };
@@ -3116,7 +3116,7 @@
       list.innerHTML = '';
 
       if (!allRemindersKindle.length) {
-        list.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Tiada temu janji. Tekan + Tambah.</div>';
+        list.innerHTML = '<div style="text-align:center;color:#000;padding:20px;">Tiada temu janji. Tekan + Tambah.</div>';
         return;
       }
 
@@ -3130,37 +3130,37 @@
       sorted.forEach(function(data) {
         var tarikhObj = data.tarikh ? new Date(data.tarikh + 'T00:00:00') : null;
         var diffHari = tarikhObj ? Math.round((tarikhObj - today) / (1000*60*60*24)) : null;
-        var statusWarna = '#9ca3af', statusLabel = 'Tiada tarikh';
+        var statusLabel = 'Tiada tarikh';
         if (diffHari !== null) {
-          if (diffHari < 0) { statusWarna='#6b7280'; statusLabel=Math.abs(diffHari)+' hari lepas'; }
-          else if (diffHari===0) { statusWarna='#f87171'; statusLabel='🔴 HARI INI!'; }
-          else if (diffHari===1) { statusWarna='#fb923c'; statusLabel='🟠 Esok'; }
-          else if (diffHari<=3) { statusWarna='#fcd34d'; statusLabel='🟡 '+diffHari+' hari lagi'; }
-          else { statusWarna='#34d399'; statusLabel=diffHari+' hari lagi'; }
+          if (diffHari < 0) { statusLabel = Math.abs(diffHari)+' hari lepas'; }
+          else if (diffHari===0) { statusLabel = '*** HARI INI ***'; }
+          else if (diffHari===1) { statusLabel = '** ESOK **'; }
+          else if (diffHari<=3) { statusLabel = '* '+diffHari+' hari lagi *'; }
+          else { statusLabel = diffHari+' hari lagi'; }
         }
-        if (data.harian) { statusWarna='#a78bfa'; statusLabel='🔁 Harian'; }
+        if (data.harian) { statusLabel = '[ HARIAN ]'; }
 
         var tarikhLabel = tarikhObj ? tarikhObj.toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '';
-        var masaLabel = data.masa ? ' — '+data.masa : '';
+        var masaLabel = data.masa ? ' - '+data.masa : '';
+        var borderStyle = diffHari===0 ? '3px solid #000' : '2px solid #000';
 
         var div = document.createElement('div');
-        div.style.cssText = 'border:2px solid '+(diffHari===0?'#f87171':diffHari!==null&&diffHari<=3?'#f59e0b':'#ccc')+';border-radius:8px;padding:10px;margin-bottom:10px;';
-        div.innerHTML =
-          '<div style="font-size:0.7rem;color:'+statusWarna+';font-weight:700;margin-bottom:4px;">'+statusLabel+'</div>'+
-          '<div style="font-weight:bold;font-size:0.95rem;margin-bottom:2px;">'+(data.nama||'(Tiada nama)')+'</div>'+
-          '<div style="font-size:0.75rem;color:#555;">'+tarikhLabel+masaLabel+'</div>'+
-          (data.nota?'<div style="font-size:0.72rem;color:#777;margin-top:4px;">'+data.nota.substring(0,60)+(data.nota.length>60?'...':'')+'</div>':'')+
-          '<div style="display:flex;gap:6px;margin-top:8px;">'+
-            '<div class="rk-padam-btn" style="font-size:0.75rem;color:#c00;border:1.5px solid #c00;padding:5px 10px;border-radius:6px;cursor:pointer;">🗑️ Padam</div>'+
-          '</div>';
-
+        div.style.cssText = 'border:'+borderStyle+';border-radius:4px;padding:10px;margin-bottom:10px;background:'+(diffHari===0?'#000':'#fff')+';color:'+(diffHari===0?'#fff':'#000')+';';
         var captured = data;
+        div.innerHTML =
+          '<div style="font-size:0.72rem;font-weight:bold;margin-bottom:4px;">'+statusLabel+'</div>'+
+          '<div style="font-weight:bold;font-size:0.95rem;margin-bottom:2px;">'+(data.nama||'(Tiada nama)')+'</div>'+
+          '<div style="font-size:0.75rem;">'+tarikhLabel+masaLabel+'</div>'+
+          (data.nota?'<div style="font-size:0.72rem;margin-top:4px;">'+data.nota.substring(0,60)+(data.nota.length>60?'...':'')+'</div>':'')+
+          '<div style="margin-top:8px;"><div class="rk-padam-btn" style="display:inline-block;font-size:0.75rem;font-weight:bold;border:2px solid '+(diffHari===0?'#fff':'#000')+';padding:5px 14px;border-radius:4px;cursor:pointer;background:'+(diffHari===0?'#fff':'#000')+';color:'+(diffHari===0?'#000':'#fff')+';">Padam</div></div>';
+
         div.querySelector('.rk-padam-btn').addEventListener('click', function(e) {
           e.stopPropagation();
-          if (!confirm('Padam "'+(captured.nama||'temu janji ini')+'"?')) return;
-          db.collection('users').doc(currentUser.uid).collection('reminders').doc(captured.id).delete()
-            .then(function() { setText('reminder-status','🗑️ Dipadam!'); setTimeout(function(){setText('reminder-status','⏰ REMINDER');},2000); })
-            .catch(function(err) { setText('reminder-status','❌ Gagal: '+(err.message||err)); });
+          wsConfirm('Padam temu janji ini?\n\n' + (captured.nama||''), function() {
+            db.collection('users').doc(currentUser.uid).collection('reminders').doc(captured.id).delete()
+              .then(function() { setText('reminder-status','Dipadam!'); setTimeout(function(){setText('reminder-status','REMINDER');},2000); })
+              .catch(function(err) { setText('reminder-status','Gagal: '+(err.message||err)); });
+          });
         });
 
         list.appendChild(div);
@@ -3230,10 +3230,10 @@
       var labelHari = '';
       if (isHarian) {
         var h = new Date(); var hh=h.getHours(); var mm=String(h.getMinutes()).padStart(2,'0');
-        labelHari = '🔁 HARIAN — '+(hh%12||12)+':'+mm+(hh>=12?'pm':'am');
-      } else if (diffHari===0) labelHari='⏰ HARI INI!';
-      else if (diffHari===1) labelHari='⚠️ ESOK';
-      else if (diffHari===3) labelHari='📅 3 HARI LAGI';
+        labelHari = 'HARIAN - '+(hh%12||12)+':'+mm+(hh>=12?'ptg':'pg');
+      } else if (diffHari===0) labelHari='*** HARI INI ***';
+      else if (diffHari===1) labelHari='** ESOK **';
+      else if (diffHari===3) labelHari='* 3 HARI LAGI *';
 
       var tarikhObj = reminder.tarikh ? new Date(reminder.tarikh+'T00:00:00') : null;
       var tarikhLabel = tarikhObj ? tarikhObj.toLocaleDateString('ms-MY',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) : '';
@@ -3283,7 +3283,7 @@
           newInput.value=''; if(pesan) pesan.textContent='';
           if(reminderCountdownInterval) clearInterval(reminderCountdownInterval);
         } else {
-          if(pesan) pesan.textContent='⚠️ Sila taip "saya ingat" untuk tutup.';
+        if(pesan) pesan.textContent='Sila taip "saya ingat" untuk tutup.';
           newInput.focus();
         }
       }
@@ -3319,7 +3319,7 @@
       await db.collection('users').doc(currentUser.uid).collection('main_motivation').add({
         title: '', text: '', imageUrl: '', order: maxOrder + 1, createdAt: Date.now()
       });
-      setText('mm-status', '✅ Motivasi berjaya ditambah!');
+      setText('mm-status', 'Motivasi berjaya ditambah!');
       setTimeout(function() { setText('mm-status', 'MAIN MOTIVATION'); }, 2000);
     };
 
@@ -3362,7 +3362,7 @@
           '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>' +
           '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">' +
             '<div class="mm-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;flex:1;">Tekan untuk edit →</div>' +
-            '<div class="mm-pindah-om" style="font-size:0.75rem;color:#4c1d95;background:#ede9fe;border:1.5px solid #7c3aed;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;flex:1;">✨ → Other</div>' +
+          '<div class="mm-pindah-om" style="font-size:0.75rem;font-weight:bold;border:2px solid #000;padding:6px 10px;border-radius:4px;text-align:center;cursor:pointer;flex:1;">Pindah ke Other</div>' +
           '</div>';
 
         div.querySelector('.mm-edit-btn').addEventListener('click', function(e) {
@@ -3372,19 +3372,20 @@
 
         div.querySelector('.mm-pindah-om').addEventListener('click', function(e) {
           e.stopPropagation();
-          if (!confirm('Pindah "' + (dataCapture.title || 'motivasi ini') + '" ke Other Motivation?')) return;
-          var maxOrder = allOtherMotivation.reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
-          db.collection('users').doc(currentUser.uid).collection('other_motivation').add({
-            title: dataCapture.title || '', text: dataCapture.text || '',
-            imageUrl: dataCapture.imageUrl || '', imgRatioW: dataCapture.imgRatioW || 16,
-            imgRatioH: dataCapture.imgRatioH || 9, order: maxOrder + 1, createdAt: Date.now()
-          }).then(function() {
-            return db.collection('users').doc(currentUser.uid).collection('main_motivation').doc(dataCapture.id).delete();
-          }).then(function() {
-            setText('mm-status', '✨ Dipindah ke Other Motivation!');
-            setTimeout(function() { setText('mm-status', 'MAIN MOTIVATION'); }, 2500);
-          }).catch(function(err) {
-            setText('mm-status', '❌ Gagal: ' + (err.message || err));
+          wsConfirm('Pindah ke Other Motivation?\n\n' + (dataCapture.title || ''), function() {
+            var maxOrder = allOtherMotivation.reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
+            db.collection('users').doc(currentUser.uid).collection('other_motivation').add({
+              title: dataCapture.title || '', text: dataCapture.text || '',
+              imageUrl: dataCapture.imageUrl || '', imgRatioW: dataCapture.imgRatioW || 16,
+              imgRatioH: dataCapture.imgRatioH || 9, order: maxOrder + 1, createdAt: Date.now()
+            }).then(function() {
+              return db.collection('users').doc(currentUser.uid).collection('main_motivation').doc(dataCapture.id).delete();
+            }).then(function() {
+              setText('mm-status', 'Dipindah ke Other Motivation!');
+              setTimeout(function() { setText('mm-status', 'MAIN MOTIVATION'); }, 2500);
+            }).catch(function(err) {
+              setText('mm-status', 'Gagal: ' + (err.message || err));
+            });
           });
         });
 
@@ -3441,7 +3442,7 @@
           showScreen('screen-main-motivation');
         })
         .catch(function(e) {
-          setText('mm-edit-msg', '❌ Gagal padam: ' + (e.message || e));
+          setText('mm-edit-msg', 'Gagal padam: ' + (e.message || e));
         });
     };
 
@@ -3462,15 +3463,15 @@
         .set({ title: title, text: text, updatedAt: Date.now() }, { merge: true })
         .then(function() {
           btn.disabled = false;
-          btn.textContent = 'Simpan ✓';
-          setText('mm-edit-msg', '✅ Tersimpan!');
-          setText('mm-edit-status', 'EDIT — ' + (title || 'Tanpa Tajuk'));
+          btn.textContent = 'Simpan';
+          setText('mm-edit-msg', 'Tersimpan!');
+          setText('mm-edit-status', 'EDIT - ' + (title || 'Tanpa Tajuk'));
           setTimeout(function() { setText('mm-edit-msg', ''); }, 2000);
         })
         .catch(function(e) {
           btn.disabled = false;
-          btn.textContent = 'Simpan ✓';
-          setText('mm-edit-msg', '❌ Gagal: ' + (e.message || e));
+          btn.textContent = 'Simpan';
+          setText('mm-edit-msg', 'Gagal: ' + (e.message || e));
         });
     };
 
@@ -3489,7 +3490,7 @@
       await db.collection('users').doc(currentUser.uid).collection('other_motivation').add({
         title: '', text: '', imageUrl: '', order: maxOrder + 1, createdAt: Date.now()
       });
-      setText('om-status', '✅ Motivasi berjaya ditambah!');
+      setText('om-status', 'Motivasi berjaya ditambah!');
       setTimeout(function() { setText('om-status', 'OTHER MOTIVATION'); }, 2000);
     };
 
@@ -3536,7 +3537,7 @@
           '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>' +
           '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">' +
             '<div class="om-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;flex:1;">Tekan untuk edit →</div>' +
-            '<div class="om-pindah-mm" style="font-size:0.75rem;color:#92400e;background:#fef3c7;border:1.5px solid #d97706;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;flex:1;">⭐ → Main</div>' +
+          '<div class="om-pindah-mm" style="font-size:0.75rem;font-weight:bold;border:2px solid #000;padding:6px 10px;border-radius:4px;text-align:center;cursor:pointer;flex:1;">Pindah ke Main</div>' +
           '</div>';
 
         div.querySelector('.om-edit-btn').addEventListener('click', function(e) {
@@ -3546,19 +3547,20 @@
 
         div.querySelector('.om-pindah-mm').addEventListener('click', function(e) {
           e.stopPropagation();
-          if (!confirm('Pindah "' + (dataCapture.title || 'motivasi ini') + '" ke Main Motivation?')) return;
-          var maxOrder = (champData.mainMotivation || []).reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
-          db.collection('users').doc(currentUser.uid).collection('main_motivation').add({
-            title: dataCapture.title || '', text: dataCapture.text || '',
-            imageUrl: dataCapture.imageUrl || '', imgRatioW: dataCapture.imgRatioW || 16,
-            imgRatioH: dataCapture.imgRatioH || 9, order: maxOrder + 1, createdAt: Date.now()
-          }).then(function() {
-            return db.collection('users').doc(currentUser.uid).collection('other_motivation').doc(dataCapture.id).delete();
-          }).then(function() {
-            setText('om-status', '⭐ Dipindah ke Main Motivation!');
-            setTimeout(function() { setText('om-status', 'OTHER MOTIVATION'); }, 2500);
-          }).catch(function(err) {
-            setText('om-status', '❌ Gagal: ' + (err.message || err));
+          wsConfirm('Pindah ke Main Motivation?\n\n' + (dataCapture.title || ''), function() {
+            var maxOrder = (champData.mainMotivation || []).reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
+            db.collection('users').doc(currentUser.uid).collection('main_motivation').add({
+              title: dataCapture.title || '', text: dataCapture.text || '',
+              imageUrl: dataCapture.imageUrl || '', imgRatioW: dataCapture.imgRatioW || 16,
+              imgRatioH: dataCapture.imgRatioH || 9, order: maxOrder + 1, createdAt: Date.now()
+            }).then(function() {
+              return db.collection('users').doc(currentUser.uid).collection('other_motivation').doc(dataCapture.id).delete();
+            }).then(function() {
+              setText('om-status', 'Dipindah ke Main Motivation!');
+              setTimeout(function() { setText('om-status', 'OTHER MOTIVATION'); }, 2500);
+            }).catch(function(err) {
+              setText('om-status', 'Gagal: ' + (err.message || err));
+            });
           });
         });
 
@@ -3617,7 +3619,7 @@
           showScreen('screen-other-motivation');
         })
         .catch(function(e) {
-          setText('om-edit-msg', '❌ Gagal padam: ' + (e.message || e));
+          setText('om-edit-msg', 'Gagal padam: ' + (e.message || e));
         });
     };
 
@@ -3638,15 +3640,15 @@
         .set({ title: title, text: text, updatedAt: Date.now() }, { merge: true })
         .then(function() {
           btn.disabled = false;
-          btn.textContent = 'Simpan ✓';
-          setText('om-edit-msg', '✅ Tersimpan!');
-          setText('om-edit-status', 'EDIT — ' + (title || 'Tanpa Tajuk'));
+          btn.textContent = 'Simpan';
+          setText('om-edit-msg', 'Tersimpan!');
+          setText('om-edit-status', 'EDIT - ' + (title || 'Tanpa Tajuk'));
           setTimeout(function() { setText('om-edit-msg', ''); }, 2000);
         })
         .catch(function(e) {
           btn.disabled = false;
-          btn.textContent = 'Simpan ✓';
-          setText('om-edit-msg', '❌ Gagal: ' + (e.message || e));
+          btn.textContent = 'Simpan';
+          setText('om-edit-msg', 'Gagal: ' + (e.message || e));
         });
     };
 
@@ -3941,8 +3943,8 @@
 
     function gtUntickSemua() {
       if (!gtActiveTajuk || !currentUser) return;
-      if (!confirm('Untick semua item dalam "' + (gtActiveTajuk.title || '') + '"?')) return;
-      var items = (gtActiveTajuk.items || []).map(function(it) {
+      wsConfirm('Untick semua item dalam "' + (gtActiveTajuk.title || '') + '"?', function() {
+        var items = (gtActiveTajuk.items || []).map(function(it) {
         return { group: it.group || '', name: it.name || '', ticked: false };
       });
       gtActiveTajuk.items = items;
