@@ -429,9 +429,9 @@
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
     <button id="btn-go-gotick" class="btn">Go-Tick ✓</button>
-    <button id="btn-go-main-motivation" class="btn">⭐ Main Motivation</button>
+    <button id="btn-go-main-motivation" class="btn" style="border:2px solid #d97706;color:#92400e;">⭐ Main Motivation</button>
     <button id="btn-go-reminder" class="btn" style="border:2px solid #f59e0b;color:#d97706;">⏰ Reminder</button>
-    <button id="btn-go-other-motivation" class="btn">✨ Other Motivation</button>
+    <button id="btn-go-other-motivation" class="btn" style="border:2px solid #7c3aed;color:#4c1d95;">✨ Other Motivation</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
   </div>
@@ -3302,7 +3302,11 @@
     // ══════════════════════════════════════════
     document.getElementById('btn-go-main-motivation').onclick = function() {
       showScreen('screen-main-motivation');
-      loadMainMotivation();
+      if (_mmUnsub) {
+        renderMainMotivation();
+      } else {
+        loadMainMotivation();
+      }
     };
 
     document.getElementById('btn-mm-back').onclick = function() {
@@ -3321,7 +3325,7 @@
 
     function loadMainMotivation() {
       if (!currentUser) return;
-      if (_mmUnsub) return;
+      if (_mmUnsub) { renderMainMotivation(); return; }
       _mmUnsub = db.collection('users').doc(currentUser.uid)
         .collection('main_motivation')
         .orderBy('order', 'asc')
