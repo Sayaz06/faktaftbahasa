@@ -3945,13 +3945,14 @@
       if (!gtActiveTajuk || !currentUser) return;
       wsConfirm('Untick semua item dalam "' + (gtActiveTajuk.title || '') + '"?', function() {
         var items = (gtActiveTajuk.items || []).map(function(it) {
-        return { group: it.group || '', name: it.name || '', ticked: false };
+          return { group: it.group || '', name: it.name || '', ticked: false };
+        });
+        gtActiveTajuk.items = items;
+        db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
+          .update({ items: items, updatedAt: Date.now() })
+          .catch(function(e) { setText('gt-check-err', 'Gagal simpan: ' + e.message); });
+        gtRenderChecklist();
       });
-      gtActiveTajuk.items = items;
-      db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
-        .update({ items: items, updatedAt: Date.now() })
-        .catch(function(e) { setText('gt-check-err', 'Gagal simpan: ' + e.message); });
-      gtRenderChecklist();
     }
 
     document.getElementById('btn-go-gotick').onclick = function() {
