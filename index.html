@@ -3073,11 +3073,32 @@
         div.innerHTML = imgHtml +
           '<div style="font-weight:bold;font-size:0.9rem;margin-bottom:4px;">' + (data.title || '(Tiada tajuk)') + '</div>' +
           '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>' +
-          '<div class="mm-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;margin-top:8px;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;display:inline-block;">Tekan untuk edit →</div>';
+          '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">' +
+            '<div class="mm-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;flex:1;">Tekan untuk edit →</div>' +
+            '<div class="mm-pindah-om" style="font-size:0.75rem;color:#4c1d95;background:#ede9fe;border:1.5px solid #7c3aed;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;flex:1;">✨ → Other</div>' +
+          '</div>';
 
         div.querySelector('.mm-edit-btn').addEventListener('click', function(e) {
           e.stopPropagation();
           bukaEditMM(dataCapture);
+        });
+
+        div.querySelector('.mm-pindah-om').addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (!confirm('Pindah "' + (dataCapture.title || 'motivasi ini') + '" ke Other Motivation?')) return;
+          var maxOrder = allOtherMotivation.reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
+          db.collection('users').doc(currentUser.uid).collection('other_motivation').add({
+            title: dataCapture.title || '', text: dataCapture.text || '',
+            imageUrl: dataCapture.imageUrl || '', imgRatioW: dataCapture.imgRatioW || 16,
+            imgRatioH: dataCapture.imgRatioH || 9, order: maxOrder + 1, createdAt: Date.now()
+          }).then(function() {
+            return db.collection('users').doc(currentUser.uid).collection('main_motivation').doc(dataCapture.id).delete();
+          }).then(function() {
+            setText('mm-status', '✨ Dipindah ke Other Motivation!');
+            setTimeout(function() { setText('mm-status', 'MAIN MOTIVATION'); }, 2500);
+          }).catch(function(err) {
+            setText('mm-status', '❌ Gagal: ' + (err.message || err));
+          });
         });
 
         list.appendChild(div);
@@ -3226,11 +3247,32 @@
         div.innerHTML = imgHtml +
           '<div style="font-weight:bold;font-size:0.9rem;margin-bottom:4px;">' + (data.title || '(Tiada tajuk)') + '</div>' +
           '<div style="font-size:0.82rem;color:#333;line-height:1.5;">' + (data.text || '(Tiada teks)') + '</div>' +
-          '<div class="om-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;margin-top:8px;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;display:inline-block;">Tekan untuk edit →</div>';
+          '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">' +
+            '<div class="om-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;flex:1;">Tekan untuk edit →</div>' +
+            '<div class="om-pindah-mm" style="font-size:0.75rem;color:#92400e;background:#fef3c7;border:1.5px solid #d97706;padding:6px 10px;border-radius:6px;text-align:center;cursor:pointer;flex:1;">⭐ → Main</div>' +
+          '</div>';
 
         div.querySelector('.om-edit-btn').addEventListener('click', function(e) {
           e.stopPropagation();
           bukaEditOM(dataCapture);
+        });
+
+        div.querySelector('.om-pindah-mm').addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (!confirm('Pindah "' + (dataCapture.title || 'motivasi ini') + '" ke Main Motivation?')) return;
+          var maxOrder = (champData.mainMotivation || []).reduce(function(m, x) { return Math.max(m, x.order || 0); }, 0);
+          db.collection('users').doc(currentUser.uid).collection('main_motivation').add({
+            title: dataCapture.title || '', text: dataCapture.text || '',
+            imageUrl: dataCapture.imageUrl || '', imgRatioW: dataCapture.imgRatioW || 16,
+            imgRatioH: dataCapture.imgRatioH || 9, order: maxOrder + 1, createdAt: Date.now()
+          }).then(function() {
+            return db.collection('users').doc(currentUser.uid).collection('other_motivation').doc(dataCapture.id).delete();
+          }).then(function() {
+            setText('om-status', '⭐ Dipindah ke Main Motivation!');
+            setTimeout(function() { setText('om-status', 'OTHER MOTIVATION'); }, 2500);
+          }).catch(function(err) {
+            setText('om-status', '❌ Gagal: ' + (err.message || err));
+          });
         });
 
         list.appendChild(div);
