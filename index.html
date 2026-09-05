@@ -4022,12 +4022,17 @@
       function sudahUnlocked(namaWaktu) {
         var ts = _azanUnlocked[namaWaktu];
         if (!ts) return false;
-        if (_subuhEsokMs > 0) {
-          return ts > (_subuhEsokMs - 24*60*60*1000) && ts < _subuhEsokMs;
+        // Format baru: timestamp number
+        if (typeof ts === 'number') {
+          if (_subuhEsokMs > 0) {
+            return ts > (_subuhEsokMs - 24*60*60*1000) && ts < _subuhEsokMs;
+          }
+          var tsDarikh = new Date(ts);
+          var unlock_tarikh = tsDarikh.getFullYear() + '-' + (tsDarikh.getMonth()+1 < 10 ? '0' : '') + (tsDarikh.getMonth()+1) + '-' + (tsDarikh.getDate() < 10 ? '0' : '') + tsDarikh.getDate();
+          return unlock_tarikh === tarikhHariIni();
         }
-        var tsDarikh = new Date(ts);
-        var unlock_tarikh = tsDarikh.getFullYear() + '-' + (tsDarikh.getMonth()+1 < 10 ? '0' : '') + (tsDarikh.getMonth()+1) + '-' + (tsDarikh.getDate() < 10 ? '0' : '') + tsDarikh.getDate();
-        return unlock_tarikh === tarikhHariIni();
+        // Format lama: string tarikh "2026-09-05"
+        return ts === tarikhHariIni();
       }
 
       function simpanAzanLockState(aktif, fasa, namaWaktu, jamStr, lokasiNama) {
