@@ -4078,6 +4078,9 @@
               if (lok.lat === activeLat && lok.lng === activeLng && lok.waktu) {
                 setAzanTimers(lok.waktu, _lokasiNama);
                 if (!cbDipanggil) { cbDipanggil = true; cb && cb(); }
+              } else if (lok.lat === activeLat && lok.lng === activeLng) {
+                // Tiada cache waktu — tetap panggil cb supaya loadAzanLockState jalan
+                if (!cbDipanggil) { cbDipanggil = true; cb && cb(); }
               }
               // Fetch API untuk waktu terkini
               var url = 'https://api.aladhan.com/v1/timings?latitude=' + lok.lat + '&longitude=' + lok.lng + '&method=3';
