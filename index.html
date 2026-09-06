@@ -4514,6 +4514,7 @@
 
         buatPicker('azan-test-jam-list', labelJam, function(idx) { selJam12 = idx + 1; }, false, selJam12 - 1);
         buatPicker('azan-test-minit-list', labelMinit, function(idx) { selMinit = idx; }, false, selMinit);
+        kemaskiniPreview();
         window.azanPickerSetAmpm = function(idx) {
           selAmpm = idx;
           document.getElementById('btn-ampm-am').style.background = idx === 0 ? '#6366f1' : 'transparent';
