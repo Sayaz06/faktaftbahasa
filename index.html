@@ -4220,6 +4220,11 @@
       }
 
       function triggerLock(fasa, namaWaktu, jamStr, lokasiNama) {
+        var lockEl = elAzan('azan-lock');
+        if (lockEl && lockEl.classList.contains('active')) {
+          var namaAktif = elAzan('azan-waktu-nama') ? elAzan('azan-waktu-nama').textContent : '';
+          if (namaAktif === namaWaktu && _azanFasa === fasa) return;
+        }
         // Stop countdown lama kalau ada
         if (_azanCdTimer) { clearInterval(_azanCdTimer); _azanCdTimer = null; }
         _azanFasa = fasa;
