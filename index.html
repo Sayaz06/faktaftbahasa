@@ -4441,7 +4441,7 @@
         var ITEM_H = 32;
         var selJam12 = 12, selMinit = 0, selAmpm = 0;
 
-        function buatPicker(elId, labels, onPilih, noLoop) {
+        function buatPicker(elId, labels, onPilih, noLoop, initIdx) {
           var el = document.getElementById(elId);
           var max = labels.length;
           var html = '';
@@ -4452,7 +4452,8 @@
             });
           });
           el.innerHTML = html;
-          var offsetTop = noLoop ? 0 : -max * ITEM_H;
+          var startIdx = (initIdx !== undefined && !noLoop) ? initIdx : 0;
+          var offsetTop = noLoop ? 0 : -(max + startIdx) * ITEM_H;
           function getTop() { return parseInt(el.style.transform ? el.style.transform.replace('translateY(', '').replace('px)', '') : offsetTop) || offsetTop; }
           function setTop(y, animate) {
             el.style.transition = animate ? 'transform 0.2s' : 'none';
@@ -4511,8 +4512,8 @@
         selJam12 = h % 12 || 12;
         selMinit = now.getMinutes();
 
-        buatPicker('azan-test-jam-list', labelJam, function(idx) { selJam12 = idx + 1; });
-        buatPicker('azan-test-minit-list', labelMinit, function(idx) { selMinit = idx; });
+        buatPicker('azan-test-jam-list', labelJam, function(idx) { selJam12 = idx + 1; }, false, selJam12 - 1);
+        buatPicker('azan-test-minit-list', labelMinit, function(idx) { selMinit = idx; }, false, selMinit);
         window.azanPickerSetAmpm = function(idx) {
           selAmpm = idx;
           document.getElementById('btn-ampm-am').style.background = idx === 0 ? '#6366f1' : 'transparent';
