@@ -4577,25 +4577,20 @@
           kemaskiniPreview();
         };
 
-        // Reset ke mode jam bila panel dibuka semula
-        var origBtnTest = document.getElementById('btn-azan-test');
-        if (origBtnTest) {
-          origBtnTest.addEventListener('click', function() {
-            clockMode = 'jam';
-            var n2 = new Date();
-            selJam12 = n2.getHours() % 12 || 12;
-            selMinit = n2.getMinutes();
-            selAmpm = n2.getHours() >= 12 ? 1 : 0;
-            azanPickerSetAmpm(selAmpm);
-            lukisClock();
-          });
-        }
-
         azanPickerSetAmpm(selAmpm);
         lukisClock();
       })();
 
-      elAzan('btn-azan-test').onclick = function() { elAzan('azan-test-panel').className = 'azan-test-panel active'; };
+      elAzan('btn-azan-test').onclick = function() {
+        elAzan('azan-test-panel').className = 'azan-test-panel active';
+        clockMode = 'jam';
+        var n2 = new Date();
+        selJam12 = n2.getHours() % 12 || 12;
+        selMinit = n2.getMinutes();
+        selAmpm = n2.getHours() >= 12 ? 1 : 0;
+        azanPickerSetAmpm(selAmpm);
+        lukisClock();
+      };
       elAzan('btn-azan-test-cancel').onclick = function() { elAzan('azan-test-panel').className = 'azan-test-panel'; };
       elAzan('btn-azan-test-set').onclick = function() {
         var val = elAzan('azan-test-input').value;
