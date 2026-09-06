@@ -4519,6 +4519,8 @@
 
         buatPicker('azan-test-jam-list', labelJam, function(idx) { selJam12 = idx + 1; }, false, selJam12 - 1);
         buatPicker('azan-test-minit-list', labelMinit, function(idx) { selMinit = idx; }, false, selMinit);
+        selJam12 = (new Date()).getHours() % 12 || 12;
+        selMinit = (new Date()).getMinutes();
         kemaskiniPreview();
         window.azanPickerSetAmpm = function(idx) {
           selAmpm = idx;
