@@ -1422,9 +1422,9 @@
       setText('play-mode', 'CHAMPION · ' + (sourceLabel[item.source] || item.source));
       setText('side-label', 'MUKA DEPAN');
 
-      // otherMotivation: tajuk dipapar dalam kotak — bawah gambar, atas teks
+      // otherMotivation & mainMotivation: tajuk dipapar dalam kotak — bawah gambar, atas teks
       var kandungan;
-      if (item.source === 'otherMotivation') {
+      if (item.source === 'otherMotivation' || item.source === 'mainMotivation') {
         kandungan = (item.title ? item.title + '\n\n' : '') + (item.depan || '');
       } else {
         kandungan = item.depan;
@@ -1435,8 +1435,8 @@
       setText('play-meta', '');
 
       setText('play-err', '');
-      // Papar gambar untuk otherMotivation — kena letak selepas setCardImage
-      if (item.source === 'otherMotivation' && item.imageUrl) {
+      // Papar gambar untuk otherMotivation DAN mainMotivation
+      if ((item.source === 'otherMotivation' || item.source === 'mainMotivation') && item.imageUrl) {
         setCardImage(item.imageUrl);
         autoFitImage(kandungan.length);
       } else {
@@ -1446,8 +1446,8 @@
       var mainEl = document.getElementById('main-text');
       if (mainEl) {
         var pjg = kandungan.length;
-        if (item.source === 'otherMotivation') {
-          // Auto-kecil ikut panjang kandungan untuk otherMotivation
+        if (item.source === 'otherMotivation' || item.source === 'mainMotivation') {
+          // Auto-kecil ikut panjang kandungan untuk otherMotivation dan mainMotivation
           mainEl.className = pjg > 300 ? 'big-text ultra-long'
                            : pjg > 150 ? 'big-text extra-long'
                            : pjg > 80  ? 'big-text long-text'
