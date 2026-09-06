@@ -2219,8 +2219,7 @@
       var fasaLabel = '';
       if (c.isTamat) fasaLabel = 'TAMAT';
       else if (c.isGambar) {
-        var gambarBarisLabel = (mode === 'fakta' && c.itemIndex !== undefined && c.itemIndex !== null) ? ' · Baris ' + (c.itemIndex + 1) : '';
-        fasaLabel = 'GAMBAR · ' + (c.title || '') + gambarBarisLabel;
+        fasaLabel = 'GAMBAR';
       }        
       else if (mode === 'bahasa') {
         if (c.isF0 || c.fasa === 0) fasaLabel = 'F0 · Pengenalan';
