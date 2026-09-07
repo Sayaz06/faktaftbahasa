@@ -1119,38 +1119,21 @@
         var allSubjects = [];
     var allJenisKata = [];
 
-    var _topicsUnsub = null;
-    var _collectionsLoaded = false;
-    var _collectionsLoadedCb = null;
-
     function loadCollections(cb) {
       var uid = currentUser.uid;
-
-      // Kalau topics dah subscribe, terus panggil cb sahaja
-      if (_collectionsLoaded) { cb && cb(); return; }
-
+      // Hanya fetch metadata yang diperlukan — drawer laci diambil satu-satu on-demand
       Promise.all([
         db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
+        db.collection('users').doc(uid).collection('topics').get(),
         db.collection('users').doc(uid).collection('jenis_kata').get()
       ]).then(function(res) {
         allBahasaPerkataan = [];
         res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
+        allTopics = [];
+        res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
         allJenisKata = [];
-        res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
-
-        // Subscribe topics supaya auto-detect tick berubah dari phone
-        if (_topicsUnsub) _topicsUnsub();
-        _topicsUnsub = db.collection('users').doc(uid).collection('topics')
-          .onSnapshot(function(snap) {
-            allTopics = [];
-            snap.forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
-            if (!_collectionsLoaded) {
-              _collectionsLoaded = true;
-              cb && cb();
-            }
-          }, function(e) {
-            setText('play-err', 'Gagal load topics: ' + e.message);
-          });
+        res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
+        cb && cb();
       }).catch(function(e) {
         setText('play-err', 'Gagal load: ' + e.message);
       });
