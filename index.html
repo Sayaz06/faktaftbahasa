@@ -4087,7 +4087,7 @@
         window._reminderBolehCheck = false;
         window._azanFasaSemasa = '';
         var waktuSolat = ['Subuh','Zohor','Asar','Maghrib','Isyak'];
-        var nowMs = getNowMs();
+        var nowMs = Date.now() + (window._testOffset || 0);
         var now = new Date(nowMs);
 
         // Kira Subuh hari ini untuk detect tempoh 12am-Subuh
@@ -4140,7 +4140,7 @@
               _azanTimers.push(setTimeout(function() {
                 window._reminderBolehCheck = false;
                 window._azanFasaSemasa = '';
-                tambahAzanLog('25min sebelum ' + n + ' — reminder diblock');
+        if (window.tambahAzanLog) window.tambahAzanLog('25min sebelum ' + n + ' — reminder diblock');
               }, ms25));
             } else {
               tambahAzanLog('25min sebelum ' + n + ' dah lepas — reminder diblock');
@@ -4595,15 +4595,16 @@
         wrap.style.display = html ? 'block' : 'none';
       };
 
-      function tambahAzanLog(mesej) {} // kosong — tidak dipakai lagi
+      window.tambahAzanLog = function(mesej) {};
+
+      function getNowMs() {
+        return Date.now() + (window._testOffset || 0);
+      }
+      window.getNowMs = getNowMs;
 
       // ── TEST OFFSET SYSTEM ──
       var _testOffset = 0;
       var _testAktif = false;
-
-      function getNowMs() {
-        return Date.now() + _testOffset;
-      }
 
 
 
