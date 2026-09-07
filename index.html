@@ -4087,7 +4087,7 @@
                 if (!cbDipanggil) { cbDipanggil = true; cb && cb(); }
               }
               // Fetch API untuk waktu terkini
-              var url = 'https://api.aladhan.com/v1/timings?latitude=' + lok.lat + '&longitude=' + lok.lng + '&method=3';
+              var url = 'https://api.aladhan.com/v1/timings?latitude=' + lok.lat + '&longitude=' + lok.lng + '&method=11';
               fetch(url).then(function(r) { return r.json(); }).then(function(data) {
                 if (data.code !== 200) return;
                 var t = data.data.timings;
