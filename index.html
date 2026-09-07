@@ -350,29 +350,46 @@
       font-weight: bold;
     }
     .azan-test-panel {
-      display: none; position: fixed; bottom: 110px; right: 18px;
+      display: none; position: fixed;
+      left: 8px; right: 8px; bottom: 56px;
       background: #1e293b; border: 1px solid #334155; border-radius: 10px;
-      padding: 14px; z-index: 99997; width: 200px;
+      padding: 8px; z-index: 99997; width: auto;
+      box-sizing: border-box;
     }
     .azan-test-panel.active { display: block; }
+    .azan-test-grid {
+      display: table;
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 8px 0;
+    }
+    .azan-test-clock-col,
+    .azan-test-ctrl-col {
+      display: table-cell;
+      vertical-align: middle;
+    }
+    .azan-test-clock-col { width: 132px; text-align: center; }
+    .azan-test-ctrl-col { width: auto; }
     .azan-test-panel input {
-      display: block; width: 100%; padding: 8px;
+      display: block; width: 100%; padding: 5px;
       background: #0f172a; color: #e5e7eb;
       border: 1px solid #334155; border-radius: 6px;
-      font-size: 0.9rem; text-align: center; margin: 8px 0;
+      font-size: 0.78rem; text-align: center; margin: 4px 0;
       outline: none; font-family: Georgia, serif;
     }
     .azan-test-panel button {
-      display: block; width: 100%; padding: 8px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff; border: none; border-radius: 6px;
-      font-size: 0.82rem; font-weight: bold; cursor: pointer;
-      font-family: Georgia, serif;
+      display: block; width: 100%; padding: 7px 6px;
+      background: #6366f1; color: #fff; border: none; border-radius: 6px;
+      font-size: 0.75rem; font-weight: bold; cursor: pointer;
+      font-family: Georgia, serif; margin-top: 4px;
     }
     .azan-test-panel .azan-test-cancel {
       background: transparent; color: #6b7280;
-      border: 1px solid #334155; margin-top: 6px;
+      border: 1px solid #334155; margin-top: 4px;
     }
+    #azan-clock-svg { width: 128px; height: 128px; }
+    .azan-ampm-row { display: table; width: 100%; border-collapse: separate; border-spacing: 4px 0; }
+    .azan-ampm-row button { display: table-cell; width: 50%; margin-top: 0; }
     #btn-jenis-seterusnya-float {
       display: none;
       position: fixed; top: 8px; right: 8px;
@@ -698,33 +715,34 @@
   <div class="azan-test-wrap">
     <button class="azan-test-btn" id="btn-azan-test">🧪 Test Azan</button>
     <div class="azan-test-panel" id="azan-test-panel">
-      <div style="font-size:0.72rem;color:#9ca3af;margin-bottom:6px;">Set masa "SEKARANG" untuk test</div>
-      <div id="azan-test-status-pill" style="display:none;text-align:center;font-size:0.72rem;font-weight:bold;letter-spacing:0.04em;color:#052e16;background:#34d399;border-radius:6px;padding:6px 8px;margin-bottom:8px;">TEST SEDANG AKTIF</div>
-      <div style="display:flex;justify-content:center;gap:10px;margin-bottom:8px;">
-        <button id="btn-ampm-am" onclick="azanPickerSetAmpm(0)" style="padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;border:2px solid #6366f1;background:#6366f1;color:#fff;">AM</button>
-        <button id="btn-ampm-pm" onclick="azanPickerSetAmpm(1)" style="padding:6px 14px;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;border:2px solid #334155;background:transparent;color:#9ca3af;">PM</button>
+      <div class="azan-test-grid">
+        <div class="azan-test-clock-col">
+          <div id="azan-clock-display" style="font-size:1.1rem;font-weight:bold;color:#34d399;text-align:center;letter-spacing:1px;cursor:pointer;">12:00</div>
+          <div id="azan-clock-mode-label" style="font-size:0.62rem;color:#9ca3af;text-align:center;margin:2px 0 4px;cursor:pointer;">Ketik JAM</div>
+          <svg id="azan-clock-svg" width="128" height="128" viewBox="0 0 220 220" style="cursor:pointer;touch-action:none;">
+            <circle cx="110" cy="110" r="108" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+            <line id="azan-clock-hand" x1="110" y1="110" x2="110" y2="30" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"/>
+            <circle id="azan-clock-dot" cx="110" cy="30" r="10" fill="#6366f1"/>
+            <text id="azan-clock-num-label" x="110" y="114" text-anchor="middle" dominant-baseline="middle" font-size="22" font-weight="bold" fill="#fff">12</text>
+          </svg>
+        </div>
+        <div class="azan-test-ctrl-col">
+          <div id="azan-test-status-pill" style="display:none;text-align:center;font-size:0.62rem;font-weight:bold;color:#052e16;background:#34d399;border-radius:6px;padding:4px 6px;">TEST SEDANG AKTIF</div>
+          <div class="azan-ampm-row">
+            <button id="btn-ampm-am" onclick="azanPickerSetAmpm(0)" style="padding:5px 8px;border-radius:6px;font-size:0.75rem;font-weight:bold;cursor:pointer;border:2px solid #6366f1;background:#6366f1;color:#fff;">AM</button>
+            <button id="btn-ampm-pm" onclick="azanPickerSetAmpm(1)" style="padding:5px 8px;border-radius:6px;font-size:0.75rem;font-weight:bold;cursor:pointer;border:2px solid #334155;background:transparent;color:#9ca3af;">PM</button>
+          </div>
+          <div style="font-size:0.62rem;color:#9ca3af;margin-top:4px;">Tarikh</div>
+          <input type="date" id="azan-test-tarikh" style="background:#1e293b;border:1px solid #334155;color:#fff;border-radius:6px;padding:4px;font-size:0.72rem;margin:2px 0;">
+          <div id="azan-test-preview" style="font-size:0.65rem;color:#34d399;text-align:center;min-height:1em;"></div>
+          <div id="azan-test-offset-label" style="font-size:0.62rem;color:#9ca3af;text-align:center;"></div>
+          <input type="hidden" id="azan-test-input">
+          <button id="btn-azan-test-set">Aktifkan Test</button>
+          <button id="btn-azan-test-stop" style="display:none;background:#dc2626;border-color:#dc2626;">Henti Test</button>
+          <button id="btn-azan-test-clear-unlock" style="background:transparent;color:#f87171;border:1px solid #7f1d1d;">Padam Sejarah Unlock</button>
+          <button class="azan-test-cancel" id="btn-azan-test-cancel">Batal</button>
+        </div>
       </div>
-      <div id="azan-clock-display" style="font-size:1.6rem;font-weight:bold;color:#34d399;text-align:center;margin-bottom:6px;letter-spacing:2px;cursor:pointer;">12:00</div>
-      <div id="azan-clock-mode-label" style="font-size:0.7rem;color:#9ca3af;text-align:center;margin-bottom:6px;cursor:pointer;">Ketik JAM — tekan untuk tukar</div>
-      <div style="display:flex;justify-content:center;margin-bottom:8px;">
-        <svg id="azan-clock-svg" width="220" height="220" viewBox="0 0 220 220" style="cursor:pointer;touch-action:none;">
-          <circle cx="110" cy="110" r="108" fill="#1e293b" stroke="#334155" stroke-width="2"/>
-          <line id="azan-clock-hand" x1="110" y1="110" x2="110" y2="30" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"/>
-          <circle id="azan-clock-dot" cx="110" cy="30" r="10" fill="#6366f1"/>
-          <text id="azan-clock-num-label" x="110" y="114" text-anchor="middle" dominant-baseline="middle" font-size="22" font-weight="bold" fill="#fff">12</text>
-        </svg>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:8px;">
-        <span style="font-size:0.72rem;color:#9ca3af;">Tarikh:</span>
-        <input type="date" id="azan-test-tarikh" style="background:#1e293b;border:1px solid #334155;color:#fff;border-radius:6px;padding:4px 8px;font-size:0.82rem;">
-      </div>
-      <div id="azan-test-preview" style="font-size:0.85rem;color:#34d399;text-align:center;margin-bottom:8px;min-height:1.2em;"></div>
-      <div id="azan-test-offset-label" style="font-size:0.7rem;color:#9ca3af;text-align:center;margin-bottom:6px;display:none;"></div>
-      <input type="hidden" id="azan-test-input">
-      <button id="btn-azan-test-set">Aktifkan Test</button>
-      <button id="btn-azan-test-stop" style="display:none;background:#dc2626;border-color:#dc2626;">Henti Test</button>
-      <button id="btn-azan-test-clear-unlock" style="background:transparent;color:#f87171;border:1px solid #7f1d1d;margin-top:6px;">Padam Sejarah Unlock</button>
-      <button class="azan-test-cancel" id="btn-azan-test-cancel">Batal</button>
     </div>
   </div>
 
