@@ -2396,113 +2396,126 @@
 
     function lompatPerkataanSeterusnya() {    
       if (!activePerkataan) return Promise.resolve(false);
-      var sorted = allBahasaPerkataan
-        .filter(function(p) { return p.jenisId === activePerkataan.jenisId; })
-        .sort(function(a, b) {
-          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
-        });
-      var idx = -1;
-      for (var i = 0; i < sorted.length; i++) {
-        if (sorted[i].id === activePerkataan.id) { idx = i; break; }
-      }
+      var uid = currentUser.uid;
+      var activePerkId = activePerkataan.id;
 
-      // Ada perkataan seterusnya — lompat ke sana
-      if (idx >= 0 && idx < sorted.length - 1) {
-        var next = sorted[idx + 1];
-        var batch = db.batch();
-        var uid = currentUser.uid;
-        for (var j = 0; j < allBahasaPerkataan.length; j++) {
-          if (allBahasaPerkataan[j].isActive) {
-            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
-            allBahasaPerkataan[j].isActive = false;
+      // Reload jenis_kata dan bahasa_perkataan dari Firestore supaya data terkini
+      return db.collection('users').doc(uid).collection('jenis_kata').get()
+        .then(function(snap) {
+          allJenisKata = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
+          return db.collection('users').doc(uid).collection('bahasa_perkataan').get();
+        })
+        .then(function(snap) {
+          allBahasaPerkataan = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
+          // Kemas kini activePerkataan dari data terkini Firestore
+          var semasa = allBahasaPerkataan.filter(function(p) { return p.id === activePerkId; })[0];
+          if (semasa) activePerkataan = semasa;
+
+          var sorted = allBahasaPerkataan
+            .filter(function(p) { return p.jenisId === activePerkataan.jenisId; })
+            .sort(function(a, b) {
+              return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+            });
+          var idx = -1;
+          for (var i = 0; i < sorted.length; i++) {
+            if (sorted[i].id === activePerkataan.id) { idx = i; break; }
           }
-        }
-        batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
-        next.isActive = true;
-        next.lastIndex = 0;
-        next.lastDrawerId = null;
 
-        return batch.commit().then(function() {
-          activePerkataan = next;
-          rebuildBahasaCards(function(ok) {
-            setText('play-status', 'BAHASA · ' + (next.name || ''));
-            if (jqAktif && jqMotivasiList.length) {
-              tunjukMotivasiJQ(function() { renderCard(); });
-            } else {
-              renderCard();
+          // Ada perkataan seterusnya — lompat ke sana
+          if (idx >= 0 && idx < sorted.length - 1) {
+            var next = sorted[idx + 1];
+            var batch = db.batch();
+            for (var j = 0; j < allBahasaPerkataan.length; j++) {
+              if (allBahasaPerkataan[j].isActive) {
+                batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
+                allBahasaPerkataan[j].isActive = false;
+              }
             }
-          });
-          return true;
-        }).catch(function() { return false; });
-      }
+            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+            next.isActive = true;
+            next.lastIndex = 0;
+            next.lastDrawerId = null;
 
-      // Habis semua perkataan — tunjuk JQ dulu, kemudian kad "selesai"
-      // Tunjuk JQ pertama, kemudian kad "selesai"
-      function _tunjukKadSelesai() {
-        // Cari jenis kata seterusnya (sort sama seperti releasestress — localeCompare numeric)
-        var jenisSemasaId = activePerkataan ? activePerkataan.jenisId : null;
-        var allJenisSorted = allJenisKata.slice().sort(function(a, b) {
-          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
-        });
-        var idxJenis = -1;
-        for (var ji = 0; ji < allJenisSorted.length; ji++) {
-          if (allJenisSorted[ji].id === jenisSemasaId) { idxJenis = ji; break; }
-        }
-        var jenisBerikut = (idxJenis >= 0 && idxJenis < allJenisSorted.length - 1)
-          ? allJenisSorted[idxJenis + 1] : null;
-
-        // Tunjuk button float — kekal sampai user tekan
-        var btnFloat = document.getElementById('btn-jenis-seterusnya-float');
-        if (btnFloat) {
-          btnFloat.className = jenisBerikut ? 'active' : 'active tiada';
-          btnFloat._jenisBerikutId = jenisBerikut ? jenisBerikut.id : null;
-          btnFloat.textContent = jenisBerikut
-            ? '→ Jenis Kata Seterusnya'
-            : '→ Tiada Jenis Kata Seterusnya, sila tambah di app phone dan reset kindle semula.';
-          // Adjust posisi kalau badge notif aktif
-          var badge = document.getElementById('ws-notif-badge');
-          if (badge && badge.classList.contains('active')) {
-            btnFloat.style.top = '50px';
-          } else {
-            btnFloat.style.top = '8px';
+            return batch.commit().then(function() {
+              activePerkataan = next;
+              rebuildBahasaCards(function(ok) {
+                setText('play-status', 'BAHASA · ' + (next.name || ''));
+                if (jqAktif && jqMotivasiList.length) {
+                  tunjukMotivasiJQ(function() { renderCard(); });
+                } else {
+                  renderCard();
+                }
+              });
+              return true;
+            }).catch(function() { return false; });
           }
-          // Simpan state ke Firebase
-          simpanJenisState(jenisBerikut ? jenisBerikut.id : null);
-        }
 
-        cards = [{
-          front: 'Semua perkataan dalam jenis kata ini telah selesai.',
-          back: '', tips: '', imageUrl: '',
-          title: '', drawerId: null,
-          isF0: false, isTamat: false, isSR: false,
-          isKadSelesai: true
-        }];
-        cardIndex = 0;
-        setText('play-status', 'BAHASA · Selesai');
-        setText('play-mode', 'TAMAT SEMUA');
-        setText('side-label', '');
-        setText('main-text', cards[0].front);
-        var mainEl = document.getElementById('main-text');
-        if (mainEl) mainEl.className = 'big-text tips-mode';
-        setText('play-progress', '');
-        setText('play-meta', '');
-        setText('play-err', '');
-        setCardImage('');
-        clearBlockCard();
-      }
+          // Habis semua perkataan — tunjuk JQ dulu, kemudian kad "selesai"
+          function _tunjukKadSelesai() {
+            var jenisSemasaId = activePerkataan ? activePerkataan.jenisId : null;
+            var allJenisSorted = allJenisKata.slice().sort(function(a, b) {
+              return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
+            });
+            var idxJenis = -1;
+            for (var ji = 0; ji < allJenisSorted.length; ji++) {
+              if (allJenisSorted[ji].id === jenisSemasaId) { idxJenis = ji; break; }
+            }
+            var jenisBerikut = (idxJenis >= 0 && idxJenis < allJenisSorted.length - 1)
+              ? allJenisSorted[idxJenis + 1] : null;
 
-      isBusy = false;
-      setText('play-err', '');
-      if (jqAktif && jqMotivasiList.length) {
-        tunjukMotivasiJQ(function() {
+            var btnFloat = document.getElementById('btn-jenis-seterusnya-float');
+            if (btnFloat) {
+              btnFloat.className = jenisBerikut ? 'active' : 'active tiada';
+              btnFloat._jenisBerikutId = jenisBerikut ? jenisBerikut.id : null;
+              btnFloat.textContent = jenisBerikut
+                ? '→ Jenis Kata Seterusnya'
+                : '→ Tiada Jenis Kata Seterusnya, sila tambah di app phone dan reset kindle semula.';
+              var badge = document.getElementById('ws-notif-badge');
+              if (badge && badge.classList.contains('active')) {
+                btnFloat.style.top = '50px';
+              } else {
+                btnFloat.style.top = '8px';
+              }
+              simpanJenisState(jenisBerikut ? jenisBerikut.id : null);
+            }
+
+            cards = [{
+              front: 'Semua perkataan dalam jenis kata ini telah selesai.',
+              back: '', tips: '', imageUrl: '',
+              title: '', drawerId: null,
+              isF0: false, isTamat: false, isSR: false,
+              isKadSelesai: true
+            }];
+            cardIndex = 0;
+            setText('play-status', 'BAHASA · Selesai');
+            setText('play-mode', 'TAMAT SEMUA');
+            setText('side-label', '');
+            setText('main-text', cards[0].front);
+            var mainEl = document.getElementById('main-text');
+            if (mainEl) mainEl.className = 'big-text tips-mode';
+            setText('play-progress', '');
+            setText('play-meta', '');
+            setText('play-err', '');
+            setCardImage('');
+            clearBlockCard();
+          }
+
           isBusy = false;
-          _tunjukKadSelesai();
-        });
-      } else {
-        _tunjukKadSelesai();
-      }
+          setText('play-err', '');
+          if (jqAktif && jqMotivasiList.length) {
+            tunjukMotivasiJQ(function() {
+              isBusy = false;
+              _tunjukKadSelesai();
+            });
+          } else {
+            _tunjukKadSelesai();
+          }
 
-      return Promise.resolve(true);
+          return true;
+        })
+        .catch(function() { return false; });
     }
 
     function afterTamat(c) {
