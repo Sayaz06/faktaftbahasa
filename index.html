@@ -2578,7 +2578,7 @@
                 if (allTopics[ti].isActive) { activeTopic = allTopics[ti]; break; }
               }
             }
-          });
+          }).then(function() {
 
           var _rebuildFn = mode === 'bahasa' ? rebuildBahasaCards : rebuildFaktaCards;
           _rebuildFn(function(ok) {
@@ -2658,6 +2658,8 @@
               renderCard();
             }
           });
+
+          }); // tutup .then() reload Firestore selepas SR
 
         } else {
           // ── SELEPAS LACI BIASA: check SR dulu sebelum ke laci seterusnya ──
