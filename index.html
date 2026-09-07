@@ -4089,8 +4089,8 @@
         window._reminderBolehCheck = false;
         window._azanFasaSemasa = '';
         var waktuSolat = ['Subuh','Zohor','Asar','Maghrib','Isyak'];
-        var now = new Date();
-        var nowMs = now.getTime();
+        var nowMs = getNowMs();
+        var now = new Date(nowMs);
 
         // Kira Subuh hari ini untuk detect tempoh 12am-Subuh
         var subuhHariIniMs = 0;
@@ -4608,6 +4608,10 @@
       // ── TEST OFFSET SYSTEM ──
       var _testOffset = 0;
       var _testAktif = false;
+
+      function getNowMs() {
+        return Date.now() + _testOffset;
+      }
 
 
 
