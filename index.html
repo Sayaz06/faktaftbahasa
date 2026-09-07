@@ -2360,7 +2360,16 @@
 
     function resetBahasaKePerkataanPertama() {
       if (!currentUser) return;
+      var uid = currentUser.uid;
       var jenisId = activePerkataan ? activePerkataan.jenisId : null;
+      // Reload dari Firestore dulu sebelum pilih perkataan pertama
+      db.collection('users').doc(uid).collection('bahasa_perkataan').get()
+        .then(function(snap) {
+          allBahasaPerkataan = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
+        })
+        .catch(function() {})
+        .then(function() {
       var sorted = allBahasaPerkataan
         .filter(function(p) { return !jenisId || p.jenisId === jenisId; })
         .sort(function(a, b) {
@@ -2369,7 +2378,6 @@
       var pertama = sorted[0];
       if (!pertama) { isBusy = false; startBahasa(); return; }
       var batch2 = db.batch();
-      var uid = currentUser.uid;
       for (var k = 0; k < allBahasaPerkataan.length; k++) {
         if (allBahasaPerkataan[k].isActive) {
           batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
@@ -2401,9 +2409,10 @@
           renderCard();
         });
       }).catch(function() { isBusy = false; startBahasa(); });
+        }); // tutup .then() reload Firestore resetBahasaKePerkataanPertama
     }
 
-    function lompatPerkataanSeterusnya() {    
+    function lompatPerkataanSeterusnya() {
       if (!activePerkataan) return Promise.resolve(false);
       var uid = currentUser.uid;
       var activePerkId = activePerkataan.id;
