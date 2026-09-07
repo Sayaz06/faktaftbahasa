@@ -435,6 +435,13 @@
     <button id="btn-jq" class="btn" style="margin-top:8px;">JQ: OFF</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
+    <div id="azan-log-wrap" style="display:none;margin-top:8px;border:1px solid #334155;border-radius:8px;padding:8px;max-height:160px;overflow-y:auto;">
+      <div style="font-size:0.65rem;color:#9ca3af;margin-bottom:4px;display:flex;justify-content:space-between;">
+        <span>Log Azan</span>
+        <span id="btn-clear-azan-log" style="cursor:pointer;color:#ef4444;">Padam</span>
+      </div>
+      <div id="azan-log-list" style="font-size:0.7rem;color:#e2e8f0;line-height:1.8;"></div>
+    </div>
   </div>
 
   <!-- SCREEN: MAIN MOTIVATION -->
@@ -4132,33 +4139,46 @@
             // ── TIMER MS25 — nyahaktifkan reminder ──
             if (ms25 > 0) {
               _azanTimers.push(setTimeout(function() {
-      window._reminderBolehCheck = false;
-      window._azanFasaSemasa = '';
+                window._reminderBolehCheck = false;
+                window._azanFasaSemasa = '';
+                tambahAzanLog('25min sebelum ' + n + ' — reminder diblock');
               }, ms25));
+            } else {
+              tambahAzanLog('25min sebelum ' + n + ' dah lepas — reminder diblock');
             }
 
             // ── POPUP MANDI (ms20) ──
             if (ms20 > 0) {
               _azanTimers.push(setTimeout(function() {
                 window._azanFasaSemasa = 'pre20';
+                tambahAzanLog('20min sebelum ' + n + ' — popup mandi');
                 if (!sudahUnlocked(n, 'pre20')) triggerLock('pin', n, j, lokasiNama);
+                else tambahAzanLog('→ ' + n + ' pre20 dah unlock, skip');
               }, ms20));
             } else if (ms5 > 0) {
               window._azanFasaSemasa = 'pre20';
+              tambahAzanLog('Login antara 20-5min sebelum ' + n + ' — popup mandi terus');
               if (!sudahUnlocked(n, 'pre20')) triggerLock('pin', n, j, lokasiNama);
+              else tambahAzanLog('→ ' + n + ' pre20 dah unlock, skip');
             } else if (nowMs < waktuMs) {
               window._azanFasaSemasa = 'pre20';
+              tambahAzanLog('Login <20min sebelum ' + n + ' — popup mandi terus');
               if (!sudahUnlocked(n, 'pre20')) triggerLock('pin', n, j, lokasiNama);
+              else tambahAzanLog('→ ' + n + ' pre20 dah unlock, skip');
             } else if (nextMs && nowMs < nextMs) {
               window._azanFasaSemasa = 'post';
+              tambahAzanLog('Selepas ' + n + ' — popup post azan');
               if (!sudahUnlocked(n, 'post')) triggerLock('pin', n, j, lokasiNama);
+              else tambahAzanLog('→ ' + n + ' post dah unlock, skip');
             }
 
             // ── POPUP WUDHU (ms5) ──
             if (ms5 > 0) {
               _azanTimers.push(setTimeout(function() {
                 window._azanFasaSemasa = 'pre5';
+                tambahAzanLog('5min sebelum ' + n + ' — popup wudhu');
                 if (!sudahUnlocked(n, 'pre5')) triggerLock('countdown', n, j, lokasiNama);
+                else tambahAzanLog('→ ' + n + ' pre5 dah unlock, skip');
               }, ms5));
             }
           })(item.nama, item.jamStr, nextWaktuMs);
@@ -4557,13 +4577,41 @@
         lukisClock();
       })();
 
+      // ── AZAN LOG ──
+      var _azanLog = [];
+
+      function tambahAzanLog(mesej) {
+        var now = new Date(getNowMs());
+        var hh = now.getHours(); var mm = now.getMinutes();
+        var ampm = hh >= 12 ? 'pm' : 'am';
+        var hh12 = hh % 12 || 12;
+        var mmStr = mm < 10 ? '0' + mm : '' + mm;
+        var masa = hh12 + ':' + mmStr + ampm;
+        _azanLog.unshift(masa + ' — ' + mesej);
+        if (_azanLog.length > 20) _azanLog.pop();
+        var wrap = document.getElementById('azan-log-wrap');
+        var list = document.getElementById('azan-log-list');
+        if (wrap && list) {
+          wrap.style.display = 'block';
+          list.innerHTML = _azanLog.map(function(x) { return '<div>' + x + '</div>'; }).join('');
+        }
+      }
+
+      document.getElementById('btn-clear-azan-log').addEventListener('click', function() {
+        _azanLog = [];
+        var wrap = document.getElementById('azan-log-wrap');
+        var list = document.getElementById('azan-log-list');
+        if (wrap) wrap.style.display = 'none';
+        if (list) list.innerHTML = '';
+      });
+
       // ── TEST OFFSET SYSTEM ──
       var _testOffset = 0;
       var _testAktif = false;
 
-      function getNowMs() {
-        return Date.now() + _testOffset;
-      }
+
+
+
 
       function kemaskiniOffsetLabel() {
         var lbl = elAzan('azan-test-offset-label');
