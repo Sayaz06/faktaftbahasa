@@ -1121,7 +1121,7 @@
 
     function loadCollections(cb) {
       var uid = currentUser.uid;
-      // Hanya fetch metadata yang diperlukan — drawer laci diambil satu-satu on-demand
+      // Sentiasa fetch terkini dari Firestore — elak data lapuk di Kindle
       Promise.all([
         db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
         db.collection('users').doc(uid).collection('topics').get(),
@@ -1133,6 +1133,15 @@
         res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
         allJenisKata = [];
         res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
+        // Kemas kini activePerkataan dan activeTopic dari data terkini
+        if (activePerkataan) {
+          var pBaru = allBahasaPerkataan.filter(function(p) { return p.id === activePerkataan.id; })[0];
+          if (pBaru) activePerkataan = pBaru;
+        }
+        if (activeTopic) {
+          var tBaru = allTopics.filter(function(t) { return t.id === activeTopic.id; })[0];
+          if (tBaru) activeTopic = tBaru;
+        }
         cb && cb();
       }).catch(function(e) {
         setText('play-err', 'Gagal load: ' + e.message);
@@ -2542,15 +2551,34 @@
           srModeAktif = false;
           srLaciSemasa = null;
 
-          if (mode === 'bahasa' && !activePerkataan) {
-            for (var ai = 0; ai < allBahasaPerkataan.length; ai++) {
-              if (allBahasaPerkataan[ai].isActive) { activePerkataan = allBahasaPerkataan[ai]; break; }
+          // Reload dari Firestore supaya dapat isActive terkini selepas SR
+          var uid2 = currentUser.uid;
+          var _fetchArr = [
+            db.collection('users').doc(uid2).collection('bahasa_perkataan').get(),
+            db.collection('users').doc(uid2).collection('topics').get()
+          ];
+          Promise.all(_fetchArr).then(function(res2) {
+            allBahasaPerkataan = [];
+            res2[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
+            allTopics = [];
+            res2[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
+            if (mode === 'bahasa') {
+              activePerkataan = allBahasaPerkataan.filter(function(p) { return p.isActive; })[0] || activePerkataan;
+            } else if (mode === 'fakta') {
+              activeTopic = allTopics.filter(function(t) { return t.isActive; })[0] || activeTopic;
             }
-          } else if (mode === 'fakta' && !activeTopic) {
-            for (var ti = 0; ti < allTopics.length; ti++) {
-              if (allTopics[ti].isActive) { activeTopic = allTopics[ti]; break; }
+          }).catch(function() {
+            // Gagal fetch — guna memori sedia ada sebagai fallback
+            if (mode === 'bahasa' && !activePerkataan) {
+              for (var ai = 0; ai < allBahasaPerkataan.length; ai++) {
+                if (allBahasaPerkataan[ai].isActive) { activePerkataan = allBahasaPerkataan[ai]; break; }
+              }
+            } else if (mode === 'fakta' && !activeTopic) {
+              for (var ti = 0; ti < allTopics.length; ti++) {
+                if (allTopics[ti].isActive) { activeTopic = allTopics[ti]; break; }
+              }
             }
-          }
+          });
 
           var _rebuildFn = mode === 'bahasa' ? rebuildBahasaCards : rebuildFaktaCards;
           _rebuildFn(function(ok) {
