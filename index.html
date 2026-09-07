@@ -723,6 +723,7 @@
       <input type="hidden" id="azan-test-input">
       <button id="btn-azan-test-set">Aktifkan Test</button>
       <button id="btn-azan-test-stop" style="display:none;background:#dc2626;border-color:#dc2626;">Henti Test</button>
+      <button id="btn-azan-test-clear-unlock" style="background:transparent;color:#f87171;border:1px solid #7f1d1d;margin-top:6px;">Padam Sejarah Unlock</button>
       <button class="azan-test-cancel" id="btn-azan-test-cancel">Batal</button>
     </div>
   </div>
@@ -4708,6 +4709,24 @@
         kemaskiniOffsetLabel();
         if (currentUser) fetchAzanData(currentUser.uid);
         resetPickerKeJamAsal();
+      };
+
+      elAzan('btn-azan-test-clear-unlock').onclick = function() {
+        if (!currentUser) return;
+        wsConfirm('Padam semua sejarah unlock azan?\nLock waktu solat boleh muncul semula.', function() {
+          _azanUnlocked = {};
+          db.collection('users').doc(currentUser.uid)
+            .collection('kindle_settings').doc('azan_unlocked')
+            .delete()
+            .then(function() {
+              var preview = elAzan('azan-test-preview');
+              if (preview) preview.textContent = 'Sejarah unlock azan dipadam';
+            })
+            .catch(function(e) {
+              var preview = elAzan('azan-test-preview');
+              if (preview) preview.textContent = 'Gagal padam: ' + (e.message || e);
+            });
+        });
       };
 
       window._azanInit = function(uid) { fetchAzanData(uid); };
