@@ -4125,7 +4125,7 @@
           _subuhEsokMs = subuhEsok;
         }
         _waktuSolatList = waktuList;
-        paparWaktuSolat(waktuList);
+        if (window.paparWaktuSolat) window.paparWaktuSolat(waktuList);
 
         waktuList.forEach(function(item, idx) {
           var waktuMs = item.waktuMs;
@@ -4576,14 +4576,14 @@
         lukisClock();
       })();
 
-      function paparWaktuSolat(waktuList) {
+      window.paparWaktuSolat = function(waktuList) {
         var wrap = document.getElementById('azan-log-wrap');
         var list = document.getElementById('azan-log-list');
         if (!wrap || !list || !waktuList || !waktuList.length) return;
         var namaSolat = ['Subuh', 'Zohor', 'Asar', 'Maghrib', 'Isyak'];
         var html = '';
         waktuList.forEach(function(item) {
-          if (namaSolat.indexOf(item.nama) === -1) return; // skip Subuh esok
+          if (namaSolat.indexOf(item.nama) === -1) return;
           var d = new Date(item.waktuMs);
           var hh = d.getHours(); var mm = d.getMinutes();
           var ampm = hh >= 12 ? 'pm' : 'am';
@@ -4593,7 +4593,7 @@
         });
         list.innerHTML = html;
         wrap.style.display = html ? 'block' : 'none';
-      }
+      };
 
       function tambahAzanLog(mesej) {} // kosong — tidak dipakai lagi
 
