@@ -4203,6 +4203,22 @@
                 else tambahAzanLog('→ ' + n + ' pre5 dah unlock, skip');
               }, ms5));
             }
+
+            // ── POPUP SELEPAS AZAN (ms0) — sama macam pre20/pre5 ──
+            var ms0 = waktuMs - nowMs;
+            if (ms0 > 0) {
+              _azanTimers.push(setTimeout(function() {
+                window._azanFasaSemasa = 'post';
+                tambahAzanLog('Azan ' + n + ' — popup post');
+                if (!sudahUnlocked(n, 'post')) {
+                  window._reminderBolehCheck = false;
+                  triggerLock('pin', n, j, lokasiNama);
+                } else {
+                  window._reminderBolehCheck = true;
+                  tambahAzanLog('→ ' + n + ' post dah unlock, reminder ON');
+                }
+              }, ms0));
+            }
           })(item.nama, item.jamStr, nextWaktuMs);
         });
 
@@ -4228,6 +4244,71 @@
             window._reminderBolehCheck = true;
           }
         }
+        startAzanLiveWatch();
+      }
+
+      var _azanLiveLast = 0;
+
+      function semakAzanLive() {
+        if (!_waktuSolatList || !_waktuSolatList.length) return;
+        var tapMs = Date.now();
+        if (tapMs - _azanLiveLast < 1500) return;
+        _azanLiveLast = tapMs;
+        var nowMs = getNowMs();
+        var last = null;
+        var next = null;
+        var i;
+        for (i = 0; i < _waktuSolatList.length; i++) {
+          if (_waktuSolatList[i].waktuMs <= nowMs) last = _waktuSolatList[i];
+          else if (!next) next = _waktuSolatList[i];
+        }
+
+        if (next && (next.waktuMs - nowMs) <= 25 * 60 * 1000) {
+          window._reminderBolehCheck = false;
+        }
+
+        if (next) {
+          var t = next.waktuMs;
+          if (nowMs >= t - 20 * 60 * 1000 && nowMs < t - 5 * 60 * 1000) {
+            window._azanFasaSemasa = 'pre20';
+            window._reminderBolehCheck = false;
+            if (!sudahUnlocked(next.nama, 'pre20')) {
+              triggerLock('pin', next.nama, next.jamStr, _lokasiNama);
+            }
+            return;
+          }
+          if (nowMs >= t - 5 * 60 * 1000 && nowMs < t) {
+            window._azanFasaSemasa = 'pre5';
+            window._reminderBolehCheck = false;
+            if (!sudahUnlocked(next.nama, 'pre5')) {
+              triggerLock('countdown', next.nama, next.jamStr, _lokasiNama);
+            }
+            return;
+          }
+        }
+
+        if (last) {
+          window._azanFasaSemasa = 'post';
+          if (!sudahUnlocked(last.nama, 'post')) {
+            window._reminderBolehCheck = false;
+            triggerLock('pin', last.nama, last.jamStr, _lokasiNama);
+            return;
+          }
+          if (!next || (next.waktuMs - nowMs) > 25 * 60 * 1000) {
+            window._reminderBolehCheck = true;
+          }
+        }
+      }
+
+      function startAzanLiveWatch() {
+        if (window._azanTouchBind) return;
+        window._azanTouchBind = true;
+        document.addEventListener('touchstart', semakAzanLive, { passive: true });
+        document.addEventListener('click', semakAzanLive);
+        document.addEventListener('visibilitychange', function() {
+          if (!document.hidden) { _azanLiveLast = 0; semakAzanLive(); }
+        });
+        window.addEventListener('pageshow', function() { _azanLiveLast = 0; semakAzanLive(); });
       }
 
       function clearAzanTimers() {
