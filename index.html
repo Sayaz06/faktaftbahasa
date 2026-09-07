@@ -4610,8 +4610,8 @@
 
 
       function kemaskiniOffsetLabel() {
-        var lbl = elAzan('azan-test-offset-label');
-        var stop = elAzan('btn-azan-test-stop');
+        var lbl = document.getElementById('azan-test-offset-label');
+        var stop = document.getElementById('btn-azan-test-stop');
         var jamStatusLbl = document.getElementById('jam-status-label');
         if (_testAktif) {
           if (jamStatusLbl) jamStatusLbl.style.color = '#f59e0b';
