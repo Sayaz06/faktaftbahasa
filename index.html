@@ -435,7 +435,6 @@
     <button id="btn-jq" class="btn" style="margin-top:8px;">JQ: OFF</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
-    <div id="jam-status-label" style="text-align:center;font-size:0.65rem;margin-top:4px;color:#9ca3af;"></div>
     <div id="azan-log-wrap" style="display:none;margin-top:8px;border:1px solid #334155;border-radius:8px;padding:8px;">
       <div style="font-size:0.65rem;color:#9ca3af;margin-bottom:6px;">Waktu Solat Hari Ini</div>
       <div id="azan-log-list" style="font-size:0.78rem;color:#e2e8f0;line-height:2;"></div>
@@ -4087,7 +4086,7 @@
         window._reminderBolehCheck = false;
         window._azanFasaSemasa = '';
         var waktuSolat = ['Subuh','Zohor','Asar','Maghrib','Isyak'];
-        var nowMs = Date.now() + (window._testOffset || 0);
+        var nowMs = getNowMs();
         var now = new Date(nowMs);
 
         // Kira Subuh hari ini untuk detect tempoh 12am-Subuh
@@ -4125,7 +4124,7 @@
           _subuhEsokMs = subuhEsok;
         }
         _waktuSolatList = waktuList;
-        if (window.paparWaktuSolat) window.paparWaktuSolat(waktuList);
+        paparWaktuSolat(waktuList);
 
         waktuList.forEach(function(item, idx) {
           var waktuMs = item.waktuMs;
@@ -4140,7 +4139,7 @@
               _azanTimers.push(setTimeout(function() {
                 window._reminderBolehCheck = false;
                 window._azanFasaSemasa = '';
-        if (window.tambahAzanLog) window.tambahAzanLog('25min sebelum ' + n + ' — reminder diblock');
+                tambahAzanLog('25min sebelum ' + n + ' — reminder diblock');
               }, ms25));
             } else {
               tambahAzanLog('25min sebelum ' + n + ' dah lepas — reminder diblock');
@@ -4576,14 +4575,14 @@
         lukisClock();
       })();
 
-      window.paparWaktuSolat = function(waktuList) {
+      function paparWaktuSolat(waktuList) {
         var wrap = document.getElementById('azan-log-wrap');
         var list = document.getElementById('azan-log-list');
         if (!wrap || !list || !waktuList || !waktuList.length) return;
         var namaSolat = ['Subuh', 'Zohor', 'Asar', 'Maghrib', 'Isyak'];
         var html = '';
         waktuList.forEach(function(item) {
-          if (namaSolat.indexOf(item.nama) === -1) return;
+          if (namaSolat.indexOf(item.nama) === -1) return; // skip Subuh esok
           var d = new Date(item.waktuMs);
           var hh = d.getHours(); var mm = d.getMinutes();
           var ampm = hh >= 12 ? 'pm' : 'am';
@@ -4593,34 +4592,25 @@
         });
         list.innerHTML = html;
         wrap.style.display = html ? 'block' : 'none';
-      };
-
-      window.tambahAzanLog = function(mesej) {};
-
-      function getNowMs() {
-        return Date.now() + (window._testOffset || 0);
       }
-      window.getNowMs = getNowMs;
+
+      function tambahAzanLog(mesej) {} // kosong — tidak dipakai lagi
 
       // ── TEST OFFSET SYSTEM ──
       var _testOffset = 0;
       var _testAktif = false;
+
+      function getNowMs() {
+        return Date.now() + _testOffset;
+      }
 
 
 
 
 
       function kemaskiniOffsetLabel() {
-        var lbl = document.getElementById('azan-test-offset-label');
-        var stop = document.getElementById('btn-azan-test-stop');
-        var jamStatusLbl = document.getElementById('jam-status-label');
-        if (_testAktif) {
-          if (jamStatusLbl) jamStatusLbl.style.color = '#f59e0b';
-          if (jamStatusLbl) jamStatusLbl.textContent = 'JAM VIRTUAL aktif';
-        } else {
-          if (jamStatusLbl) jamStatusLbl.style.color = '#9ca3af';
-          if (jamStatusLbl) jamStatusLbl.textContent = 'Jam dunia sebenar';
-        }
+        var lbl = elAzan('azan-test-offset-label');
+        var stop = elAzan('btn-azan-test-stop');
         if (!lbl || !stop) return;
         if (_testAktif) {
           var fakeNow = new Date(getNowMs());
@@ -4949,7 +4939,6 @@
         if (window._loadManualLockState) window._loadManualLockState();
         subscribeReminderKindle();
         mulakanReminderCheckKindle();
-        kemaskiniOffsetLabel();
         // Load state button jenis seterusnya selepas collections diload
         loadCollections(function() {
           loadJenisState();
