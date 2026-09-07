@@ -435,12 +435,9 @@
     <button id="btn-jq" class="btn" style="margin-top:8px;">JQ: OFF</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
-    <div id="azan-log-wrap" style="display:none;margin-top:8px;border:1px solid #334155;border-radius:8px;padding:8px;max-height:160px;overflow-y:auto;">
-      <div style="font-size:0.65rem;color:#9ca3af;margin-bottom:4px;display:flex;justify-content:space-between;">
-        <span>Log Azan</span>
-        <span id="btn-clear-azan-log" style="cursor:pointer;color:#ef4444;">Padam</span>
-      </div>
-      <div id="azan-log-list" style="font-size:0.7rem;color:#e2e8f0;line-height:1.8;"></div>
+    <div id="azan-log-wrap" style="display:none;margin-top:8px;border:1px solid #334155;border-radius:8px;padding:8px;">
+      <div style="font-size:0.65rem;color:#9ca3af;margin-bottom:6px;">Waktu Solat Hari Ini</div>
+      <div id="azan-log-list" style="font-size:0.78rem;color:#e2e8f0;line-height:2;"></div>
     </div>
   </div>
 
@@ -4127,6 +4124,7 @@
           _subuhEsokMs = subuhEsok;
         }
         _waktuSolatList = waktuList;
+        paparWaktuSolat(waktuList);
 
         waktuList.forEach(function(item, idx) {
           var waktuMs = item.waktuMs;
@@ -4577,33 +4575,26 @@
         lukisClock();
       })();
 
-      // ── AZAN LOG ──
-      var _azanLog = [];
-
-      function tambahAzanLog(mesej) {
-        var now = new Date(getNowMs());
-        var hh = now.getHours(); var mm = now.getMinutes();
-        var ampm = hh >= 12 ? 'pm' : 'am';
-        var hh12 = hh % 12 || 12;
-        var mmStr = mm < 10 ? '0' + mm : '' + mm;
-        var masa = hh12 + ':' + mmStr + ampm;
-        _azanLog.unshift(masa + ' — ' + mesej);
-        if (_azanLog.length > 20) _azanLog.pop();
+      function paparWaktuSolat(waktuList) {
         var wrap = document.getElementById('azan-log-wrap');
         var list = document.getElementById('azan-log-list');
-        if (wrap && list) {
-          wrap.style.display = 'block';
-          list.innerHTML = _azanLog.map(function(x) { return '<div>' + x + '</div>'; }).join('');
-        }
+        if (!wrap || !list || !waktuList || !waktuList.length) return;
+        var namaSolat = ['Subuh', 'Zohor', 'Asar', 'Maghrib', 'Isyak'];
+        var html = '';
+        waktuList.forEach(function(item) {
+          if (namaSolat.indexOf(item.nama) === -1) return; // skip Subuh esok
+          var d = new Date(item.waktuMs);
+          var hh = d.getHours(); var mm = d.getMinutes();
+          var ampm = hh >= 12 ? 'pm' : 'am';
+          var hh12 = hh % 12 || 12;
+          var mmStr = mm < 10 ? '0' + mm : '' + mm;
+          html += '<div style="display:flex;justify-content:space-between;"><span>' + item.nama + '</span><span style="color:#34d399;">' + hh12 + ':' + mmStr + ampm + '</span></div>';
+        });
+        list.innerHTML = html;
+        wrap.style.display = html ? 'block' : 'none';
       }
 
-      document.getElementById('btn-clear-azan-log').addEventListener('click', function() {
-        _azanLog = [];
-        var wrap = document.getElementById('azan-log-wrap');
-        var list = document.getElementById('azan-log-list');
-        if (wrap) wrap.style.display = 'none';
-        if (list) list.innerHTML = '';
-      });
+      function tambahAzanLog(mesej) {} // kosong — tidak dipakai lagi
 
       // ── TEST OFFSET SYSTEM ──
       var _testOffset = 0;
