@@ -1121,11 +1121,14 @@
 
     function loadCollections(cb) {
       var uid = currentUser.uid;
-      // Sentiasa fetch terkini dari Firestore — elak data lapuk di Kindle
+      function colGet(col) {
+        var r = db.collection('users').doc(uid).collection(col);
+        return r.get({ source: 'server' }).catch(function() { return r.get(); });
+      }
       Promise.all([
-        db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
-        db.collection('users').doc(uid).collection('topics').get(),
-        db.collection('users').doc(uid).collection('jenis_kata').get()
+        colGet('bahasa_perkataan'),
+        colGet('topics'),
+        colGet('jenis_kata')
       ]).then(function(res) {
         allBahasaPerkataan = [];
         res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
@@ -1133,14 +1136,13 @@
         res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
         allJenisKata = [];
         res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
-        // Kemas kini activePerkataan dan activeTopic dari data terkini
-        if (activePerkataan) {
-          var pBaru = allBahasaPerkataan.filter(function(p) { return p.id === activePerkataan.id; })[0];
-          if (pBaru) activePerkataan = pBaru;
+        activePerkataan = null;
+        for (var pi = 0; pi < allBahasaPerkataan.length; pi++) {
+          if (allBahasaPerkataan[pi].isActive) { activePerkataan = allBahasaPerkataan[pi]; break; }
         }
-        if (activeTopic) {
-          var tBaru = allTopics.filter(function(t) { return t.id === activeTopic.id; })[0];
-          if (tBaru) activeTopic = tBaru;
+        activeTopic = null;
+        for (var ti = 0; ti < allTopics.length; ti++) {
+          if (allTopics[ti].isActive) { activeTopic = allTopics[ti]; break; }
         }
         cb && cb();
       }).catch(function(e) {
@@ -2239,6 +2241,7 @@
       }
 
       if (cardIndex >= cards.length) {
+        if (isLoading) return;
         if (mode === 'bahasa') {
           lompatPerkataanSeterusnya().then(function(ok) {
             if (!ok) resetBahasaKePerkataanPertama();
@@ -2360,16 +2363,15 @@
 
     // Helper: check Firestore dulu sebelum tulis isActive — hormati tick phone
     function checkPhoneDahTukar(uid, dariPerkId) {
-      return db.collection('users').doc(uid).collection('bahasa_perkataan').get()
+      var ref = db.collection('users').doc(uid).collection('bahasa_perkataan');
+      return ref.get({ source: 'server' }).catch(function() { return ref.get(); })
         .then(function(snap) {
           allBahasaPerkataan = [];
           snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
-          // Cari siapa yang aktif dalam Firestore sekarang
           var aktifDlmFirestore = null;
           for (var i = 0; i < allBahasaPerkataan.length; i++) {
             if (allBahasaPerkataan[i].isActive) { aktifDlmFirestore = allBahasaPerkataan[i]; break; }
           }
-          // Kalau phone dah tukar ke perkataan lain — hormati pilihan phone
           if (aktifDlmFirestore && dariPerkId && aktifDlmFirestore.id !== dariPerkId) {
             return { phoneDahTukar: true, aktif: aktifDlmFirestore };
           }
@@ -2449,12 +2451,12 @@
         .then(function(snap) {
           allJenisKata = [];
           snap.forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
-          return db.collection('users').doc(uid).collection('bahasa_perkataan').get();
+          var refPerk = db.collection('users').doc(uid).collection('bahasa_perkataan');
+          return refPerk.get({ source: 'server' }).catch(function() { return refPerk.get(); });
         })
         .then(function(snap) {
           allBahasaPerkataan = [];
           snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
-          // Kemas kini activePerkataan dari data terkini Firestore
           var semasa = allBahasaPerkataan.filter(function(p) { return p.id === activePerkId; })[0];
           if (semasa) activePerkataan = semasa;
 
@@ -2953,7 +2955,9 @@
         return;
       }
 
-      if (!cards.length || cardIndex >= cards.length) {
+      if (isLoading) return;
+      if (!cards.length) return;
+      if (cardIndex >= cards.length) {
         if (mode === 'bahasa') {
           lompatPerkataanSeterusnya().then(function(ok) {
             if (!ok) resetBahasaKePerkataanPertama();
