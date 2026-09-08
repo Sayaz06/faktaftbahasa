@@ -833,8 +833,6 @@
     var jqPendingCardIndex = -1; // index kad F2 yang menunggu selepas motivasi (fakta)
     var _jqMotivasiUnsubscribe = null; // untuk cleanup onSnapshot
     var isLoading = false; // guard untuk elak double-trigger button
-    var _bahasaSesi = 0;
-    var _bahasaReady = false;
 
     // ── CHAMPION QUEUE ──
     var champSources = []; // sumber yang ditick: ['motivasi','perjanjian','rutin','supplement','water']
@@ -1121,25 +1119,13 @@
         var allSubjects = [];
     var allJenisKata = [];
 
-    function colGetServerDulu(uid, colName) {
-      var ref = db.collection('users').doc(uid).collection(colName);
-      return ref.get({ source: 'server' }).catch(function() { return ref.get(); });
-    }
-
-    function getPerkataanAktifMem() {
-      for (var i = 0; i < allBahasaPerkataan.length; i++) {
-        if (allBahasaPerkataan[i].isActive) return allBahasaPerkataan[i];
-      }
-      return null;
-    }
-
     function loadCollections(cb) {
       var uid = currentUser.uid;
-      // Server dulu — cache Kindle mudah lapuk dan boleh overwrite tick phone
+      // Sentiasa fetch terkini dari Firestore — elak data lapuk di Kindle
       Promise.all([
-        colGetServerDulu(uid, 'bahasa_perkataan'),
-        colGetServerDulu(uid, 'topics'),
-        colGetServerDulu(uid, 'jenis_kata')
+        db.collection('users').doc(uid).collection('bahasa_perkataan').get(),
+        db.collection('users').doc(uid).collection('topics').get(),
+        db.collection('users').doc(uid).collection('jenis_kata').get()
       ]).then(function(res) {
         allBahasaPerkataan = [];
         res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
@@ -1147,10 +1133,14 @@
         res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
         allJenisKata = [];
         res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
-        activePerkataan = getPerkataanAktifMem() || null;
-        activeTopic = null;
-        for (var ti = 0; ti < allTopics.length; ti++) {
-          if (allTopics[ti].isActive) { activeTopic = allTopics[ti]; break; }
+        // Kemas kini activePerkataan dan activeTopic dari data terkini
+        if (activePerkataan) {
+          var pBaru = allBahasaPerkataan.filter(function(p) { return p.id === activePerkataan.id; })[0];
+          if (pBaru) activePerkataan = pBaru;
+        }
+        if (activeTopic) {
+          var tBaru = allTopics.filter(function(t) { return t.id === activeTopic.id; })[0];
+          if (tBaru) activeTopic = tBaru;
         }
         cb && cb();
       }).catch(function(e) {
@@ -1901,8 +1891,6 @@
     function startBahasa() {
       if (isLoading) return;
       isLoading = true;
-      _bahasaSesi += 1;
-      _bahasaReady = false;
       _prefetchCache = {};
       mode = 'bahasa';
       isFlipped = false; showTips = false;
@@ -1978,20 +1966,12 @@
                 var firstIssues = checkTipsBlock(firstDrawer);
                 if (firstIssues.length) {
                   isLoading = false;
-                  _bahasaReady = true;
                   renderBlockCard(firstDrawer.title || '', firstIssues);
                   return;
                 }
               }
             }
-            isLoading = false;
-            _bahasaReady = true;
-            clearBlockCard();
-            if (ok && cards.length && cardIndex < cards.length) renderCard();
-            else if (!ok || !cards.length) {
-              setText('main-text', 'Tiada kad');
-              setCardImage('');
-            }
+            isLoading = false; clearBlockCard(); renderCard();
           });
         }
 
@@ -2259,7 +2239,6 @@
       }
 
       if (cardIndex >= cards.length) {
-        if (isLoading || !_bahasaReady) return;
         if (mode === 'bahasa') {
           lompatPerkataanSeterusnya().then(function(ok) {
             if (!ok) resetBahasaKePerkataanPertama();
@@ -2379,80 +2358,43 @@
       return i;
     }
 
-    function pakaiPerkataanAktif(perk) {
-      activePerkataan = perk;
-      rebuildBahasaCards(function(ok) {
-        isBusy = false;
-        isLoading = false;
-        _bahasaReady = true;
-        if (!ok || !cards.length) {
-          setText('main-text', 'Tiada kad');
-          setCardImage('');
-          return;
-        }
-        if (cardIndex >= cards.length) cardIndex = 0;
-        setText('play-status', 'BAHASA · ' + (perk.name || ''));
-        var firstCard = cards[cardIndex] || cards[0];
-        var firstDrawerId = firstCard ? firstCard.drawerId : null;
-        var firstDrawerObj = firstDrawerId
-          ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
-          : null;
-        if (firstDrawerObj) {
-          var issues = checkTipsBlock(firstDrawerObj);
-          if (issues.length) {
-            renderBlockCard(firstDrawerObj.title || '', issues);
-            return;
+    // Helper: check Firestore dulu sebelum tulis isActive — hormati tick phone
+    function checkPhoneDahTukar(uid, dariPerkId) {
+      return db.collection('users').doc(uid).collection('bahasa_perkataan').get()
+        .then(function(snap) {
+          allBahasaPerkataan = [];
+          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
+          // Cari siapa yang aktif dalam Firestore sekarang
+          var aktifDlmFirestore = null;
+          for (var i = 0; i < allBahasaPerkataan.length; i++) {
+            if (allBahasaPerkataan[i].isActive) { aktifDlmFirestore = allBahasaPerkataan[i]; break; }
           }
-        }
-        renderCard();
-      });
-    }
-
-    function commitTukarPerkataanAktif(dariId, kePerk, sesiSnap) {
-      if (!currentUser || !kePerk) return Promise.resolve({ aborted: true });
-      var uid = currentUser.uid;
-      return colGetServerDulu(uid, 'bahasa_perkataan').then(function(snap) {
-        if (sesiSnap !== undefined && sesiSnap !== _bahasaSesi) return { aborted: true, stale: true };
-        allBahasaPerkataan = [];
-        snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
-        var phoneActive = getPerkataanAktifMem();
-        if (phoneActive && dariId && phoneActive.id !== dariId && phoneActive.id !== kePerk.id) {
-          return { aborted: true, active: phoneActive };
-        }
-        var batch = db.batch();
-        for (var k = 0; k < allBahasaPerkataan.length; k++) {
-          if (allBahasaPerkataan[k].isActive && allBahasaPerkataan[k].id !== kePerk.id) {
-            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
-            allBahasaPerkataan[k].isActive = false;
+          // Kalau phone dah tukar ke perkataan lain — hormati pilihan phone
+          if (aktifDlmFirestore && dariPerkId && aktifDlmFirestore.id !== dariPerkId) {
+            return { phoneDahTukar: true, aktif: aktifDlmFirestore };
           }
-        }
-        batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(kePerk.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
-        kePerk.isActive = true;
-        kePerk.lastIndex = 0;
-        kePerk.lastDrawerId = null;
-        return batch.commit().then(function() { return { aborted: false, active: kePerk }; });
-      }).catch(function() {
-        return { aborted: true };
-      });
+          return { phoneDahTukar: false, aktif: aktifDlmFirestore };
+        });
     }
 
     function resetBahasaKePerkataanPertama() {
       if (!currentUser) return;
       var uid = currentUser.uid;
       var jenisId = activePerkataan ? activePerkataan.jenisId : null;
-      var dariId = activePerkataan ? activePerkataan.id : null;
-      var sesiSnap = _bahasaSesi;
-      colGetServerDulu(uid, 'bahasa_perkataan')
-        .then(function(snap) {
-          allBahasaPerkataan = [];
-          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
-        })
-        .catch(function() {})
-        .then(function() {
-      if (sesiSnap !== _bahasaSesi) { isBusy = false; return; }
-      var phoneActive = getPerkataanAktifMem();
-      if (phoneActive && dariId && phoneActive.id !== dariId && (!jenisId || phoneActive.jenisId !== jenisId)) {
-        pakaiPerkataanAktif(phoneActive);
+      var dariPerkId = activePerkataan ? activePerkataan.id : null;
+      // Reload dari Firestore dulu dan check kalau phone dah tukar
+      checkPhoneDahTukar(uid, dariPerkId)
+        .catch(function() { return { phoneDahTukar: false }; })
+        .then(function(hasil) {
+      // Kalau phone dah tick perkataan lain — guna pilihan phone
+      if (hasil && hasil.phoneDahTukar && hasil.aktif) {
+        activePerkataan = hasil.aktif;
+        rebuildBahasaCards(function(ok) {
+          isBusy = false;
+          if (!ok) return;
+          setText('play-status', 'BAHASA · ' + (hasil.aktif.name || ''));
+          renderCard();
+        });
         return;
       }
       var sorted = allBahasaPerkataan
@@ -2462,15 +2404,39 @@
         });
       var pertama = sorted[0];
       if (!pertama) { isBusy = false; startBahasa(); return; }
-      commitTukarPerkataanAktif(dariId, pertama, sesiSnap).then(function(res) {
-        if (!res || res.aborted) {
-          if (res && res.active) pakaiPerkataanAktif(res.active);
-          else { isBusy = false; }
-          return;
+      var batch2 = db.batch();
+      for (var k = 0; k < allBahasaPerkataan.length; k++) {
+        if (allBahasaPerkataan[k].isActive) {
+          batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
+          allBahasaPerkataan[k].isActive = false;
         }
-        pakaiPerkataanAktif(pertama);
-      }).catch(function() { isBusy = false; startBahasa(); });
+      }
+      batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+      pertama.isActive = true;
+      pertama.lastIndex = 0;
+      pertama.lastDrawerId = null;
+      batch2.commit().then(function() {
+        activePerkataan = pertama;
+        rebuildBahasaCards(function(ok) {
+          isBusy = false;
+          if (!ok) return;
+          setText('play-status', 'BAHASA · ' + (pertama.name || ''));
+          var firstCard = cards[cardIndex] || cards[0];
+          var firstDrawerId = firstCard ? firstCard.drawerId : null;
+          var firstDrawerObj = firstDrawerId
+            ? allBahasaDrawers.filter(function(d) { return d.id === firstDrawerId; })[0]
+            : null;
+          if (firstDrawerObj) {
+            var issues = checkTipsBlock(firstDrawerObj);
+            if (issues.length) {
+              renderBlockCard(firstDrawerObj.title || '', issues);
+              return;
+            }
+          }
+          renderCard();
         });
+      }).catch(function() { isBusy = false; startBahasa(); });
+        }); // tutup .then() reload Firestore resetBahasaKePerkataanPertama
     }
 
     function lompatPerkataanSeterusnya() {
@@ -2492,12 +2458,6 @@
           var semasa = allBahasaPerkataan.filter(function(p) { return p.id === activePerkId; })[0];
           if (semasa) activePerkataan = semasa;
 
-          var phoneActiveLompat = getPerkataanAktifMem();
-          if (phoneActiveLompat && phoneActiveLompat.id !== activePerkId) {
-            pakaiPerkataanAktif(phoneActiveLompat);
-            return true;
-          }
-
           var sorted = allBahasaPerkataan
             .filter(function(p) { return p.jenisId === activePerkataan.jenisId; })
             .sort(function(a, b) {
@@ -2508,15 +2468,36 @@
             if (sorted[i].id === activePerkataan.id) { idx = i; break; }
           }
 
+          // Check kalau phone dah tukar tick semasa Kindle sibuk
+          var phoneAktifLompat = null;
+          for (var pa = 0; pa < allBahasaPerkataan.length; pa++) {
+            if (allBahasaPerkataan[pa].isActive) { phoneAktifLompat = allBahasaPerkataan[pa]; break; }
+          }
+          if (phoneAktifLompat && phoneAktifLompat.id !== activePerkId) {
+            activePerkataan = phoneAktifLompat;
+            rebuildBahasaCards(function(ok) {
+              setText('play-status', 'BAHASA · ' + (phoneAktifLompat.name || ''));
+              renderCard();
+            });
+            return true;
+          }
+
           // Ada perkataan seterusnya — lompat ke sana
           if (idx >= 0 && idx < sorted.length - 1) {
             var next = sorted[idx + 1];
-            var sesiLompat = _bahasaSesi;
-            return commitTukarPerkataanAktif(activePerkId, next, sesiLompat).then(function(res) {
-              if (!res || res.aborted) {
-                if (res && res.active) pakaiPerkataanAktif(res.active);
-                return !!res && !!res.active;
+            var batch = db.batch();
+            for (var j = 0; j < allBahasaPerkataan.length; j++) {
+              if (allBahasaPerkataan[j].isActive) {
+                batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
+                allBahasaPerkataan[j].isActive = false;
               }
+            }
+            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+            next.isActive = true;
+            next.lastIndex = 0;
+            next.lastDrawerId = null;
+
+            return batch.commit().then(function() {
               activePerkataan = next;
               rebuildBahasaCards(function(ok) {
                 setText('play-status', 'BAHASA · ' + (next.name || ''));
@@ -2972,9 +2953,7 @@
         return;
       }
 
-      if (isLoading || (mode === 'bahasa' && !_bahasaReady)) return;
-      if (!cards.length) return;
-      if (cardIndex >= cards.length) {
+      if (!cards.length || cardIndex >= cards.length) {
         if (mode === 'bahasa') {
           lompatPerkataanSeterusnya().then(function(ok) {
             if (!ok) resetBahasaKePerkataanPertama();
@@ -3545,23 +3524,46 @@
       }
 
       var pertama = perkataanDlmJenis[0];
-      var dariJenisId = activePerkataan ? activePerkataan.id : null;
-      var sesiJenis = _bahasaSesi;
-      commitTukarPerkataanAktif(dariJenisId, pertama, sesiJenis).then(function(res) {
-        if (!res || res.aborted) {
-          if (res && res.active) {
-            simpanJenisState(null);
-            pakaiPerkataanAktif(res.active);
-            return;
-          }
-          self.className = 'active';
+      var dariPerkBtn = activePerkataan ? activePerkataan.id : null;
+
+      // Check dulu kalau phone dah tukar tick
+      checkPhoneDahTukar(uid, dariPerkBtn)
+        .catch(function() { return { phoneDahTukar: false }; })
+        .then(function(hasil) {
+        if (hasil && hasil.phoneDahTukar && hasil.aktif) {
+          activePerkataan = hasil.aktif;
+          simpanJenisState(null);
+          rebuildBahasaCards(function(ok) {
+            isBusy = false;
+            if (!ok) return;
+            setText('play-status', 'BAHASA · ' + (hasil.aktif.name || ''));
+            renderCard();
+          });
           return;
         }
+
+      var batch = db.batch();
+
+      // Buang isActive semua perkataan
+      for (var k = 0; k < allBahasaPerkataan.length; k++) {
+        if (allBahasaPerkataan[k].isActive) {
+          batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
+          allBahasaPerkataan[k].isActive = false;
+        }
+      }
+
+      // Tick perkataan pertama jenis kata berikut
+      batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
+      pertama.isActive = true;
+      pertama.lastIndex = 0;
+      pertama.lastDrawerId = null;
+
+      batch.commit().then(function() {
         activePerkataan = pertama;
+        // Padam state dari Firebase — button dah digunakan
         simpanJenisState(null);
         rebuildBahasaCards(function(ok) {
           isBusy = false;
-          _bahasaReady = true;
           if (!ok) return;
           setText('play-status', 'BAHASA · ' + (pertama.name || ''));
           renderCard();
@@ -3570,6 +3572,7 @@
         setText('play-err', 'Ralat: ' + (e.message || e));
         self.className = 'active';
       });
+        }); // tutup .then() checkPhoneDahTukar
     });
     document.getElementById('counter-box').onclick = nextCard;
     document.getElementById('btn-flip').onclick = function() {
