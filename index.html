@@ -2240,7 +2240,7 @@
         return;
       }
 
-      if (cardIndex >= cards.length) {
+      if (cardIndex > 0 && cardIndex >= cards.length) {
         if (mode === 'bahasa') {
           lompatPerkataanSeterusnya().then(function(ok) {
             if (!ok) resetBahasaKePerkataanPertama();
