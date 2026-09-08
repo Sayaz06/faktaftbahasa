@@ -2262,10 +2262,9 @@
       // F1 bahasa: tukar makna "depan/belakang" — maksud jadi default, perkataan jadi flip
       var isF1Bahasa = (mode === 'bahasa' && !c.isF0 && c.fasa === 1 && !c.isTamat);
       var fasaLabel = '';
-      else if (c.isGambar) {
+      if (c.isGambar) {
         fasaLabel = '';
-      }        
-      else if (mode === 'bahasa') {
+      } else if (mode === 'bahasa') {
         if (c.isF0 || c.fasa === 0) fasaLabel = 'F0 · Pengenalan';
         else if (c.fasa === 1) fasaLabel = 'F1 · Latihan';
         else if (c.fasa === 2) fasaLabel = 'F2 · Ulangan';
