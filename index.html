@@ -1698,8 +1698,9 @@
           }
           if (cards[i].drawerId === lastId) foundLast = true;
         }
-        if (foundLast) return cards.length; // laci terakhir dah habis
-        return 0; // lastDrawerId tidak jumpa — mula dari awal
+        // Sama ada laci terakhir habis atau lastDrawerId tak jumpa (perkataan baru)
+        // — mula dari awal, biar lompatPerkataanSeterusnya yang handle bila betul habis
+        return 0;
       }
 
       // Fakta: cari baris SELEPAS lastDrawerId + lastItemIndex
@@ -1897,6 +1898,7 @@
       jqModeSemasa = ''; jqKadSemasa = null;
       jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
       _srAdaCache = false; // reset cache SR
+      cards = []; cardIndex = 0; // reset supaya tak terbawa kad selesai lama
       setText('play-status', 'Memuat Bahasa + SR...');
       setText('play-err', '');
       showScreen('screen-play');
