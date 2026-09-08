@@ -2257,10 +2257,11 @@
       }      
 
       var c = cards[cardIndex];
+      // Auto skip kad tamat — terus proses tanpa papar
+      if (c.isTamat) { afterTamat(c); return; }
       // F1 bahasa: tukar makna "depan/belakang" — maksud jadi default, perkataan jadi flip
       var isF1Bahasa = (mode === 'bahasa' && !c.isF0 && c.fasa === 1 && !c.isTamat);
       var fasaLabel = '';
-      if (c.isTamat) fasaLabel = 'TAMAT';
       else if (c.isGambar) {
         fasaLabel = '';
       }        
@@ -2972,8 +2973,6 @@
         return;
       }
       var c = cards[cardIndex];
-      if (c.isTamat) { afterTamat(c); return; }
-
       // Kad selesai fakta — tekan SETERUSNYA → kitar semula dari awal
       if (c.isKadSelesaiFakta) {
         resetLastDrawer();
