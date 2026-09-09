@@ -810,6 +810,8 @@
     var isFlipped = false;
     var showTips = false;
     var isBusy = false;
+    var _jqIgnoreTapUntil = 0;
+    var _champOverlayOpen = false;
 
     var allBahasaDrawers = [];
     var allBahasaPerkataan = [];
@@ -1440,13 +1442,14 @@
     }
 
     function tunjukMotivasiJQ(cbSelepas) {
-      isBusy = false;
+      isBusy = true;
+      _champOverlayOpen = false;
       // Cuba Champion queue dulu, fallback ke jqMotivasiList lama
       var item = (champSources.length > 0) ? champGetNextItem() : null;
 
       if (!item) {
         // Fallback: guna jogging_motivasi lama
-        if (!jqMotivasiList.length) { cbSelepas && cbSelepas(); return; }
+        if (!jqMotivasiList.length) { isBusy = false; cbSelepas && cbSelepas(); return; }
         var m = jqMotivasiList[jqMotivasiIdx];
         jqMotivasiIdx = (jqMotivasiIdx + 1) % jqMotivasiList.length;
         var adaFlipF = m.text && m.text.includes('=');
@@ -1514,6 +1517,7 @@
         waterItem: item.waterItem || null,
         cb: cbSelepas
       };
+      _jqIgnoreTapUntil = Date.now() + 450;
     }
 
     function champShowConfirm(h, cbYa, cbSkip) {
@@ -1536,11 +1540,17 @@
       btnYes.parentNode.replaceChild(newYes, btnYes);
       btnSkip.parentNode.replaceChild(newSkip, btnSkip);
 
+      _champOverlayOpen = true;
+      _jqIgnoreTapUntil = Date.now() + 500;
       newYes.onclick = function() {
+        if (Date.now() < _jqIgnoreTapUntil) return;
+        _champOverlayOpen = false;
         overlay.classList.remove('active');
         cbYa && cbYa();
       };
       newSkip.onclick = function() {
+        if (Date.now() < _jqIgnoreTapUntil) return;
+        _champOverlayOpen = false;
         overlay.classList.remove('active');
         cbSkip && cbSkip();
       };
@@ -1548,6 +1558,8 @@
 
     function _selesaiMotivasi() {
       window._jqMotivasiHandler = null;
+      _champOverlayOpen = false;
+      isBusy = false;
       isFlipped = false; showTips = false;
       setText('play-err', '');
     }
@@ -2880,10 +2892,11 @@
     }
 
     function nextCard() {
-      if (isBusy) return;
+      if (_champOverlayOpen) return;
 
-      // Mode motivasi JQ — tekan SETERUSNYA → ikut cara app pertama
+      // Mode motivasi JQ — tap JQ mesti dibaca dulu walaupun isBusy
       if (window._jqMotivasiHandler) {
+        if (Date.now() < _jqIgnoreTapUntil) return;
         var h = window._jqMotivasiHandler;
         if (h.adaFlip && !h.flipped) {
           // Tap pertama — tunjuk belakang
@@ -2902,6 +2915,7 @@
         // Supplement atau Water — tunjuk overlay confirm dulu
         if ((h.source === 'supplement' || h.source === 'water') && currentUser) {
           var hSnap = h; // simpan rujukan
+          _champOverlayOpen = true;
           champShowConfirm(hSnap,
             // Ya — rekod + commit index
             function() {
@@ -2955,7 +2969,7 @@
         return;
       }
 
-      if (isLoading) return;
+      if (isBusy || isLoading) return;
       if (!cards.length) return;
       if (cardIndex >= cards.length) {
         if (mode === 'bahasa') {
