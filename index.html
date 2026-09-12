@@ -2385,6 +2385,8 @@
           : (c.front || '').split('=')[0].trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
         taipInput.dataset.rujukan = ayatRujukan;
         taipInput.dataset.fasa = c.fasa;
+        // Reset event lama — bagi event baru ikut fasa semasa
+        taipInput.oninput = null;
         // Tunjuk butang debug
         document.getElementById('btn-taip-debug').style.display = '';
 
