@@ -2393,9 +2393,9 @@
         document.getElementById('btn-taip-debug').style.display = '';
 
         // Tukar btn-next merah
-        document.getElementById('btn-next').style.borderColor = '#ef4444';
-        document.getElementById('btn-next').style.background = '#ef4444';
-        document.getElementById('btn-next').style.color = '#fff';
+        document.getElementById('btn-next').style.borderColor = '#000';
+        document.getElementById('btn-next').style.background = '#fff';
+        document.getElementById('btn-next').style.color = '#000';
 
         // Butang debug
         document.getElementById('btn-taip-debug').onclick = function() {
@@ -2425,8 +2425,8 @@
           var rujukan = taipInput.dataset.rujukan || '';
           if (!taip) {
             taipStatus.textContent = '';
-            document.getElementById('btn-next').style.borderColor = '#ef4444';
-            document.getElementById('btn-next').style.background = '#ef4444';
+            document.getElementById('btn-next').style.borderColor = '#000';
+            document.getElementById('btn-next').style.background = '#fff';
             document.getElementById('taip-debug-panel').style.display = 'none';
             return;
           }
@@ -2449,8 +2449,8 @@
             taipStatus.textContent = '❌ Cuba semula';
             taipStatus.style.color = '#ef4444';
           }
-          document.getElementById('btn-next').style.borderColor = '#22c55e';
-          document.getElementById('btn-next').style.background = '#22c55e';
+          document.getElementById('btn-next').style.borderColor = '#000';
+          document.getElementById('btn-next').style.background = '#000';
           document.getElementById('btn-next').style.color = '#fff';
         };
       } else {
