@@ -630,9 +630,9 @@
       <button id="btn-back-menu" class="btn-sm btn-menu">Menu</button>
       <button id="btn-flip" class="btn-sm">Flip</button>
       <button id="btn-tips" class="btn-sm">Tips</button>
-      <button id="btn-taip-debug" class="btn-sm" style="display:none;border-color:#a78bfa;color:#a78bfa;">🔍</button>
+      <button id="btn-taip-debug" class="btn-sm" style="display:none;">🔍</button>
     </div>
-    <div id="taip-debug-panel" style="display:none;background:#111;border:1px solid #334155;border-radius:6px;padding:10px;margin-top:6px;font-size:0.7rem;line-height:1.7;"></div>
+    <div id="taip-debug-panel" style="display:none;background:#fff;border:2px solid #000;border-radius:4px;padding:8px;margin-top:4px;font-size:0.7rem;line-height:1.8;color:#000;"></div>
     <div class="btn-row" style="margin-top:4px;">
       <button id="btn-jenis-seterusnya" class="btn-sm" style="display:none;width:100%;font-size:0.72rem;border-color:#22c55e;color:#22c55e;">→ Jenis Kata Seterusnya</button>
     </div>
@@ -2379,8 +2379,12 @@
         taipStatus.textContent = '';
         taipStatus.style.color = '#999';
         // Ayat rujukan — ambil dari front (sebelum =) atau back
-        var ayatRujukan = (c.front || '').split('=')[0].trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+        // F1: taip ayat BI (front sebelum =), F2: taip maksud BM (back selepas =)
+        var ayatRujukan = c.fasa === 2
+          ? (c.back || '').trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
+          : (c.front || '').split('=')[0].trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
         taipInput.dataset.rujukan = ayatRujukan;
+        taipInput.dataset.fasa = c.fasa;
         // Tunjuk butang debug
         document.getElementById('btn-taip-debug').style.display = '';
 
