@@ -621,7 +621,11 @@
       <div class="progress" id="play-progress"></div>
       <div class="meta" id="play-meta"></div>
     </div>
-    <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>    
+    <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
+    <div id="taip-ayat-box" style="display:none;margin-top:6px;">
+      <textarea id="taip-ayat-input" rows="2" placeholder="Taip ayat dari ingatan..." style="width:100%;padding:8px;font-size:0.85rem;background:#fff;color:#000;border:2px solid #ccc;border-radius:6px;resize:none;box-sizing:border-box;"></textarea>
+      <div id="taip-ayat-status" style="font-size:0.72rem;text-align:center;min-height:1.2em;padding:2px 0;"></div>
+    </div>
     <div class="btn-row">
       <button id="btn-back-menu" class="btn-sm btn-menu">Menu</button>
       <button id="btn-flip" class="btn-sm">Flip</button>
@@ -2360,6 +2364,65 @@
         document.getElementById('tips-close-btn').classList.remove('visible');
       }
 
+      // ── Kotak taip ayat — hanya pada kad terakhir F1/F2 bahasa ──
+      var taipBox = document.getElementById('taip-ayat-box');
+      var taipInput = document.getElementById('taip-ayat-input');
+      var taipStatus = document.getElementById('taip-ayat-status');
+      var isLastFasa = (fasaPos === fasaTotal);
+      var isFasaBahasa = mode === 'bahasa' && !c.isF0 && !c.isGambar && !c.isTamat && (c.fasa === 1 || c.fasa === 2);
+
+      if (isFasaBahasa && isLastFasa) {
+        taipBox.style.display = 'block';
+        taipInput.value = '';
+        taipStatus.textContent = '';
+        taipStatus.style.color = '#999';
+        // Ayat rujukan — ambil dari front (sebelum =) atau back
+        var ayatRujukan = (c.front || '').split('=')[0].trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ');
+        taipInput.dataset.rujukan = ayatRujukan;
+        // Tukar btn-next merah
+        document.getElementById('btn-next').style.borderColor = '#ef4444';
+        document.getElementById('btn-next').style.background = '#ef4444';
+        document.getElementById('btn-next').style.color = '#fff';
+
+        taipInput.oninput = function() {
+          var taip = taipInput.value.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+          var rujukan = taipInput.dataset.rujukan || '';
+          if (!taip) {
+            taipStatus.textContent = '';
+            document.getElementById('btn-next').style.borderColor = '#ef4444';
+            document.getElementById('btn-next').style.background = '#ef4444';
+            return;
+          }
+          // Check loose — kira peratus perkataan yang betul
+          var taipKata = taip.split(' ');
+          var rujukanKata = rujukan.split(' ');
+          var betul = taipKata.filter(function(k) { return rujukanKata.indexOf(k) !== -1; }).length;
+          var peratusBetul = rujukanKata.length > 0 ? (betul / rujukanKata.length) : 0;
+          if (peratusBetul >= 0.7) {
+            taipStatus.textContent = '✅ Hampir tepat';
+            taipStatus.style.color = '#22c55e';
+          } else if (peratusBetul >= 0.4) {
+            taipStatus.textContent = '⚠️ Separuh betul';
+            taipStatus.style.color = '#f59e0b';
+          } else {
+            taipStatus.textContent = '❌ Cuba semula';
+            taipStatus.style.color = '#ef4444';
+          }
+          // Tukar btn-next hijau bila dah taip sesuatu
+          document.getElementById('btn-next').style.borderColor = '#22c55e';
+          document.getElementById('btn-next').style.background = '#22c55e';
+          document.getElementById('btn-next').style.color = '#fff';
+        };
+      } else {
+        taipBox.style.display = 'none';
+        taipInput.value = '';
+        taipStatus.textContent = '';
+        // Reset btn-next ke warna asal
+        document.getElementById('btn-next').style.borderColor = '';
+        document.getElementById('btn-next').style.background = '';
+        document.getElementById('btn-next').style.color = '';
+      }
+
       // Auto-fit selepas render (image mungkin belum load)
       setTimeout(function() {
         autoFitImage(displayText.length);
@@ -2893,6 +2956,24 @@
 
     function nextCard() {
       if (_champOverlayOpen) return;
+      // Halang proceed kalau kotak taip kosong pada kad terakhir fasa
+      var taipBox = document.getElementById('taip-ayat-box');
+      var taipInput = document.getElementById('taip-ayat-input');
+      if (taipBox && taipBox.style.display !== 'none' && !taipInput.value.trim()) {
+        // Popup ringkas — mesra Kindle
+        var popup = document.getElementById('taip-ayat-popup');
+        if (!popup) {
+          popup = document.createElement('div');
+          popup.id = 'taip-ayat-popup';
+          popup.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#000;color:#fff;border:2px solid #ef4444;border-radius:8px;padding:14px 18px;font-size:0.85rem;text-align:center;z-index:9999;max-width:260px;';
+          popup.innerHTML = 'Sila taip ayat dahulu sebelum meneruskan.<br><br><button onclick="document.getElementById(\'taip-ayat-popup\').remove()" style="background:#ef4444;border:none;color:#fff;padding:6px 16px;border-radius:4px;cursor:pointer;font-size:0.82rem;">OK</button>';
+          document.body.appendChild(popup);
+          setTimeout(function() { if (popup.parentNode) popup.remove(); }, 3000);
+        }
+        return;
+      }
+      // Reset taip ayat selepas proceed
+      if (taipInput) taipInput.value = '';
 
       // Mode motivasi JQ — tap JQ mesti dibaca dulu walaupun isBusy
       if (window._jqMotivasiHandler) {
