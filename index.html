@@ -2371,7 +2371,7 @@
       var taipInput = document.getElementById('taip-ayat-input');
       var taipStatus = document.getElementById('taip-ayat-status');
       var isLastFasa = (fasaPos === fasaTotal);
-      var isFasaBahasa = mode === 'bahasa' && !c.isF0 && !c.isGambar && !c.isTamat && (c.fasa === 1 || c.fasa === 2);
+      var isFasaBahasa = mode === 'bahasa' && !c.isF0 && !c.isGambar && !c.isTamat && !c.isSR && !window._jqMotivasiHandler && (c.fasa === 1 || c.fasa === 2);
 
       if (isFasaBahasa && isLastFasa) {
         taipBox.style.display = 'block';
