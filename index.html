@@ -2396,6 +2396,7 @@
         document.getElementById('btn-next').style.borderColor = '#000';
         document.getElementById('btn-next').style.background = '#fff';
         document.getElementById('btn-next').style.color = '#000';
+        document.getElementById('btn-next').textContent = 'SETERUSNYA';
 
         // Butang debug
         document.getElementById('btn-taip-debug').onclick = function() {
@@ -2449,9 +2450,11 @@
             taipStatus.textContent = '❌ Cuba semula';
             taipStatus.style.color = '#ef4444';
           }
-          document.getElementById('btn-next').style.borderColor = '#000';
-          document.getElementById('btn-next').style.background = '#000';
-          document.getElementById('btn-next').style.color = '#fff';
+        document.getElementById('btn-next').style.borderColor = '';
+        document.getElementById('btn-next').style.background = '';
+        document.getElementById('btn-next').style.color = '';
+        document.getElementById('btn-next').textContent = 'SETERUSNYA';
+          document.getElementById('btn-next').textContent = '✓ SETERUSNYA';
         };
       } else {
         taipBox.style.display = 'none';
@@ -2461,6 +2464,7 @@
         document.getElementById('btn-next').style.borderColor = '';
         document.getElementById('btn-next').style.background = '';
         document.getElementById('btn-next').style.color = '';
+        document.getElementById('btn-next').textContent = 'SETERUSNYA';
       }
 
       // Auto-fit selepas render (image mungkin belum load)
