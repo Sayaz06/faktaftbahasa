@@ -3711,7 +3711,11 @@
       });
         }); // tutup .then() checkPhoneDahTukar
     });
-    document.getElementById('counter-box').onclick = nextCard;
+    document.getElementById('counter-box').onclick = function() {
+      var taipBox = document.getElementById('taip-ayat-box');
+      if (taipBox && taipBox.style.display !== 'none') return;
+      nextCard();
+    };
     document.getElementById('btn-flip').onclick = function() {
       if (window._jqMotivasiHandler) {
         var h = window._jqMotivasiHandler;
