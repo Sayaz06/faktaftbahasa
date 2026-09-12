@@ -2417,63 +2417,68 @@
         document.getElementById('btn-next').style.color = '#000';
         document.getElementById('btn-next').textContent = 'SETERUSNYA';
 
-        // Butang debug
-        document.getElementById('btn-taip-debug').onclick = function() {
-          var panel = document.getElementById('taip-debug-panel');
+        // Fungsi semak — dipanggil oleh butang debug dan onblur
+        function _semakTaipan() {
           var taip = taipInput.value.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
           var rujukan = taipInput.dataset.rujukan || '';
-          var taipKata = taip ? taip.split(' ') : [];
-          var rujukanKata = rujukan ? rujukan.split(' ') : [];
-          var betul = taipKata.filter(function(k) { return rujukanKata.indexOf(k) !== -1; });
-          var salah = taipKata.filter(function(k) { return rujukanKata.indexOf(k) === -1; });
-          var tertinggal = rujukanKata.filter(function(k) { return taipKata.indexOf(k) === -1; });
-          var peratusBetul = rujukanKata.length > 0 ? Math.round((betul.length / rujukanKata.length) * 100) : 0;
-          panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-          panel.innerHTML =
-            '<div style="color:#a78bfa;font-weight:bold;margin-bottom:4px;">🔍 Analisis Semakan</div>' +
-            '<div>📝 <b>Rujukan:</b> <span style="color:#fde68a;">' + (rujukan || '(tiada)') + '</span></div>' +
-            '<div>✍️ <b>Taipan:</b> <span style="color:#fde68a;">' + (taip || '(kosong)') + '</span></div>' +
-            '<div>✅ <b>Betul (' + betul.length + '):</b> <span style="color:#4ade80;">' + (betul.join(', ') || '-') + '</span></div>' +
-            '<div>❌ <b>Salah (' + salah.length + '):</b> <span style="color:#f87171;">' + (salah.join(', ') || '-') + '</span></div>' +
-            '<div>⚠️ <b>Tertinggal (' + tertinggal.length + '):</b> <span style="color:#fb923c;">' + (tertinggal.join(', ') || '-') + '</span></div>' +
-            '<div>📊 <b>Skor:</b> <span style="color:#38bdf8;">' + peratusBetul + '% (' + betul.length + '/' + rujukanKata.length + ' perkataan)</span></div>' +
-            '<div style="margin-top:4px;color:#64748b;font-size:0.65rem;">Tepat ≥70% · Separuh ≥40% · Gagal &lt;40%</div>';
-        };
-
-        taipInput.oninput = function() {
-          var taip = taipInput.value.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
-          var rujukan = taipInput.dataset.rujukan || '';
-          if (!taip) {
-            taipStatus.textContent = '';
-            document.getElementById('btn-next').style.borderColor = '#000';
-            document.getElementById('btn-next').style.background = '#fff';
-            document.getElementById('taip-debug-panel').style.display = 'none';
-            return;
-          }
+          if (!taip) { taipStatus.textContent = ''; return; }
           var taipKata = taip.split(' ');
           var rujukanKata = rujukan.split(' ');
-          var betul = taipKata.filter(function(k) { return rujukanKata.indexOf(k) !== -1; }).length;
-          // Tepat: semua perkataan rujukan ada dalam taipan
+          var betulList = taipKata.filter(function(k) { return rujukanKata.indexOf(k) !== -1; });
+          var salahList = taipKata.filter(function(k) { return rujukanKata.indexOf(k) === -1; });
+          var tertinggalList = rujukanKata.filter(function(k) { return taipKata.indexOf(k) === -1; });
           var semuaBetul = rujukanKata.every(function(k) { return taipKata.indexOf(k) !== -1; });
-          var peratusBetul = rujukanKata.length > 0 ? (betul / rujukanKata.length) : 0;
+          var peratusBetul = rujukanKata.length > 0 ? Math.round((betulList.length / rujukanKata.length) * 100) : 0;
+          // Status ringkas — tanpa emoji, mesra Kindle
           if (semuaBetul) {
-            taipStatus.textContent = '✅ Tepat!';
-            taipStatus.style.color = '#22c55e';
-          } else if (peratusBetul >= 0.7) {
-            taipStatus.textContent = '🟡 Hampir tepat';
-            taipStatus.style.color = '#f59e0b';
-          } else if (peratusBetul >= 0.4) {
-            taipStatus.textContent = '⚠️ Separuh betul';
-            taipStatus.style.color = '#f59e0b';
+            taipStatus.textContent = 'Tepat';
+          } else if (peratusBetul >= 70) {
+            taipStatus.textContent = 'Hampir tepat (' + peratusBetul + '%)';
+          } else if (peratusBetul >= 40) {
+            taipStatus.textContent = 'Separuh betul (' + peratusBetul + '%)';
           } else {
-            taipStatus.textContent = '❌ Cuba semula';
-            taipStatus.style.color = '#ef4444';
+            taipStatus.textContent = 'Cuba semula (' + peratusBetul + '%)';
           }
-        document.getElementById('btn-next').style.borderColor = '';
-        document.getElementById('btn-next').style.background = '';
-        document.getElementById('btn-next').style.color = '';
-        document.getElementById('btn-next').textContent = 'SETERUSNYA';
-          document.getElementById('btn-next').textContent = '✓ SETERUSNYA';
+          taipStatus.style.color = '#000';
+          return { betulList: betulList, salahList: salahList, tertinggalList: tertinggalList, peratusBetul: peratusBetul, rujukanKata: rujukanKata };
+        }
+
+        // Butang debug — semak dan papar analisis
+        document.getElementById('btn-taip-debug').onclick = function() {
+          var panel = document.getElementById('taip-debug-panel');
+          var hasil = _semakTaipan();
+          if (!hasil) { panel.style.display = 'none'; return; }
+          panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+          var taip = taipInput.value.toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+          var rujukan = taipInput.dataset.rujukan || '';
+          panel.innerHTML =
+            '<b>Analisis Semakan</b><br>' +
+            'Rujukan: ' + (rujukan || '(tiada)') + '<br>' +
+            'Taipan: ' + (taip || '(kosong)') + '<br>' +
+            'Betul (' + hasil.betulList.length + '): ' + (hasil.betulList.join(', ') || '-') + '<br>' +
+            'Salah (' + hasil.salahList.length + '): ' + (hasil.salahList.join(', ') || '-') + '<br>' +
+            'Tertinggal (' + hasil.tertinggalList.length + '): ' + (hasil.tertinggalList.join(', ') || '-') + '<br>' +
+            'Skor: ' + hasil.peratusBetul + '% (' + hasil.betulList.length + '/' + hasil.rujukanKata.length + ' perkataan)<br>' +
+            '<small>Tepat=100% / Hampir>=70% / Separuh>=40%</small>';
+        };
+
+        // Checking hanya bila keluar textarea (onblur)
+        taipInput.onblur = function() { _semakTaipan(); };
+        taipInput.oninput = null;
+
+        // Buka btn-next bila ada sebarang input
+        taipInput.onkeyup = function() {
+          if (taipInput.value.trim()) {
+            document.getElementById('btn-next').style.borderColor = '';
+            document.getElementById('btn-next').style.background = '';
+            document.getElementById('btn-next').style.color = '';
+            document.getElementById('btn-next').textContent = '[ OK ] SETERUSNYA';
+          } else {
+            document.getElementById('btn-next').style.borderColor = '#000';
+            document.getElementById('btn-next').style.background = '#fff';
+            document.getElementById('btn-next').style.color = '#000';
+            document.getElementById('btn-next').textContent = 'SETERUSNYA';
+          }
         };
       } else {
         taipBox.style.display = 'none';
