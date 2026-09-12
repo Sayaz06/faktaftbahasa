@@ -2015,7 +2015,13 @@
         }
 
         if (jqAktif && jqMotivasiList.length) {
-          tunjukMotivasiJQ(function() { _terusKeSR(); });
+          tunjukMotivasiJQ(function() {
+            isBusy = true;
+            var mainEl = document.getElementById('main-text');
+            if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
+            setText('play-err', '');
+            setTimeout(function() { _terusKeSR(); }, 0);
+          });
         } else {
           _terusKeSR();
         }
@@ -2114,7 +2120,13 @@
         }
 
         if (jqAktif && jqMotivasiList.length) {
-          tunjukMotivasiJQ(function() { _terusKeSR(); });
+          tunjukMotivasiJQ(function() {
+            isBusy = true;
+            var mainEl = document.getElementById('main-text');
+            if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
+            setText('play-err', '');
+            setTimeout(function() { _terusKeSR(); }, 0);
+          });
         } else {
           _terusKeSR();
         }
