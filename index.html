@@ -1450,6 +1450,21 @@
     function tunjukMotivasiJQ(cbSelepas) {
       isBusy = true;
       _champOverlayOpen = false;
+      // Pastikan kotak taip sentiasa tertutup semasa JQ
+      var _tb = document.getElementById('taip-ayat-box');
+      var _ti = document.getElementById('taip-ayat-input');
+      var _ts = document.getElementById('taip-ayat-status');
+      var _dp = document.getElementById('taip-debug-panel');
+      var _db = document.getElementById('btn-taip-debug');
+      if (_tb) _tb.style.display = 'none';
+      if (_ti) _ti.value = '';
+      if (_ts) _ts.textContent = '';
+      if (_dp) _dp.style.display = 'none';
+      if (_db) _db.style.display = 'none';
+      document.getElementById('btn-next').style.borderColor = '';
+      document.getElementById('btn-next').style.background = '';
+      document.getElementById('btn-next').style.color = '';
+      document.getElementById('btn-next').textContent = 'SETERUSNYA';
       // Cuba Champion queue dulu, fallback ke jqMotivasiList lama
       var item = (champSources.length > 0) ? champGetNextItem() : null;
 
