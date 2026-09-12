@@ -2700,7 +2700,26 @@
 
     function afterTamat(c) {
       isBusy = true;
-      setText('play-err', 'Menyimpan...');
+      // Tutup kotak taip dulu sebelum tunjuk status simpan
+      var taipBox = document.getElementById('taip-ayat-box');
+      var taipInput = document.getElementById('taip-ayat-input');
+      var taipStatus = document.getElementById('taip-ayat-status');
+      var debugPanel = document.getElementById('taip-debug-panel');
+      var debugBtn = document.getElementById('btn-taip-debug');
+      if (taipBox) taipBox.style.display = 'none';
+      if (taipInput) taipInput.value = '';
+      if (taipStatus) taipStatus.textContent = '';
+      if (debugPanel) debugPanel.style.display = 'none';
+      if (debugBtn) debugBtn.style.display = 'none';
+      // Reset btn-next
+      document.getElementById('btn-next').style.borderColor = '';
+      document.getElementById('btn-next').style.background = '';
+      document.getElementById('btn-next').style.color = '';
+      document.getElementById('btn-next').textContent = 'SETERUSNYA';
+      // Papar status simpan dalam main-text yang besar
+      var mainEl = document.getElementById('main-text');
+      if (mainEl) { mainEl.textContent = 'Menyimpan...'; mainEl.className = 'big-text'; }
+      setText('play-err', '');
       var drawerId = c.drawerId;
       var isSR = c.isSR || srModeAktif;
       var nextIdx = findNextDrawerStart(cardIndex);
