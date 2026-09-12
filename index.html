@@ -1515,14 +1515,18 @@
       var mainEl = document.getElementById('main-text');
       if (mainEl) {
         var pjg = kandungan.length;
-        if (item.source === 'otherMotivation' || item.source === 'mainMotivation') {
-          // Auto-kecil ikut panjang kandungan untuk otherMotivation dan mainMotivation
+        var adaGambar = (item.source === 'otherMotivation' || item.source === 'mainMotivation') && !!item.imageUrl;
+        if (adaGambar) {
+          // Ada gambar — kecilkan teks ikut panjang kandungan
           mainEl.className = pjg > 300 ? 'big-text ultra-long'
                            : pjg > 150 ? 'big-text extra-long'
                            : pjg > 80  ? 'big-text long-text'
                            : 'big-text';
         } else {
-          mainEl.className = pjg > 80 ? 'big-text long-text' : 'big-text';
+          // Tiada gambar — bagi ruang penuh, saiz besar
+          mainEl.className = pjg > 400 ? 'big-text extra-long'
+                           : pjg > 200 ? 'big-text long-text'
+                           : 'big-text';
         }
       }
       
