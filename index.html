@@ -1965,7 +1965,7 @@
                   }
                 }
                 setText('play-status', 'SR BAHASA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-                isLoading = false; clearBlockCard(); renderCard(); return;
+                isLoading = false; isBusy = false; clearBlockCard(); renderCard(); return;
               }
               // SR drawer tiada — reset dan terus ke laci biasa
               srModeAktif = false; srLaciSemasa = null; _srAdaCache = false;
@@ -2010,7 +2010,7 @@
                 }
               }
             }
-            isLoading = false; clearBlockCard(); renderCard();
+            isLoading = false; isBusy = false; clearBlockCard(); renderCard();
           });
         }
 
@@ -2084,7 +2084,7 @@
             loadSRIntoCards(srLaciSemasa, 'fakta', function(ok) {
               if (ok) {
                 setText('play-status', 'SR FAKTA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0));
-                isLoading = false; renderCard(); return;
+                isLoading = false; isBusy = false; renderCard(); return;
               }
               // SR drawer tiada — reset dan terus ke laci biasa
               srModeAktif = false; srLaciSemasa = null; _srAdaCache = false;
