@@ -2380,7 +2380,9 @@
         taipStatus.style.color = '#999';
         // Ayat rujukan — ambil dari front (sebelum =) atau back
         // F1: taip ayat BI (front sebelum =), F2: taip maksud BM (back selepas =)
-        var ayatRujukan = c.fasa === 2
+        // F1: user nampak maksud BM (back) → taip maksud BM (back)
+        // F2: user nampak ayat BI (front) → taip ayat BI (front sebelum =)
+        var ayatRujukan = c.fasa === 1
           ? (c.back || '').trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim()
           : (c.front || '').split('=')[0].trim().toLowerCase().replace(/[^a-z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
         taipInput.dataset.rujukan = ayatRujukan;
