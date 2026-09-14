@@ -2181,6 +2181,11 @@
       var img = document.getElementById('card-img');
       var placeholder = document.getElementById('card-img-placeholder');
       if (!img) return;
+      // Hantar URL gambar semasa ke Firestore untuk app monitor laptop
+      if (currentUser) {
+        db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
+          .set({ imageUrl: url || '', updatedAt: Date.now() }).catch(function() {});
+      }
       if (url) {
         img.src = url;
         img.style.display = 'block';
