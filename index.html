@@ -2830,7 +2830,7 @@
 
     function afterTamat(c) {
       isBusy = true;
-      // Tutup kotak taip dulu sebelum tunjuk status simpan
+      // Tutup kotak taip dulu
       var taipBox = document.getElementById('taip-ayat-box');
       var taipInput = document.getElementById('taip-ayat-input');
       var taipStatus = document.getElementById('taip-ayat-status');
@@ -2841,12 +2841,37 @@
       if (taipStatus) taipStatus.textContent = '';
       if (debugPanel) debugPanel.style.display = 'none';
       if (debugBtn) debugBtn.style.display = 'none';
-      // Reset btn-next
       document.getElementById('btn-next').style.borderColor = '';
       document.getElementById('btn-next').style.background = '';
       document.getElementById('btn-next').style.color = '';
       document.getElementById('btn-next').textContent = 'SETERUSNYA';
-      // Papar status simpan dalam main-text yang besar
+
+      // Monitor ON + fasa 2 + ada gambar → tunjuk gambar, tunggu Enter di laptop
+      if (monitorAktif && !c.isSR && c.fasa === 2 && c.imageUrl) {
+        var mainElM = document.getElementById('main-text');
+        if (mainElM) { mainElM.textContent = 'Tekan di laptop untuk meneruskan.'; mainElM.className = 'big-text tips-mode'; }
+        setCardImage(c.imageUrl, false);
+        _monitorTungguNext = true;
+        db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
+          .set({ monitorTunggu: true, nextSignal: false }, { merge: true }).catch(function() {});
+        var _unsubAfterTamat = db.collection('users').doc(currentUser.uid)
+          .collection('kindle_settings').doc('monitor')
+          .onSnapshot(function(snap) {
+            if (!snap.exists) return;
+            if (snap.data().nextSignal && _monitorTungguNext) {
+              _unsubAfterTamat();
+              _monitorTungguNext = false;
+              db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
+                .set({ nextSignal: false, monitorTunggu: false }, { merge: true }).catch(function() {});
+              _terusAfterTamat(c);
+            }
+          });
+        return;
+      }
+      _terusAfterTamat(c);
+    }
+
+    function _terusAfterTamat(c) {
       var mainEl = document.getElementById('main-text');
       if (mainEl) { mainEl.textContent = 'Menyimpan...'; mainEl.className = 'big-text'; }
       setText('play-err', '');
@@ -3145,7 +3170,7 @@
       }).catch(function(e) {
         isBusy = false; setText('play-err', e.message || 'Gagal simpan');
       });
-    }
+    } // tutup _terusAfterTamat
 
     function nextCard() {
       if (_champOverlayOpen) return;
