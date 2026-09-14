@@ -455,6 +455,7 @@
     <button id="btn-go-other-motivation" class="btn">[ OTHER MOTIVATION ]</button>
     <button id="btn-jq" class="btn" style="margin-top:8px;">JQ: OFF</button>
     <button id="btn-taip" class="btn" style="margin-top:8px;">TAIP: OFF</button>
+    <button id="btn-monitor" class="btn" style="margin-top:8px;">MONITOR: OFF</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
     <div id="azan-log-wrap" style="display:none;margin-top:8px;border:1px solid #334155;border-radius:8px;padding:8px;">
@@ -917,34 +918,42 @@
       var img = d.imageUrl || '';
       var r, i;
 
-      // Fasa Gambar × 10 (hanya jika ada gambar)
-      // r=0..4 → G1 (5 kad) | r=5..9 → G2 (5 kad)
+      // Fasa Gambar — ikut mode monitor
       var img2 = d.imageUrl11 || '';
       if (img) {
-        for (r = 0; r < 10; r++) {
-          var isG2 = (r >= 5); // kad 6-10 guna G2
+        var jumlahG1 = monitorAktif ? 1 : 5;
+        var jumlahG2 = monitorAktif ? 1 : 5;
+        var jumlahGambar = jumlahG1 + (img2 ? jumlahG2 : 0);
+        for (r = 0; r < jumlahGambar; r++) {
+          var isG2 = (r >= jumlahG1);
           var imgFasa, frontFasa, gambarSlot;
           if (!isG2) {
             // G1
             imgFasa = img;
-            frontFasa = 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
+            frontFasa = monitorAktif
+              ? 'Tekan di laptop untuk meneruskan.'
+              : 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
             gambarSlot = 1;
           } else if (img2) {
             // G2 ada
             imgFasa = img2;
-            frontFasa = 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
+            frontFasa = monitorAktif
+              ? 'Tekan di laptop untuk meneruskan.'
+              : 'Hafal gambar ini terlebih dahulu.\nTutup mata dan bayangkan imej tersebut.\nBuka mata semula, kemudian tekan SETERUSNYA.\nUlang langkah ini sebanyak 5 kali.';
             gambarSlot = 2;
           } else {
-            // G2 tiada — guna G1 sementara
+            // G2 tiada — monitor off: guna G1 sementara; monitor on: skip
+            if (monitorAktif) continue;
             imgFasa = img;
-            frontFasa = '📷 Gambar 1 digunakan sementara waktu\n📷 Gambar 2 belum tersedia untuk digunakan.\nSila tambah melalui telefon anda.\nTekan SETERUSNYA untuk meneruskan.';
+            frontFasa = 'Gambar 2 belum tersedia.\nSila tambah melalui telefon anda.\nTekan SETERUSNYA untuk meneruskan.';
             gambarSlot = 2;
           }
           out.push({
             front: frontFasa,
             back: '', tips: '', imageUrl: imgFasa,
             title: title, drawerId: d.id, isF0: false, isGambar: true, isTamat: false, isSR: !!isSR, fasa: -1,
-            gambarSlot: gambarSlot
+            gambarSlot: gambarSlot,
+            monitorTunggu: monitorAktif
           });
         }
       }
@@ -1220,6 +1229,46 @@
           var badge = document.getElementById('ws-notif-badge');
           btnFloat.style.top = (badge && badge.classList.contains('active')) ? '50px' : '8px';
         }).catch(function() {});
+    }
+
+    var monitorAktif = false;
+    var _monitorTungguNext = false;
+    var _monitorNextUnsub = null;
+
+    function updateMonitorButton() {
+      var btn = document.getElementById('btn-monitor');
+      if (!btn) return;
+      btn.textContent = monitorAktif ? 'MONITOR: ON' : 'MONITOR: OFF';
+      btn.className = monitorAktif ? 'btn-sm on' : 'btn-sm';
+    }
+
+    function loadMonitorState() {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
+        .get().then(function(snap) {
+          monitorAktif = snap.exists && snap.data().monitorAktif === true;
+          updateMonitorButton();
+          if (monitorAktif) subscribeMonitorNext();
+        }).catch(function() { monitorAktif = false; updateMonitorButton(); });
+    }
+
+    function subscribeMonitorNext() {
+      if (!currentUser) return;
+      if (_monitorNextUnsub) _monitorNextUnsub();
+      _monitorNextUnsub = db.collection('users').doc(currentUser.uid)
+        .collection('kindle_settings').doc('monitor')
+        .onSnapshot(function(snap) {
+          if (!snap.exists) return;
+          var data = snap.data();
+          if (data.nextSignal && _monitorTungguNext) {
+            _monitorTungguNext = false;
+            isBusy = false;
+            // Reset signal
+            db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
+              .set({ nextSignal: false }, { merge: true }).catch(function() {});
+            nextCard();
+          }
+        });
     }
 
     function updateTaipButton() {
@@ -2395,7 +2444,14 @@
         document.getElementById('btn-flip').className = 'btn-sm';
         document.getElementById('btn-tips').className = 'btn-sm';
         if (c.imageUrl) setCardImage(c.imageUrl, false);
-        else setCardImage('', c.gambarSlot === 2);        
+        else setCardImage('', c.gambarSlot === 2);
+        // Monitor ON — block SETERUSNYA, tunggu signal dari laptop
+        if (c.monitorTunggu) {
+          isBusy = true;
+          _monitorTungguNext = true;
+          db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
+            .set({ monitorTunggu: true, nextSignal: false }, { merge: true }).catch(function() {});
+        }
       } else if (showTips) {
         setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
         displayText = c.tips ? c.tips : '(Tiada tips)';
@@ -3340,6 +3396,15 @@
     }
 
     // ── JQ BUTTON HANDLER ──
+    document.getElementById('btn-monitor').onclick = function() {
+      monitorAktif = !monitorAktif;
+      updateMonitorButton();
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
+        .set({ monitorAktif: monitorAktif }, { merge: true }).catch(function() {});
+      if (monitorAktif) subscribeMonitorNext();
+      else { if (_monitorNextUnsub) { _monitorNextUnsub(); _monitorNextUnsub = null; } }
+    };
+
     document.getElementById('btn-taip').onclick = function() {
       taipAktif = !taipAktif;
       updateTaipButton();
@@ -5452,6 +5517,7 @@
         loadCollections(function() {
           loadJenisState();
           loadTaipState();
+          loadMonitorState();
         });
         showScreen('screen-menu');
       } else {
