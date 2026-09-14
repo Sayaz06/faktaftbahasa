@@ -2846,8 +2846,8 @@
       document.getElementById('btn-next').style.color = '';
       document.getElementById('btn-next').textContent = 'SETERUSNYA';
 
-      // Monitor ON + fasa 2 + ada gambar → tunjuk gambar, tunggu Enter di laptop
-      if (monitorAktif && !c.isSR && c.fasa === 2 && c.imageUrl) {
+      // Monitor ON + fasa 2 + ada gambar → tunjuk gambar, tunggu Enter di laptop (termasuk SR)
+      if (monitorAktif && c.fasa === 2 && c.imageUrl) {
         var mainElM = document.getElementById('main-text');
         if (mainElM) { mainElM.textContent = 'Tekan di laptop untuk meneruskan.'; mainElM.className = 'big-text tips-mode'; }
         setCardImage(c.imageUrl, false);
