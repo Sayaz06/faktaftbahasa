@@ -2876,6 +2876,7 @@
     }
 
     function _terusAfterTamat(c) {
+      setCardImage('');
       var mainEl = document.getElementById('main-text');
       if (mainEl) { mainEl.textContent = 'Menyimpan...'; mainEl.className = 'big-text'; }
       setText('play-err', '');
