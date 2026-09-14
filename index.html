@@ -1367,8 +1367,19 @@
       _champUnsubs.push(
         db.collection('users').doc(currentUser.uid).collection('supplement_tracker')
           .onSnapshot(function(snap) {
+            var d = new Date();
+            var todayKey = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
             champData.supplement = [];
-            snap.forEach(function(d) { var x = d.data(); x.id = d.id; if (x.title) champData.supplement.push(x); });
+            snap.forEach(function(doc) {
+              var x = doc.data(); x.id = doc.id;
+              if (!x.title) return;
+              var takenToday = (x.takenDates || []).filter(function(t) { return t === todayKey; }).length;
+              var dailyLimit = x.dailyLimit || 1;
+              // Masukkan berbilang kali mengikut baki had harian
+              for (var i = 0; i < (dailyLimit - takenToday); i++) {
+                champData.supplement.push(x);
+              }
+            });
             champData.supplement.sort(function(a, b) { return (a.order || 0) - (b.order || 0); });
           }, function() { champData.supplement = []; })
       );
@@ -1487,7 +1498,8 @@
           belakang: '',
           adaFlip: false,
           _champSourceKey: sourceKey,
-          _champActiveLen: activeLen
+          _champActiveLen: activeLen,
+          _champItemId: item.id
         };
       } else if (sourceKey === 'water') {
         return {
@@ -1504,9 +1516,21 @@
       return null;
     }
 
-    function champCommitItem(sourceKey, activeLen) {
-      // Naikkan index selepas user sahkan — dipanggil bila Ya atau selesai motivasi/rutin/perjanjian
-      champIdx[sourceKey] = (champIdx[sourceKey] + 1) % champData[sourceKey].length;
+    function champCommitItem(sourceKey, activeLen, itemId) {
+      if (sourceKey === 'supplement' && itemId && currentUser) {
+        var d = new Date();
+        var todayKey = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        var supRef = db.collection('users').doc(currentUser.uid).collection('supplement_tracker').doc(itemId);
+        supRef.get().then(function(snap) {
+          if (!snap.exists) return;
+          var takenDates = (snap.data().takenDates || []).filter(function(t) {
+            return new Date(t).getTime() >= Date.now() - (7 * 24 * 60 * 60 * 1000);
+          });
+          takenDates.push(todayKey);
+          supRef.update({ takenDates: takenDates }).catch(function() {});
+        });
+      }
+      champIdx[sourceKey] = (champIdx[sourceKey] + 1) % Math.max(champData[sourceKey].length, 1);
       champLastIdx = (champLastIdx + 1) % activeLen;
       db.collection('users').doc(currentUser.uid)
         .collection('kindle_settings').doc('champion')
@@ -3254,7 +3278,7 @@
                   }, { merge: true }).catch(function() {});
               }
               // Commit index — baru naikkan selepas user sahkan
-              if (hSnap.champSourceKey) champCommitItem(hSnap.champSourceKey, hSnap.champActiveLen);
+              if (hSnap.champSourceKey) champCommitItem(hSnap.champSourceKey, hSnap.champActiveLen, hSnap._champItemId);
               _selesaiMotivasi();
               if (cbM) cbM();
             },
