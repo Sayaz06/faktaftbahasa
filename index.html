@@ -1005,8 +1005,8 @@
 
       out.push({
         front: isSR ? ('SR selesai — ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0)) : 'Laci Tamat. Tekan SETERUSNYA.',
-        back: '', tips: '', imageUrl: '',
-        title: title, drawerId: d.id, isF0: false, isTamat: true, isSR: !!isSR
+        back: '', tips: '', imageUrl: img,
+        title: title, drawerId: d.id, isF0: false, isTamat: true, isSR: !!isSR, fasa: 2
       });
       return out;
     }
@@ -2451,6 +2451,10 @@
           _monitorTungguNext = true;
           db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
             .set({ monitorTunggu: true, nextSignal: false }, { merge: true }).catch(function() {});
+        } else if (monitorAktif) {
+          // Reset monitorTunggu bila dah keluar dari kad gambar
+          db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('monitor')
+            .set({ monitorTunggu: false }, { merge: true }).catch(function() {});
         }
       } else if (showTips) {
         setText('side-label', c.isF0 ? 'TIPS F0' : 'TIPS F1&2');
