@@ -94,6 +94,31 @@
     .counter-box.last-perkataan .meta {
       color: #fff;
     }
+    @font-face {
+      font-family: 'UthmanicHafs';
+      src: url('https://verses.quran.foundation/fonts/quran/hafs/uthmanic_hafs/UthmanicHafs1Ver18.woff2') format('woff2');
+      font-display: block;
+    }
+    .arab-text {
+      font-family: 'UthmanicHafs', 'Traditional Arabic', serif;
+      font-size: 2.4rem;
+      font-weight: 600;
+      line-height: 2.0;
+      direction: rtl;
+      text-align: right;
+      word-break: break-word;
+      margin: 4px 0;
+      white-space: pre-wrap;
+    }
+    .terjemah-text {
+      font-size: 1.25rem;
+      line-height: 1.6;
+      font-weight: normal;
+      text-align: left;
+      word-break: break-word;
+      margin: 4px 0;
+      white-space: pre-wrap;
+    }
     .mode-label { font-size: 0.65rem; font-weight: bold; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 1px; }
     .side-label { font-size: 0.65rem; font-weight: bold; margin-bottom: 1px; }
     .big-text {
@@ -3284,19 +3309,37 @@
           window._qjqHandler = null; return;
         }
         if (!qjqFlipped) {
-          // Tunjuk maksud
           var c = qjqCards[qjqIdx];
+          // Ada bahagian waqaf seterusnya?
+          if (qjqWaqaf.length > 1 && qjqWaqafIdx < qjqWaqaf.length - 1) {
+            qjqWaqafIdx++;
+            var simW = qjqWaqaf[qjqWaqafIdx].simbol || '';
+            var arabW = qjqWaqaf[qjqWaqafIdx].teks + (simW ? ' ' + simW : '');
+            var mainElW = document.getElementById('main-text');
+            if (mainElW) {
+              mainElW.textContent = arabW;
+              mainElW.className = 'arab-text';
+              mainElW.style.fontFamily = '';
+              mainElW.style.fontSize = '';
+              mainElW.style.direction = '';
+              mainElW.style.textAlign = '';
+            }
+            setText('play-progress', 'Ayat ' + c.ayatNum + (simW ? ' ' + simW : '') + ' · ' + (qjqWaqafIdx + 1) + '/' + qjqWaqaf.length + ' · Sesi ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
+            setText('play-meta', qjqWaqafIdx < qjqWaqaf.length - 1 ? '(Tekan untuk bahagian seterusnya)' : '(Tekan untuk Maksud)');
+            return;
+          }
+          // Habis waqaf — tunjuk maksud
           qjqFlipped = true;
           setText('side-label', 'TERJEMAHAN');
-          setText('play-meta', qjqMaksud.length > 1 ? '(Bahagian 1/' + qjqMaksud.length + ' · Tekan untuk seterusnya)' : '(Tekan SETERUSNYA untuk ayat berikut)');
+          setText('play-meta', qjqMaksud.length > 1 ? '(Bahagian 1/' + qjqMaksud.length + ' · Tekan untuk seterusnya)' : '(Tekan untuk ayat berikut)');
           var mainElQ = document.getElementById('main-text');
           if (mainElQ) {
             mainElQ.textContent = qjqMaksud[0] || '(Tiada terjemahan)';
+            mainElQ.className = 'terjemah-text';
             mainElQ.style.fontFamily = '';
             mainElQ.style.fontSize = '';
             mainElQ.style.direction = '';
             mainElQ.style.textAlign = '';
-            mainElQ.className = (qjqMaksud[0] || '').length > 200 ? 'big-text long-text' : 'big-text';
           }
           return;
         }
@@ -3305,7 +3348,14 @@
           qjqMaksudIdx++;
           setText('play-meta', '(Bahagian ' + (qjqMaksudIdx + 1) + '/' + qjqMaksud.length + ' · Tekan untuk seterusnya)');
           var mainElQ2 = document.getElementById('main-text');
-          if (mainElQ2) { mainElQ2.textContent = qjqMaksud[qjqMaksudIdx]; mainElQ2.className = qjqMaksud[qjqMaksudIdx].length > 200 ? 'big-text long-text' : 'big-text'; }
+          if (mainElQ2) {
+            mainElQ2.textContent = qjqMaksud[qjqMaksudIdx];
+            mainElQ2.className = 'terjemah-text';
+            mainElQ2.style.fontFamily = '';
+            mainElQ2.style.fontSize = '';
+            mainElQ2.style.direction = '';
+            mainElQ2.style.textAlign = '';
+          }
           return;
         }
         // Simpan kemajuan — ayat selesai dibaca
@@ -3322,7 +3372,7 @@
           var cbDone = window._qjqHandler;
           window._qjqHandler = null;
           var mainElQ3 = document.getElementById('main-text');
-          if (mainElQ3) { mainElQ3.style.fontFamily = ''; mainElQ3.style.fontSize = ''; mainElQ3.style.direction = ''; mainElQ3.style.textAlign = ''; }
+          if (mainElQ3) { mainElQ3.className = 'big-text'; mainElQ3.style.fontFamily = ''; mainElQ3.style.fontSize = ''; mainElQ3.style.direction = ''; mainElQ3.style.textAlign = ''; }
           cbDone && cbDone();
           return;
         }
@@ -3579,18 +3629,52 @@
     }
 
     // ── QURAN FUNCTIONS ──
+    var WAQAF_SYMBOLS_K = ['\u06DA','\u06D7','\u06D6','\u06D8','\u06DB'];
+    function potongWaqafKindle(teks) {
+      if (!teks || !teks.trim()) return [{ teks: teks || '', simbol: '' }];
+      var hasil = []; var semasa = '';
+      for (var i = 0; i < teks.length; i++) {
+        if (WAQAF_SYMBOLS_K.indexOf(teks[i]) !== -1) {
+          var trim = semasa.trim();
+          if (trim) hasil.push({ teks: trim, simbol: teks[i] });
+          semasa = '';
+        } else { semasa += teks[i]; }
+      }
+      var baki = semasa.trim();
+      if (baki) hasil.push({ teks: baki, simbol: '' });
+      return hasil.length ? hasil : [{ teks: teks, simbol: '' }];
+    }
+    function filterMuanaqahKindle(bahagian) {
+      var hasil = []; var i = 0;
+      while (i < bahagian.length) {
+        if (bahagian[i].simbol === '\u06DB' && i + 1 < bahagian.length && bahagian[i+1].simbol === '\u06DB') {
+          hasil.push({ teks: (bahagian[i].teks + ' ' + bahagian[i+1].teks).trim(), simbol: '\u06DB' });
+          i += 2;
+        } else { hasil.push(bahagian[i]); i++; }
+      }
+      return hasil;
+    }
     function pecahMaksudKindle(teks) {
       var MAX = 300;
+      var SIMBOL_POTONG = '!#@$%^&*?,.`~';
       if (!teks || teks.length <= MAX) return [teks || ''];
-      var bahagian = [];
-      var i = 0;
+      var bahagian = []; var i = 0;
       while (i < teks.length) {
         var hujung = i + MAX;
         if (hujung >= teks.length) { bahagian.push(teks.slice(i).trim()); break; }
-        var potong = teks.lastIndexOf(' ', hujung);
-        if (potong <= i) potong = hujung;
-        bahagian.push(teks.slice(i, potong).trim() + '...');
-        i = potong + 1;
+        var potong = -1;
+        for (var j = hujung; j > i; j--) {
+          if (SIMBOL_POTONG.indexOf(teks[j]) !== -1) { potong = j; break; }
+        }
+        if (potong === -1) {
+          potong = teks.lastIndexOf(' ', hujung);
+          if (potong <= i) potong = hujung;
+          bahagian.push(teks.slice(i, potong).trim() + '...');
+          i = potong + 1;
+        } else {
+          bahagian.push(teks.slice(i, potong + 1).trim() + '...');
+          i = potong + 1;
+        }
       }
       return bahagian.filter(function(b) { return b; });
     }
@@ -3702,7 +3786,6 @@
 
     function _renderQjqAyat(cbSelepas) {
       if (!qjqCards.length || qjqIdx >= qjqCards.length) {
-        // Habis semua ayat
         window._qjqHandler = null;
         cbSelepas && cbSelepas();
         return;
@@ -3711,17 +3794,28 @@
       setText('play-status', 'QURAN · ' + (QURAN_SURAH_NAMES[c.surahNum - 1] || '') + ' · ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
       setText('play-mode', c.tajuk);
       setText('side-label', 'ARAB');
-      setText('play-progress', 'Ayat ' + c.ayatNum + ' · ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
-      setText('play-meta', '(Tekan SETERUSNYA untuk Maksud)');
       setText('play-err', '');
+      qjqWaqaf = filterMuanaqahKindle(potongWaqafKindle(c.arab || ''));
+      qjqWaqafIdx = 0;
+      var simPertama = qjqWaqaf.length > 1 ? (qjqWaqaf[0].simbol || '') : '';
+      var arabPertama = qjqWaqaf.length > 1
+        ? qjqWaqaf[0].teks + (simPertama ? ' ' + simPertama : '')
+        : (c.arab || '—');
       var mainEl = document.getElementById('main-text');
       if (mainEl) {
-        mainEl.textContent = c.arab || '—';
-        mainEl.style.fontFamily = "'UthmanicHafs','Traditional Arabic',serif";
-        mainEl.style.fontSize = '1.5rem';
-        mainEl.style.direction = 'rtl';
-        mainEl.style.textAlign = 'center';
-        mainEl.className = 'big-text';
+        mainEl.textContent = arabPertama;
+        mainEl.className = 'arab-text';
+        mainEl.style.fontFamily = '';
+        mainEl.style.fontSize = '';
+        mainEl.style.direction = '';
+        mainEl.style.textAlign = '';
+      }
+      if (qjqWaqaf.length > 1) {
+        setText('play-progress', 'Ayat ' + c.ayatNum + (simPertama ? ' ' + simPertama : '') + ' · 1/' + qjqWaqaf.length + ' · Sesi ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
+        setText('play-meta', '(Tekan untuk bahagian seterusnya)');
+      } else {
+        setText('play-progress', 'Ayat ' + c.ayatNum + ' · Sesi ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
+        setText('play-meta', '(Tekan untuk Maksud)');
       }
       setCardImage('');
       qjqFlipped = false;
