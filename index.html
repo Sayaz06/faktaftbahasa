@@ -3106,19 +3106,19 @@
                     }
                   }
                   clearBlockCard();
-            function _doRenderSR() {
-              setText('play-status', srStatusLabel);
-              if (mode === 'bahasa') {
-                var srDrawerOk = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
-                if (srDrawerOk) { var srIssOk = checkTipsBlock(srDrawerOk); if (srIssOk.length) { renderBlockCard(srDrawerOk.title || '', srIssOk); return; } }
-              }
-              renderCard();
-            }
-            if (jqAktif && jqMotivasiList.length) {
-              tunjukMotivasiJQ(function() { _doRenderSR(); });
-            } else {
-              _doRenderSR();
-            }
+                  function _doRenderSR() {
+                    setText('play-status', srStatusLabel);
+                    if (mode === 'bahasa') {
+                      var srDrawerOk = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                      if (srDrawerOk) { var srIssOk = checkTipsBlock(srDrawerOk); if (srIssOk.length) { renderBlockCard(srDrawerOk.title || '', srIssOk); return; } }
+                    }
+                    renderCard();
+                  }
+                  if (jqAktif && jqMotivasiList.length) {
+                    tunjukMotivasiJQ(function() { _doRenderSR(); });
+                  } else {
+                    _doRenderSR();
+                  }
                   return;
                 }
                 // SR drawer tiada — reset dan terus ke laci biasa seterusnya
