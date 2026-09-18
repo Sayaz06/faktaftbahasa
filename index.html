@@ -2150,26 +2150,12 @@
 
         if (jqAktif && jqMotivasiList.length) {
           tunjukMotivasiJQ(function() {
-            if (quranAktif) {
-              // JQ selesai → papar Quran → kemudian ke bahasa
-              tunjukQuranJQ(function() {
-                isBusy = true;
-                var mainEl = document.getElementById('main-text');
-                if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
-                setText('play-err', '');
-                setTimeout(function() { _terusKeSR(); }, 0);
-              });
-            } else {
-              isBusy = true;
-              var mainEl = document.getElementById('main-text');
-              if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
-              setText('play-err', '');
-              setTimeout(function() { _terusKeSR(); }, 0);
-            }
+            isBusy = true;
+            var mainEl = document.getElementById('main-text');
+            if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
+            setText('play-err', '');
+            setTimeout(function() { _terusKeSR(); }, 0);
           });
-        } else if (quranAktif) {
-          // Tiada JQ tapi Quran ON — papar Quran terus sebelum bahasa
-          tunjukQuranJQ(function() { _terusKeSR(); });
         } else {
           _terusKeSR();
         }
@@ -2269,26 +2255,12 @@
 
         if (jqAktif && jqMotivasiList.length) {
           tunjukMotivasiJQ(function() {
-            if (quranAktif) {
-              // JQ selesai → papar Quran → kemudian ke bahasa
-              tunjukQuranJQ(function() {
-                isBusy = true;
-                var mainEl = document.getElementById('main-text');
-                if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
-                setText('play-err', '');
-                setTimeout(function() { _terusKeSR(); }, 0);
-              });
-            } else {
-              isBusy = true;
-              var mainEl = document.getElementById('main-text');
-              if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
-              setText('play-err', '');
-              setTimeout(function() { _terusKeSR(); }, 0);
-            }
+            isBusy = true;
+            var mainEl = document.getElementById('main-text');
+            if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
+            setText('play-err', '');
+            setTimeout(function() { _terusKeSR(); }, 0);
           });
-        } else if (quranAktif) {
-          // Tiada JQ tapi Quran ON — papar Quran terus sebelum bahasa
-          tunjukQuranJQ(function() { _terusKeSR(); });
         } else {
           _terusKeSR();
         }
@@ -2852,10 +2824,16 @@
               activePerkataan = next;
               rebuildBahasaCards(function(ok) {
                 setText('play-status', 'BAHASA · ' + (next.name || ''));
+                function _renderLompat() { renderCard(); }
                 if (jqAktif && jqMotivasiList.length) {
-                  tunjukMotivasiJQ(function() { renderCard(); });
+                  tunjukMotivasiJQ(function() {
+                    if (quranAktif) { tunjukQuranJQ(function() { _renderLompat(); }); }
+                    else { _renderLompat(); }
+                  });
+                } else if (quranAktif) {
+                  tunjukQuranJQ(function() { _renderLompat(); });
                 } else {
-                  renderCard();
+                  _renderLompat();
                 }
               });
               return true;
@@ -3060,57 +3038,37 @@
               return;
             }
 
-            if (jqAktif && jqMotivasiList.length) {
-              tunjukMotivasiJQ(function() {
-                setText('play-status', _statusSR);
-                if (mode === 'bahasa' && cardIndex >= cards.length) {
-                  lompatPerkataanSeterusnya();
-                  return;
-                }
-                if (mode === 'fakta' && cardIndex >= cards.length) {
-                  resetLastDrawer();
-                  rebuildFaktaCards(function(ok2) {
-                    if (ok2) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
-                    if (cardIndex < cards.length) renderCard();
-                  });
-                  return;
-                }
-                // Block check bahasa selepas JQ
-                if (mode === 'bahasa') {
-                  var resumeCard = cards[cardIndex] || cards[0];
-                  var resumeDrawerId = resumeCard ? resumeCard.drawerId : null;
-                  var firstDrawerObj = resumeDrawerId
-                    ? allBahasaDrawers.filter(function(d) { return d.id === resumeDrawerId; })[0]
-                    : null;
-                  if (firstDrawerObj) {
-                    var blockIssuesSR = checkTipsBlock(firstDrawerObj);
-                    if (blockIssuesSR.length) {
-                      isBusy = true;
-                      renderBlockCard(firstDrawerObj.title || '', blockIssuesSR);
-                      isBusy = false;
-                      return;
-                    }
-                  }
-                }
-                renderCard();
-              });
-            } else {
-              // Block check bahasa (tiada JQ)
+            function _doRenderSelepasJQSR() {
+              setText('play-status', _statusSR);
+              if (mode === 'bahasa' && cardIndex >= cards.length) { lompatPerkataanSeterusnya(); return; }
+              if (mode === 'fakta' && cardIndex >= cards.length) {
+                resetLastDrawer();
+                rebuildFaktaCards(function(ok2) {
+                  if (ok2) setText('play-status', 'FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+                  if (cardIndex < cards.length) renderCard();
+                });
+                return;
+              }
               if (mode === 'bahasa') {
                 var resumeCard = cards[cardIndex] || cards[0];
                 var resumeDrawerId = resumeCard ? resumeCard.drawerId : null;
-                var firstDrawerObj = resumeDrawerId
-                  ? allBahasaDrawers.filter(function(d) { return d.id === resumeDrawerId; })[0]
-                  : null;
+                var firstDrawerObj = resumeDrawerId ? allBahasaDrawers.filter(function(d) { return d.id === resumeDrawerId; })[0] : null;
                 if (firstDrawerObj) {
                   var blockIssuesSR = checkTipsBlock(firstDrawerObj);
-                  if (blockIssuesSR.length) {
-                    renderBlockCard(firstDrawerObj.title || '', blockIssuesSR);
-                    return;
-                  }
+                  if (blockIssuesSR.length) { isBusy = true; renderBlockCard(firstDrawerObj.title || '', blockIssuesSR); isBusy = false; return; }
                 }
               }
               renderCard();
+            }
+            if (jqAktif && jqMotivasiList.length) {
+              tunjukMotivasiJQ(function() {
+                if (quranAktif) { tunjukQuranJQ(function() { _doRenderSelepasJQSR(); }); }
+                else { _doRenderSelepasJQSR(); }
+              });
+            } else if (quranAktif) {
+              tunjukQuranJQ(function() { _doRenderSelepasJQSR(); });
+            } else {
+              _doRenderSelepasJQSR();
             }
           });
 
@@ -3148,25 +3106,19 @@
                     }
                   }
                   clearBlockCard();
-                  if (jqAktif && jqMotivasiList.length) {
-                    tunjukMotivasiJQ(function() {
-                      setText('play-status', srStatusLabel);
-                      // Block check selepas JQ untuk SR bahasa sahaja
-                      if (mode === 'bahasa') {
-                        var srDrawerjq = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
-                        if (srDrawerjq) {
-                          var srIssuesjq = checkTipsBlock(srDrawerjq);
-                          if (srIssuesjq.length) {
-                            renderBlockCard(srDrawerjq.title || '', srIssuesjq);
-                            return;
-                          }
-                        }
-                      }
-                      renderCard();
-                    });
-                  } else {
-                    renderCard();
-                  }
+            function _doRenderSR() {
+              setText('play-status', srStatusLabel);
+              if (mode === 'bahasa') {
+                var srDrawerOk = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+                if (srDrawerOk) { var srIssOk = checkTipsBlock(srDrawerOk); if (srIssOk.length) { renderBlockCard(srDrawerOk.title || '', srIssOk); return; } }
+              }
+              renderCard();
+            }
+            if (jqAktif && jqMotivasiList.length) {
+              tunjukMotivasiJQ(function() { _doRenderSR(); });
+            } else {
+              _doRenderSR();
+            }
                   return;
                 }
                 // SR drawer tiada — reset dan terus ke laci biasa seterusnya
@@ -3219,7 +3171,12 @@
                 clearBlockCard();
               }
               if (jqAktif && jqMotivasiList.length) {
-                tunjukMotivasiJQ(function() { _tunjukKadSelesaiFakta(); });
+                tunjukMotivasiJQ(function() {
+                  if (quranAktif) { tunjukQuranJQ(function() { _tunjukKadSelesaiFakta(); }); }
+                  else { _tunjukKadSelesaiFakta(); }
+                });
+              } else if (quranAktif) {
+                tunjukQuranJQ(function() { _tunjukKadSelesaiFakta(); });
               } else {
                 _tunjukKadSelesaiFakta();
               }
@@ -3247,34 +3204,32 @@
             isFlipped = false; showTips = false; isBusy = false;
             clearBlockCard();
             setText('play-err', '');
+            var _statusNext = mode === 'bahasa'
+              ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
+              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+            function _doRenderLaciSeterusnya() {
+              setText('play-status', _statusNext);
+              if (mode === 'bahasa') {
+                var nextCard0x = cards[cardIndex];
+                var nextDrawerIdx = nextCard0x ? nextCard0x.drawerId : null;
+                var nextDrawerObjx = nextDrawerIdx ? allBahasaDrawers.filter(function(d) { return d.id === nextDrawerIdx; })[0] : null;
+                if (nextDrawerObjx) {
+                  var blockIssuesx = checkTipsBlock(nextDrawerObjx);
+                  if (blockIssuesx.length) { renderBlockCard(nextDrawerObjx.title || '', blockIssuesx); return; }
+                }
+              }
+              renderCard();
+            }
             if (jqAktif && jqMotivasiList.length) {
               tunjukMotivasiJQ(function() {
-                setText('play-status', mode === 'bahasa'
-                  ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
-                  : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
-                // Block check selepas JQ
-                if (mode === 'bahasa') {
-                  var nextCard0jq = cards[cardIndex];
-                  var nextDrawerIdjq = nextCard0jq ? nextCard0jq.drawerId : null;
-                  var nextDrawerObjjq = nextDrawerIdjq
-                    ? allBahasaDrawers.filter(function(d) { return d.id === nextDrawerIdjq; })[0]
-                    : null;
-                  if (nextDrawerObjjq) {
-                    var blockIssuesjq = checkTipsBlock(nextDrawerObjjq);
-                    if (blockIssuesjq.length) {
-                      renderBlockCard(nextDrawerObjjq.title || '', blockIssuesjq);
-                      return;
-                    }
-                  }
-                }
-                renderCard();
+                if (quranAktif) { tunjukQuranJQ(function() { _doRenderLaciSeterusnya(); }); }
+                else { _doRenderLaciSeterusnya(); }
               });
-              return;
+            } else if (quranAktif) {
+              tunjukQuranJQ(function() { _doRenderLaciSeterusnya(); });
+            } else {
+              _doRenderLaciSeterusnya();
             }
-            setText('play-status', mode === 'bahasa'
-              ? ('BAHASA · ' + ((activePerkataan && activePerkataan.name) || ''))
-              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || '')));
-            renderCard();
           }
         }
       }).catch(function(e) {
