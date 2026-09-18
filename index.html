@@ -3222,10 +3222,10 @@
             }
             if (jqAktif && jqMotivasiList.length) {
               tunjukMotivasiJQ(function() {
-                if (quranAktif) { tunjukQuranJQ(function() { _doRenderLaciSeterusnya(); }); }
+                if (quranAktif && mode === 'bahasa') { tunjukQuranJQ(function() { _doRenderLaciSeterusnya(); }); }
                 else { _doRenderLaciSeterusnya(); }
               });
-            } else if (quranAktif) {
+            } else if (quranAktif && mode === 'bahasa') {
               tunjukQuranJQ(function() { _doRenderLaciSeterusnya(); });
             } else {
               _doRenderLaciSeterusnya();
@@ -3495,28 +3495,7 @@
         if (jqAktif && jqMotivasiList.length) {
           var f2Index = cardIndex;
           tunjukMotivasiJQ(function() {
-            if (quranAktif) {
-              tunjukQuranJQ(function() {
-                cardIndex = f2Index;
-                var statusLabel = srModeAktif
-                  ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
-                  : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
-                setText('play-status', statusLabel);
-                renderCard();
-              });
-            } else {
-              cardIndex = f2Index;
-              var statusLabel = srModeAktif
-                ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
-                : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
-              setText('play-status', statusLabel);
-              renderCard();
-            }
-          });
-        } else if (quranAktif) {
-          var f2IndexQ = cardIndex;
-          tunjukQuranJQ(function() {
-            cardIndex = f2IndexQ;
+            cardIndex = f2Index;
             var statusLabel = srModeAktif
               ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
               : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
