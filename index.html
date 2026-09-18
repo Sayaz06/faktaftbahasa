@@ -670,7 +670,7 @@
   <!-- Popup PIN untuk ON JQ -->
   <div id="jq-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;">
     <div style="margin:20px auto 0;background:#fff;border:2px solid #000;border-radius:8px;padding:10px 12px;max-width:300px;width:90%;text-align:center;">
-      <div style="font-weight:bold;font-size:0.85rem;margin-bottom:6px;">Masukkan PIN untuk ON JQ</div>
+      <div id="jq-pin-label" style="font-weight:bold;font-size:0.85rem;margin-bottom:6px;">Masukkan PIN untuk ON JQ</div>
       <input id="jq-pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off" style="padding:7px;font-size:1.1rem;margin:4px 0;">
       <button id="jq-pin-ok" class="btn btn-primary" style="margin-top:3px;padding:8px;">Sahkan</button>
       <button id="jq-pin-batal" class="btn" style="margin-top:3px;padding:8px;">Batal</button>
@@ -3782,21 +3782,32 @@
         .set({ aktif: quranAktif }).catch(function() {});
     };
 
+    // Callback untuk PIN overlay dikongsi (JQ + laci-laci berkunci)
+    var _pinCallback = null;
+
+    function _bukaPinOverlay(label, cb) {
+      _pinCallback = cb;
+      setText('jq-pin-label', label);
+      document.getElementById('jq-pin-input').value = '';
+      setText('jq-pin-msg', '');
+      var overlay = document.getElementById('jq-overlay');
+      overlay.style.display = 'none';
+      overlay.style.display = 'block';
+      setTimeout(function() { document.getElementById('jq-pin-input').focus(); }, 100);
+    }
+
     document.getElementById('btn-jq').onclick = function() {
       if (isLoading) return;
       if (jqAktif) {
-        // Terus OFF tanpa PIN
         jqAktif = false;
         simpanJQStatus(false);
         updateJQButton();
       } else {
-        // Perlukan PIN untuk ON
-        document.getElementById('jq-pin-input').value = '';
-        setText('jq-pin-msg', '');
-        var overlay = document.getElementById('jq-overlay');
-        overlay.style.display = 'none';
-        overlay.style.display = 'block';
-        setTimeout(function() { document.getElementById('jq-pin-input').focus(); }, 100);
+        _bukaPinOverlay('Masukkan PIN untuk ON JQ', function() {
+          jqAktif = true;
+          simpanJQStatus(true);
+          updateJQButton();
+        });
       }
     };
 
@@ -3811,9 +3822,7 @@
         .then(function() {
           document.getElementById('jq-overlay').style.display = 'none';
           document.getElementById('jq-pin-ok').disabled = false;
-          jqAktif = true;
-          simpanJQStatus(true);
-          updateJQButton();
+          if (_pinCallback) { var cb = _pinCallback; _pinCallback = null; cb(); }
         })
         .catch(function(e) {
           document.getElementById('jq-pin-ok').disabled = false;
@@ -3826,6 +3835,7 @@
     };
 
     document.getElementById('jq-pin-batal').onclick = function() {
+      _pinCallback = null;
       document.getElementById('jq-overlay').style.display = 'none';
     };
 
@@ -3854,9 +3864,15 @@
     // ══════════════════════════════════════════
     // MAIN MOTIVATION
     // ══════════════════════════════════════════
+    function _bukaDenganPin(label, fn) {
+      _bukaPinOverlay(label, function() { fn(); });
+    }
+
     document.getElementById('btn-go-main-motivation').onclick = function() {
-      showScreen('screen-main-motivation');
-      if (_mmUnsub) { renderMainMotivation(); } else { loadMainMotivation(); }
+      _bukaDenganPin('PIN untuk buka Main Motivation', function() {
+        showScreen('screen-main-motivation');
+        if (_mmUnsub) { renderMainMotivation(); } else { loadMainMotivation(); }
+      });
     };
 
     document.getElementById('btn-mm-back').onclick = function() {
@@ -4002,8 +4018,10 @@
     // OTHER MOTIVATION
     // ══════════════════════════════════════════
     document.getElementById('btn-go-other-motivation').onclick = function() {
-      showScreen('screen-other-motivation');
-      loadOtherMotivation();
+      _bukaDenganPin('PIN untuk buka Other Motivation', function() {
+        showScreen('screen-other-motivation');
+        loadOtherMotivation();
+      });
     };
 
     document.getElementById('btn-om-back').onclick = function() {
@@ -4449,8 +4467,10 @@
     }
 
     document.getElementById('btn-go-gotick').onclick = function() {
-      gtSubscribe();
-      showScreen('screen-gotick-list');
+      _bukaDenganPin('PIN untuk buka Go-Tick', function() {
+        gtSubscribe();
+        showScreen('screen-gotick-list');
+      });
     };
     document.getElementById('btn-gt-back-menu').onclick = function() {
       if (_gtUnsub) { _gtUnsub(); _gtUnsub = null; }
@@ -5644,9 +5664,11 @@
     var _reminderPrevScreen = 'screen-menu';
 
     document.getElementById('btn-go-reminder-list').onclick = function() {
-      _reminderPrevScreen = 'screen-menu';
-      showScreen('screen-reminder-list');
-      renderReminderKindle();
+      _bukaDenganPin('PIN untuk buka Reminder', function() {
+        _reminderPrevScreen = 'screen-menu';
+        showScreen('screen-reminder-list');
+        renderReminderKindle();
+      });
     };
 
     document.getElementById('btn-reminder-list-back').onclick = function() {
