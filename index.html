@@ -454,6 +454,7 @@
     <button id="btn-go-reminder-list" class="btn">[ REMINDER ]</button>
     <button id="btn-go-other-motivation" class="btn">[ OTHER MOTIVATION ]</button>
     <button id="btn-jq" class="btn" style="margin-top:8px;">JQ: OFF</button>
+    <button id="btn-quran-jq" class="btn" style="margin-top:4px;">📖 Quran: OFF</button>
     <button id="btn-taip" class="btn" style="margin-top:8px;">TAIP: OFF</button>
     <button id="btn-monitor" class="btn" style="margin-top:8px;">MONITOR: OFF</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
@@ -844,6 +845,24 @@
     var jqPendingCardIndex = -1; // index kad F2 yang menunggu selepas motivasi (fakta)
     var _jqMotivasiUnsubscribe = null; // untuk cleanup onSnapshot
     var isLoading = false; // guard untuk elak double-trigger button
+
+    // ── QURAN MODE ──
+    var QURAN_SURAH_NAMES = ['Al-Fatihah','Al-Baqarah','Ali-\'Imran','An-Nisaa\'','Al-Ma\'idah','Al-An\'aam','Al-A\'raaf','Al-Anfaal','At-Taubah','Yunus','Hud','Yusuf','Ar-Ra\'d','Ibrahim','Al-Hijr','An-Nahl','Al-Israa\'','Al-Kahfi','Maryam','Taha','Al-Anbiyaa\'','Al-Hajj','Al-Mu\'minuun','An-Nur','Al-Furqaan','Asy-Syu\'araa\'','An-Naml','Al-Qasas','Al-\'Ankabuut','Ar-Ruum','Luqman','As-Sajdah','Al-Ahzaab','Saba\'','Faatir','Yaa siin','As-Saaffaat','Saad','Az-Zumar','Ghaafir','Fussilat','Asy-Syura','Az-Zukhruf','Ad-Dukhaan','Al-Jaathiyah','Al-Ahqaaf','Muhammad','Al-Fat-h','Al-Hujuraat','Qaaf','Adz-Dzaariyaat','At-Tuur','An-Najm','Al-Qamar','Ar-Rahmaan','Al-Waaqi\'ah','Al-Hadiid','Al-Mujaadalah','Al-Hasyr','Al-Mumtahanah','As-Saff','Al-Jumu\'ah','Al-Munaafiquun','At-Taghaabun','At-Talaaq','At-Tahriim','Al-Mulk','Al-Qalam','Al-Haaqqah','Al-Ma\'aarij','Nuh','Al-Jinn','Al-Muzzammil','Al-Muddaththir','Al-Qiyamah','Al-Insaan','Al-Mursalaat','An-Naba\'','An-Naazi\'aat','\'Abasa','At-Takwiir','Al-Infitaar','Al-Mutaffifiin','Al-Insyiqaaq','Al-Buruuj','At-Taariq','Al-A\'laa','Al-Ghaasyiyah','Al-Fajr','Al-Balad','Asy-Syams','Al-Lail','Adh-Dhuha','Al-Insyiraah','At-Tiin','Al-\'Alaq','Al-Qadr','Al-Bayyinah','Az-Zalzalah','Al-\'Aadiyaat','Al-Qaari\'ah','At-Takaathur','Al-\'Asr','Al-Humazah','Al-Fiil','Quraisy','Al-Maa\'uun','Al-Kauthar','Al-Kaafiruun','An-Nasr','Al-Masad','Al-Ikhlaas','Al-Falaq','An-Naas'];
+    var quranAktif = false;
+    var allQuranDrawers = [];
+    var quranSurahSemasa = 1;
+    var quranAyatSemasa = 0;
+    var _unsubQuranKindle = null;
+    var _unsubQuranSurahKindle = 0;
+    var _kemajuanCacheKindle = null;
+    var qjqCards = [];
+    var qjqIdx = 0;
+    var qjqFlipped = false;
+    var qjqWaqaf = [];
+    var qjqWaqafIdx = 0;
+    var qjqMaksud = [];
+    var qjqMaksudIdx = 0;
+    var QURAN_AYAT_PER_SESI = 10;
 
     // ── CHAMPION QUEUE ──
     var champSources = []; // sumber yang ditick: ['motivasi','perjanjian','rutin','supplement','water']
@@ -2106,12 +2125,26 @@
 
         if (jqAktif && jqMotivasiList.length) {
           tunjukMotivasiJQ(function() {
-            isBusy = true;
-            var mainEl = document.getElementById('main-text');
-            if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
-            setText('play-err', '');
-            setTimeout(function() { _terusKeSR(); }, 0);
+            if (quranAktif) {
+              // JQ selesai → papar Quran → kemudian ke bahasa
+              tunjukQuranJQ(function() {
+                isBusy = true;
+                var mainEl = document.getElementById('main-text');
+                if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
+                setText('play-err', '');
+                setTimeout(function() { _terusKeSR(); }, 0);
+              });
+            } else {
+              isBusy = true;
+              var mainEl = document.getElementById('main-text');
+              if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
+              setText('play-err', '');
+              setTimeout(function() { _terusKeSR(); }, 0);
+            }
           });
+        } else if (quranAktif) {
+          // Tiada JQ tapi Quran ON — papar Quran terus sebelum bahasa
+          tunjukQuranJQ(function() { _terusKeSR(); });
         } else {
           _terusKeSR();
         }
@@ -2211,12 +2244,26 @@
 
         if (jqAktif && jqMotivasiList.length) {
           tunjukMotivasiJQ(function() {
-            isBusy = true;
-            var mainEl = document.getElementById('main-text');
-            if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
-            setText('play-err', '');
-            setTimeout(function() { _terusKeSR(); }, 0);
+            if (quranAktif) {
+              // JQ selesai → papar Quran → kemudian ke bahasa
+              tunjukQuranJQ(function() {
+                isBusy = true;
+                var mainEl = document.getElementById('main-text');
+                if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
+                setText('play-err', '');
+                setTimeout(function() { _terusKeSR(); }, 0);
+              });
+            } else {
+              isBusy = true;
+              var mainEl = document.getElementById('main-text');
+              if (mainEl) { mainEl.textContent = 'Memuat...'; mainEl.className = 'big-text'; }
+              setText('play-err', '');
+              setTimeout(function() { _terusKeSR(); }, 0);
+            }
           });
+        } else if (quranAktif) {
+          // Tiada JQ tapi Quran ON — papar Quran terus sebelum bahasa
+          tunjukQuranJQ(function() { _terusKeSR(); });
         } else {
           _terusKeSR();
         }
@@ -3231,6 +3278,58 @@
       // Reset taip ayat selepas proceed
       if (taipInput) taipInput.value = '';
 
+      // Mode Quran JQ — tap dalam sesi Quran
+      if (window._qjqHandler) {
+        if (!qjqCards.length || qjqIdx >= qjqCards.length) {
+          window._qjqHandler = null; return;
+        }
+        if (!qjqFlipped) {
+          // Tunjuk maksud
+          var c = qjqCards[qjqIdx];
+          qjqFlipped = true;
+          setText('side-label', 'TERJEMAHAN');
+          setText('play-meta', qjqMaksud.length > 1 ? '(Bahagian 1/' + qjqMaksud.length + ' · Tekan untuk seterusnya)' : '(Tekan SETERUSNYA untuk ayat berikut)');
+          var mainElQ = document.getElementById('main-text');
+          if (mainElQ) {
+            mainElQ.textContent = qjqMaksud[0] || '(Tiada terjemahan)';
+            mainElQ.style.fontFamily = '';
+            mainElQ.style.fontSize = '';
+            mainElQ.style.direction = '';
+            mainElQ.style.textAlign = '';
+            mainElQ.className = (qjqMaksud[0] || '').length > 200 ? 'big-text long-text' : 'big-text';
+          }
+          return;
+        }
+        // Ada bahagian maksud seterusnya?
+        if (qjqMaksud.length > 1 && qjqMaksudIdx < qjqMaksud.length - 1) {
+          qjqMaksudIdx++;
+          setText('play-meta', '(Bahagian ' + (qjqMaksudIdx + 1) + '/' + qjqMaksud.length + ' · Tekan untuk seterusnya)');
+          var mainElQ2 = document.getElementById('main-text');
+          if (mainElQ2) { mainElQ2.textContent = qjqMaksud[qjqMaksudIdx]; mainElQ2.className = qjqMaksud[qjqMaksudIdx].length > 200 ? 'big-text long-text' : 'big-text'; }
+          return;
+        }
+        // Simpan kemajuan — ayat selesai dibaca
+        var selesaiC = qjqCards[qjqIdx];
+        if (selesaiC) {
+          quranAyatSemasa = selesaiC.ayatNum;
+          var simpanAyat = selesaiC.ayatNum === 1 ? 1 : selesaiC.ayatNum + 1;
+          simpanKemajuanQuranKindle(selesaiC.surahNum, simpanAyat);
+        }
+        // Ke ayat seterusnya
+        qjqIdx++;
+        if (qjqIdx >= qjqCards.length) {
+          // Habis 10 ayat — balik ke bahasa/fakta
+          var cbDone = window._qjqHandler;
+          window._qjqHandler = null;
+          var mainElQ3 = document.getElementById('main-text');
+          if (mainElQ3) { mainElQ3.style.fontFamily = ''; mainElQ3.style.fontSize = ''; mainElQ3.style.direction = ''; mainElQ3.style.textAlign = ''; }
+          cbDone && cbDone();
+          return;
+        }
+        _renderQjqAyat(window._qjqHandler);
+        return;
+      }
+
       // Mode motivasi JQ — tap JQ mesti dibaca dulu walaupun isBusy
       if (window._jqMotivasiHandler) {
         if (Date.now() < _jqIgnoreTapUntil) return;
@@ -3391,7 +3490,28 @@
         if (jqAktif && jqMotivasiList.length) {
           var f2Index = cardIndex;
           tunjukMotivasiJQ(function() {
-            cardIndex = f2Index;
+            if (quranAktif) {
+              tunjukQuranJQ(function() {
+                cardIndex = f2Index;
+                var statusLabel = srModeAktif
+                  ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
+                  : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+                setText('play-status', statusLabel);
+                renderCard();
+              });
+            } else {
+              cardIndex = f2Index;
+              var statusLabel = srModeAktif
+                ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
+                : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
+              setText('play-status', statusLabel);
+              renderCard();
+            }
+          });
+        } else if (quranAktif) {
+          var f2IndexQ = cardIndex;
+          tunjukQuranJQ(function() {
+            cardIndex = f2IndexQ;
             var statusLabel = srModeAktif
               ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
               : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
@@ -3458,6 +3578,157 @@
         });
     }
 
+    // ── QURAN FUNCTIONS ──
+    function pecahMaksudKindle(teks) {
+      var MAX = 300;
+      if (!teks || teks.length <= MAX) return [teks || ''];
+      var bahagian = [];
+      var i = 0;
+      while (i < teks.length) {
+        var hujung = i + MAX;
+        if (hujung >= teks.length) { bahagian.push(teks.slice(i).trim()); break; }
+        var potong = teks.lastIndexOf(' ', hujung);
+        if (potong <= i) potong = hujung;
+        bahagian.push(teks.slice(i, potong).trim() + '...');
+        i = potong + 1;
+      }
+      return bahagian.filter(function(b) { return b; });
+    }
+
+    function loadKemajuanQuranKindle() {
+      if (!currentUser) return Promise.resolve({ surah: 1, ayat: 0 });
+      if (_kemajuanCacheKindle) return Promise.resolve(_kemajuanCacheKindle);
+      var uid = currentUser.uid;
+      var pPhone = db.collection('users').doc(uid)
+        .collection('quran_progress_log')
+        .orderBy('savedAt', 'desc').limit(1).get()
+        .then(function(snap) { return snap.empty ? null : snap.docs[0].data(); })
+        .catch(function() { return null; });
+      var pKindle = db.collection('users').doc(uid)
+        .collection('kindle_quran').doc('current').get()
+        .then(function(snap) { return snap.exists ? snap.data() : null; })
+        .catch(function() { return null; });
+      return Promise.all([pPhone, pKindle]).then(function(res) {
+        var phone = res[0] ? { surah: res[0].surah || 1, ayat: res[0].ayat || 0, savedAt: res[0].savedAt || 0 } : null;
+        var kindle = res[1] ? { surah: res[1].surahNum || 1, ayat: res[1].ayatNum || 0, savedAt: res[1].savedAt || 0 } : null;
+        var hasil = (!phone && !kindle) ? { surah: 1, ayat: 0 }
+          : (!phone) ? kindle : (!kindle) ? phone
+          : (kindle.savedAt >= phone.savedAt) ? kindle : phone;
+        _kemajuanCacheKindle = hasil;
+        return hasil;
+      });
+    }
+
+    function simpanKemajuanQuranKindle(surahNum, ayatNum) {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid)
+        .collection('kindle_quran').doc('current')
+        .set({ surahNum: surahNum, ayatNum: ayatNum, savedAt: Date.now() })
+        .catch(function() {});
+      _kemajuanCacheKindle = null; // clear cache supaya load semula next sesi
+    }
+
+    function subscribeQuranKindle(surahNum, cb) {
+      if (!currentUser) { cb && cb(); return; }
+      if (_unsubQuranKindle && _unsubQuranSurahKindle === surahNum) { cb && cb(); return; }
+      if (_unsubQuranKindle) { _unsubQuranKindle(); _unsubQuranKindle = null; }
+      _unsubQuranSurahKindle = surahNum;
+      _unsubQuranKindle = db.collection('users').doc(currentUser.uid)
+        .collection('quran_drawers')
+        .where('surahNum', '==', surahNum)
+        .onSnapshot(function(snap) {
+          allQuranDrawers = [];
+          snap.forEach(function(d) {
+            var data = d.data();
+            if (data.surahNum && data.ayatNum) allQuranDrawers.push(Object.assign({ id: d.id }, data));
+          });
+          allQuranDrawers.sort(function(a, b) { return (a.ayatNum || 0) - (b.ayatNum || 0); });
+          cb && cb();
+          cb = null; // panggil sekali sahaja
+        }, function() { cb && cb(); cb = null; });
+    }
+
+    function updateQuranButton() {
+      var btn = document.getElementById('btn-quran-jq');
+      if (!btn) return;
+      btn.textContent = quranAktif ? '📖 Quran: ON' : '📖 Quran: OFF';
+      btn.style.background = quranAktif ? '#000' : '';
+      btn.style.color = quranAktif ? '#fff' : '';
+    }
+
+    // Papar 10 ayat Quran, panggil cbSelepas bila habis
+    function tunjukQuranJQ(cbSelepas) {
+      loadKemajuanQuranKindle().then(function(kemajuan) {
+        var surah = kemajuan.surah || 1;
+        var ayatSemasa = kemajuan.ayat || 0;
+        quranSurahSemasa = surah;
+        quranAyatSemasa = ayatSemasa;
+
+        subscribeQuranKindle(surah, function() {
+          var allAyat = allQuranDrawers.filter(function(d) { return d.surahNum === surah; });
+          if (!allAyat.length) {
+            setText('play-err', 'Tiada laci Quran untuk Surah ' + surah);
+            setTimeout(function() { setText('play-err', ''); cbSelepas && cbSelepas(); }, 2000);
+            return;
+          }
+          // Cari kedudukan dari kemajuan
+          var mulaIdx = 0;
+          if (ayatSemasa > 0) {
+            for (var i = 0; i < allAyat.length; i++) {
+              if ((allAyat[i].ayatNum || 0) > ayatSemasa) { mulaIdx = i; break; }
+              if (i === allAyat.length - 1) mulaIdx = 0; // wrap
+            }
+          }
+          // Ambil 10 ayat
+          qjqCards = [];
+          for (var k = 0; k < QURAN_AYAT_PER_SESI; k++) {
+            var d = allAyat[(mulaIdx + k) % allAyat.length];
+            if (d) qjqCards.push({
+              tajuk: (d.surahNum) + '. ' + (QURAN_SURAH_NAMES[d.surahNum - 1] || '') + ' Ayat ' + d.ayatNum,
+              arab: (d.arab || '').trim(),
+              maksud: (d.maksud || '').trim(),
+              surahNum: d.surahNum,
+              ayatNum: d.ayatNum
+            });
+          }
+          qjqIdx = 0; qjqFlipped = false; qjqWaqaf = []; qjqWaqafIdx = 0; qjqMaksud = []; qjqMaksudIdx = 0;
+
+          // Papar ayat pertama
+          _renderQjqAyat(cbSelepas);
+          window._qjqHandler = cbSelepas;
+        });
+      }).catch(function() { cbSelepas && cbSelepas(); });
+    }
+
+    function _renderQjqAyat(cbSelepas) {
+      if (!qjqCards.length || qjqIdx >= qjqCards.length) {
+        // Habis semua ayat
+        window._qjqHandler = null;
+        cbSelepas && cbSelepas();
+        return;
+      }
+      var c = qjqCards[qjqIdx];
+      setText('play-status', 'QURAN · ' + (QURAN_SURAH_NAMES[c.surahNum - 1] || '') + ' · ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
+      setText('play-mode', c.tajuk);
+      setText('side-label', 'ARAB');
+      setText('play-progress', 'Ayat ' + c.ayatNum + ' · ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
+      setText('play-meta', '(Tekan SETERUSNYA untuk Maksud)');
+      setText('play-err', '');
+      var mainEl = document.getElementById('main-text');
+      if (mainEl) {
+        mainEl.textContent = c.arab || '—';
+        mainEl.style.fontFamily = "'UthmanicHafs','Traditional Arabic',serif";
+        mainEl.style.fontSize = '1.5rem';
+        mainEl.style.direction = 'rtl';
+        mainEl.style.textAlign = 'center';
+        mainEl.className = 'big-text';
+      }
+      setCardImage('');
+      qjqFlipped = false;
+      qjqMaksud = pecahMaksudKindle(c.maksud || '(Tiada terjemahan)');
+      qjqMaksudIdx = 0;
+    }
+
     // ── JQ BUTTON HANDLER ──
     document.getElementById('btn-monitor').onclick = function() {
       monitorAktif = !monitorAktif;
@@ -3473,6 +3744,14 @@
       updateTaipButton();
       db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('taip')
         .set({ aktif: taipAktif }).catch(function() {});
+    };
+
+    document.getElementById('btn-quran-jq').onclick = function() {
+      quranAktif = !quranAktif;
+      updateQuranButton();
+      db.collection('users').doc(currentUser.uid)
+        .collection('kindle_settings').doc('quran_jq')
+        .set({ aktif: quranAktif }).catch(function() {});
     };
 
     document.getElementById('btn-jq').onclick = function() {
@@ -5581,6 +5860,13 @@
           loadJenisState();
           loadTaipState();
           loadMonitorState();
+          // Load status Quran JQ dari Firestore
+          db.collection('users').doc(currentUser.uid)
+            .collection('kindle_settings').doc('quran_jq')
+            .get().then(function(snap) {
+              quranAktif = snap.exists && snap.data().aktif === true;
+              updateQuranButton();
+            }).catch(function() {});
         });
         showScreen('screen-menu');
       } else {
@@ -5594,6 +5880,10 @@
         champSources = []; champLastIdx = 0;
         champData = { motivasi: [], perjanjian: [], rutin: [], supplement: [], water: [], mainMotivation: [], otherMotivation: [] };
         window._jqMotivasiHandler = null;
+        window._qjqHandler = null;
+        quranAktif = false;
+        _kemajuanCacheKindle = null;
+        if (_unsubQuranKindle) { _unsubQuranKindle(); _unsubQuranKindle = null; }
         jqAktif = false;
         jqMotivasiList = [];
         jqPendingCardIndex = -1;
