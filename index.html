@@ -650,6 +650,7 @@
       <div class="meta" id="play-meta"></div>
     </div>
     <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
+    <button id="btn-quran-undo" class="btn" style="display:none;margin-top:4px;">← UNDUR AYAT</button>
     <div id="taip-ayat-box" style="display:none;margin-top:6px;">
       <textarea id="taip-ayat-input" rows="2" placeholder="Taip ayat dari ingatan..." style="width:100%;padding:8px;font-size:0.85rem;background:#fff;color:#000;border:2px solid #ccc;border-radius:6px;resize:none;box-sizing:border-box;"></textarea>
       <div id="taip-ayat-status" style="font-size:0.72rem;text-align:center;min-height:1.2em;padding:2px 0;"></div>
@@ -3263,47 +3264,7 @@
         if (!qjqCards.length || qjqIdx >= qjqCards.length) {
           window._qjqHandler = null; return;
         }
-        // UNDO — undur ke ayat/bahagian sebelumnya (tanpa simpan ke Firebase)
-        var btnNextEl = document.getElementById('btn-next');
-        if (btnNextEl && btnNextEl._qjqUndoMode) {
-          // Dalam waqaf — undur bahagian waqaf
-          if (qjqWaqafIdx > 0) {
-            qjqWaqafIdx--;
-            var c0 = qjqCards[qjqIdx];
-            var simU0 = qjqWaqaf[qjqWaqafIdx] ? (qjqWaqaf[qjqWaqafIdx].simbol || '') : '';
-            var arabU0 = qjqWaqaf[qjqWaqafIdx] ? (qjqWaqaf[qjqWaqafIdx].teks + (simU0 ? ' ' + simU0 : '')) : (c0.arab || '');
-            var mainElU0 = document.getElementById('main-text');
-            if (mainElU0) { mainElU0.textContent = arabU0; mainElU0.className = 'arab-text'; mainElU0.style.fontFamily = ''; mainElU0.style.fontSize = ''; mainElU0.style.direction = ''; mainElU0.style.textAlign = ''; }
-            setText('play-progress', 'Ayat ' + c0.ayatNum + (simU0 ? ' ' + simU0 : '') + ' · ' + (qjqWaqafIdx + 1) + '/' + qjqWaqaf.length + ' · Sesi ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
-            setText('side-label', 'ARAB');
-            setText('play-meta', '(Tekan untuk bahagian seterusnya)');
-            qjqFlipped = false;
-          } else if (qjqFlipped && qjqMaksudIdx > 0) {
-            // Dalam maksud berbahagian — undur bahagian maksud
-            qjqMaksudIdx--;
-            var mainElU1 = document.getElementById('main-text');
-            if (mainElU1) { mainElU1.textContent = qjqMaksud[qjqMaksudIdx]; mainElU1.className = 'terjemah-text'; mainElU1.style.fontFamily = ''; mainElU1.style.fontSize = ''; mainElU1.style.direction = ''; mainElU1.style.textAlign = ''; }
-            setText('play-meta', '(Bahagian ' + (qjqMaksudIdx + 1) + '/' + qjqMaksud.length + ' · Tekan untuk seterusnya)');
-          } else if (qjqFlipped) {
-            // Dari terjemahan → balik ke Arab terakhir
-            qjqFlipped = false;
-            var c1 = qjqCards[qjqIdx];
-            var lastWaqafIdx = qjqWaqaf.length > 1 ? qjqWaqaf.length - 1 : 0;
-            qjqWaqafIdx = lastWaqafIdx;
-            var simU1 = qjqWaqaf[lastWaqafIdx] ? (qjqWaqaf[lastWaqafIdx].simbol || '') : '';
-            var arabU1 = qjqWaqaf[lastWaqafIdx] ? (qjqWaqaf[lastWaqafIdx].teks + (simU1 ? ' ' + simU1 : '')) : (c1.arab || '');
-            var mainElU2 = document.getElementById('main-text');
-            if (mainElU2) { mainElU2.textContent = arabU1; mainElU2.className = 'arab-text'; mainElU2.style.fontFamily = ''; mainElU2.style.fontSize = ''; mainElU2.style.direction = ''; mainElU2.style.textAlign = ''; }
-            setText('side-label', 'ARAB');
-            setText('play-meta', qjqWaqaf.length > 1 ? '(Tekan untuk bahagian seterusnya)' : '(Tekan untuk Maksud)');
-            setText('play-progress', 'Ayat ' + c1.ayatNum + ' · ' + (lastWaqafIdx + 1) + '/' + Math.max(qjqWaqaf.length, 1) + ' · Sesi ' + (qjqIdx + 1) + '/' + QURAN_AYAT_PER_SESI);
-          } else if (qjqIdx > 0) {
-            // Undur ke ayat sebelumnya — render semula tanpa simpan Firebase
-            qjqIdx--;
-            _renderQjqAyat(window._qjqHandler);
-          }
-          return;
-        }
+        // (undo dikendalikan oleh btn-quran-undo berasingan)
         if (!qjqFlipped) {
           var c = qjqCards[qjqIdx];
           // Ada bahagian waqaf seterusnya?
@@ -3764,7 +3725,8 @@
         window._qjqHandler = null;
         // Reset button UNDUR → SETERUSNYA
         var btnNextR = document.getElementById('btn-next');
-        if (btnNextR) { btnNextR._qjqUndoMode = false; btnNextR.textContent = 'SETERUSNYA'; btnNextR.style.background = ''; btnNextR.style.color = ''; btnNextR.style.borderColor = ''; }
+        var btnUndoR = document.getElementById('btn-quran-undo');
+        if (btnUndoR) btnUndoR.style.display = 'none';
         cbSelepas && cbSelepas();
         return;
       }
@@ -3799,23 +3761,9 @@
       qjqFlipped = false;
       qjqMaksud = pecahMaksudKindle(c.maksud || '(Tiada terjemahan)');
       qjqMaksudIdx = 0;
-      // Tunjuk/sorok button UNDUR
-      var btnNextQ = document.getElementById('btn-next');
-      if (btnNextQ) {
-        if (qjqIdx > 0) {
-          btnNextQ._qjqUndoMode = true;
-          btnNextQ.textContent = '← UNDUR';
-          btnNextQ.style.background = '#fff';
-          btnNextQ.style.color = '#000';
-          btnNextQ.style.borderColor = '#000';
-        } else {
-          btnNextQ._qjqUndoMode = false;
-          btnNextQ.textContent = 'SETERUSNYA';
-          btnNextQ.style.background = '';
-          btnNextQ.style.color = '';
-          btnNextQ.style.borderColor = '';
-        }
-      }
+      // Tunjuk/sorok button UNDUR berasingan
+      var btnUndo = document.getElementById('btn-quran-undo');
+      if (btnUndo) btnUndo.style.display = qjqIdx > 0 ? 'block' : 'none';
     }
 
     // ── JQ BUTTON HANDLER ──
@@ -3841,6 +3789,12 @@
       db.collection('users').doc(currentUser.uid)
         .collection('kindle_settings').doc('quran_jq')
         .set({ aktif: quranAktif }).catch(function() {});
+    };
+
+    document.getElementById('btn-quran-undo').onclick = function() {
+      if (!window._qjqHandler || qjqIdx <= 0) return;
+      qjqIdx--;
+      _renderQjqAyat(window._qjqHandler);
     };
 
     // Callback untuk PIN overlay dikongsi (JQ + laci-laci berkunci)
