@@ -19,7 +19,9 @@
       margin: 0 auto;
     }
     .screen { display: none; }
-    .screen.active { display: block; }
+    .screen.active { display: flex; flex-direction: column; padding: 12px; box-sizing: border-box; min-height: 100vh; }
+    #screen-telegram.active { padding: 0; }
+    #screen-tg-setup.active { padding: 12px; }
     #screen-om-edit.active { display: flex; }
 
     h1 { font-size: 1.15rem; text-align: center; margin: 4px 0 6px; }
