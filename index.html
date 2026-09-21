@@ -4138,19 +4138,17 @@
       _tgCache[chatId] = _tgCache[chatId] || [];
       var midnight = _tgTodayMidnight();
       _tgUnsubs[chatId] = db.collection('tg_messages').doc(chatId).collection('messages')
-        .where('date', '>=', midnight).orderBy('date', 'asc')
+        .where('date', '>=', midnight).orderBy('date', 'asc').limit(50)
         .onSnapshot(function(snap) {
           snap.docChanges().forEach(function(ch) {
             if (ch.type !== 'added') return;
             var d = ch.doc.data();
             var docKey = ch.doc.id;
-            // buang temp outbox yg matching (out+text dalam +-5 saat)
             var dupIdx = _tgCache[chatId].findIndex(function(m) {
               return (m._docKey === docKey) ||
                 (m._isTemp && d.out && m.out && m.text === d.text && Math.abs((m.date||0)-(d.date||0)) <= 5);
             });
             if (dupIdx >= 0) {
-              // ganti temp dgn real
               d._docKey = docKey;
               _tgCache[chatId][dupIdx] = d;
             } else {
@@ -4160,6 +4158,14 @@
           });
           if (_tgActiveChatId === chatId) _tgRenderLog();
         }, function(e) { console.warn('tgSub err:', e); });
+    }
+
+    function _tgUnsubscribeChat(chatId) {
+      if (_tgUnsubs[chatId]) {
+        _tgUnsubs[chatId]();
+        delete _tgUnsubs[chatId];
+        if (_tgCache[chatId]) _tgCache[chatId] = _tgCache[chatId].slice(-50);
+      }
     }
 
     function _tgMakeChatDiv(chatId, chatName) {
@@ -4182,7 +4188,8 @@
           var data = doc.data();
           var chatId = doc.id;
           var chatName = data.name || chatId;
-          _tgSubscribeChat(chatId, chatName);
+          _tgChatMeta[chatId] = chatName;
+          _tgCache[chatId] = _tgCache[chatId] || [];
           list.appendChild(_tgMakeChatDiv(chatId, chatName));
         });
       }).catch(function(e) {
@@ -4199,6 +4206,7 @@
       document.getElementById('tg-chat-list').style.display = 'none';
       document.getElementById('btn-tg-back-menu').style.display = 'none';
       document.getElementById('tg-msg-view').style.display = 'flex';
+      _tgSubscribeChat(chatId, chatName);
       _tgRenderLog();
     }
 
@@ -4228,6 +4236,7 @@
     }
 
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
+      if (_tgActiveChatId) _tgUnsubscribeChat(_tgActiveChatId);
       _tgActiveChatId = null;
       document.getElementById('tg-msg-view').style.display = 'none';
       document.getElementById('tg-chat-list').style.display = '';
