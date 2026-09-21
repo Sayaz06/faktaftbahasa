@@ -4139,7 +4139,7 @@
       _tgCache[chatId] = _tgCache[chatId] || [];
       var midnight = _tgTodayMidnight();
       _tgUnsubs[chatId] = db.collection('tg_messages').doc(chatId).collection('messages')
-        .where('date', '>=', midnight).orderBy('date', 'desc').limit(50)
+        .where('date', '>=', midnight).orderBy('date', 'asc')
         .onSnapshot(function(snap) {
           snap.docChanges().forEach(function(ch) {
             if (ch.type !== 'added') return;
