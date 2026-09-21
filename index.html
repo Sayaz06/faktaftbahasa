@@ -6532,11 +6532,37 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
       });
     }
 
-    function loadTgChatList() {
+    async function loadTgChatList() {
       var list = document.getElementById('tg-chat-list');
       var empty = document.getElementById('tg-chat-empty');
       if (!list) return;
       list.innerHTML = '<div style="color:#555;font-size:0.82rem;text-align:center;padding:12px;">Memuatkan...</div>';
+
+      // Cuba load dari MTProto dulu kalau ada client
+      if (_tgClient) {
+        try {
+          var dialogs = await _tgClient.getDialogs({ limit: 50 });
+          list.innerHTML = '';
+          if (!dialogs || !dialogs.length) { if (empty) empty.style.display = ''; return; }
+          if (empty) empty.style.display = 'none';
+          for (var i = 0; i < dialogs.length; i++) {
+            var d = dialogs[i];
+            var chatId = String(d.id || (d.entity && d.entity.id) || i);
+            var chatName = d.title || d.name || (d.entity && (d.entity.title || d.entity.firstName || d.entity.username)) || chatId;
+            _tgChatMeta[chatId] = chatName;
+            _tgCache[chatId] = _tgCache[chatId] || [];
+            // Simpan ke Firestore supaya ada record
+            db.collection('tg_messages').doc(chatId).set({ synced: true, name: chatName }, { merge: true });
+            list.appendChild(_tgMakeChatDiv(chatId, chatName));
+          }
+          return;
+        } catch(e) {
+          console.warn('getDialogs error:', e);
+          // Fallback ke Firestore
+        }
+      }
+
+      // Fallback: load dari Firestore
       db.collection('tg_messages').where('synced', '==', true).get().then(function(snap) {
         list.innerHTML = '';
         if (snap.empty) { if (empty) empty.style.display = ''; return; }
@@ -6549,6 +6575,7 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
         });
       }).catch(function(e) { _tgSetStatus('Ralat: ' + e.message); });
     }
+
 
     function _tgMakeChatDiv(chatId, chatName) {
       var div = document.createElement('div');
@@ -6668,7 +6695,11 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
     });
 
     document.getElementById('btn-tg-back-menu').addEventListener('click', function() {
-      showScreen('screen-menu');
+      document.querySelectorAll('.screen').forEach(function(s){
+        s.style.display = 'none'; s.classList.remove('active');
+      });
+      var el = document.getElementById('screen-menu');
+      if (el) { el.style.display = 'flex'; el.classList.add('active'); }
     });
 
     document.getElementById('btn-tg-chat-refresh').addEventListener('click', function() {
