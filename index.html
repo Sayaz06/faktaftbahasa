@@ -6796,11 +6796,17 @@ async function openChat(dialog, cid, name) {
   if (el) el.classList.add('active');
   activeChatId = cid;
   activeChatPeer = dialog.entity;
-  document.getElementById('tg-msg-chat-name').textContent = name;
-  document.getElementById('tg-msg-view').style.display = 'flex';
-  document.getElementById('tg-chat-empty').style.display = 'none';
-  document.getElementById('btn-tg-send').disabled = false;
-  if(document.getElementById('btn-attach')) document.getElementById('btn-attach').disabled = false;
+  const nameEl2 = document.getElementById('tg-msg-chat-name');
+  if (nameEl2) nameEl2.textContent = name;
+  const msgView = document.getElementById('tg-msg-view');
+  if (msgView) msgView.style.display = 'flex';
+  const chatList = document.getElementById('tg-chat-list');
+  if (chatList) chatList.style.display = 'none';
+  const emptyEl = document.getElementById('tg-chat-empty');
+  if (emptyEl) emptyEl.style.display = 'none';
+  const sendBtn = document.getElementById('btn-tg-send');
+  if (sendBtn) sendBtn.disabled = false;
+  if (document.getElementById('btn-attach')) document.getElementById('btn-attach').disabled = false;
   const body = document.getElementById('tg-log');
 
   body.innerHTML = '<div class="msg-empty">Memuatkan mesej...</div>';
@@ -7051,8 +7057,10 @@ document.getElementById('btn-tg-refresh').onclick = loadDialogs;
     document.getElementById('btn-tg-refresh').onclick = function() { loadDialogs(); };
     document.getElementById('btn-tg-send').onclick = function() { sendMessage(); };
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
-      document.getElementById('tg-msg-view').style.display = 'none';
-      document.getElementById('tg-chat-list').style.display = '';
+      var mv = document.getElementById('tg-msg-view');
+      var cl = document.getElementById('tg-chat-list');
+      if (mv) mv.style.display = 'none';
+      if (cl) cl.style.display = '';
     });
 
 
