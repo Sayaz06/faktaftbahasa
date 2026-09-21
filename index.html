@@ -4143,7 +4143,18 @@
           snap.docChanges().forEach(function(ch) {
             if (ch.type !== 'added') return;
             var d = ch.doc.data();
-            if (!_tgCache[chatId].some(function(m){ return m.id === d.id; })) {
+            var docKey = ch.doc.id;
+            // buang temp outbox yg matching (out+text dalam +-5 saat)
+            var dupIdx = _tgCache[chatId].findIndex(function(m) {
+              return (m._docKey === docKey) ||
+                (m._isTemp && d.out && m.out && m.text === d.text && Math.abs((m.date||0)-(d.date||0)) <= 5);
+            });
+            if (dupIdx >= 0) {
+              // ganti temp dgn real
+              d._docKey = docKey;
+              _tgCache[chatId][dupIdx] = d;
+            } else {
+              d._docKey = docKey;
               _tgCache[chatId].push(d);
             }
           });
@@ -4193,8 +4204,11 @@
 
     function appendTgBubble(msg) {
       if (!_tgActiveChatId) return;
-      if (!(_tgCache[_tgActiveChatId]||[]).some(function(m){ return m.id === msg.id; })) {
-        _tgCache[_tgActiveChatId] = _tgCache[_tgActiveChatId] || [];
+      _tgCache[_tgActiveChatId] = _tgCache[_tgActiveChatId] || [];
+      var hasDup = _tgCache[_tgActiveChatId].some(function(m) {
+        return m._docKey && msg._docKey && m._docKey === msg._docKey;
+      });
+      if (!hasDup) {
         _tgCache[_tgActiveChatId].push(msg);
       }
       _tgRenderLog();
@@ -4235,8 +4249,8 @@
       _tgSending = true;
       input.value = '';
       var now = Math.floor(Date.now() / 1000);
-      var tempId = 'tmp_' + now + '_' + Math.random().toString(36).slice(2);
-      appendTgBubble({ id: tempId, text: text, out: true, date: now, hasMedia: false });
+      var tempKey = 'tmp_' + now + '_' + Math.random().toString(36).slice(2);
+      appendTgBubble({ _docKey: tempKey, _isTemp: true, text: text, out: true, date: now, hasMedia: false });
       db.collection('tg_messages').doc(_tgActiveChatId).collection('outbox').add({
         text: text,
         chatId: _tgActiveChatId,
