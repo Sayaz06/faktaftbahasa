@@ -4118,7 +4118,7 @@
     }
 
     function _tgFmtLine(msg) {
-      var text = msg.text || (msg.hasMedia ? '[media]' : '');
+      var text = msg.text || msg.mediaLabel || (msg.hasMedia ? '[Media]' : '');
       if (!text) return '';
       var time = msg.date ? new Date(msg.date*1000).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'}) : '';
       var prefix = msg.out ? 'Saya' : (msg.chatName || 'Dia');
