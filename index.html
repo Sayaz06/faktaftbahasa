@@ -537,7 +537,8 @@
         <button id="btn-tg-back-list" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0;">←</button>
         <span id="tg-msg-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
       </div>
-      <div id="tg-msg-body" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;"></div>
+      <textarea id="tg-log" readonly style="flex:1;overflow-y:auto;padding:8px;font-size:0.82rem;line-height:1.7;font-family:monospace;border:none;outline:none;resize:none;background:#fafafa;color:#000;white-space:pre-wrap;"></textarea>
+
       <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
         <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej..." style="flex:1;font-size:0.85rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
         <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">➤</button>
@@ -4104,9 +4105,50 @@
     // OTHER MOTIVATION
     // ══════════════════════════════════════════
     // ══════════════════════════════════════════
-    // TELEGRAM SCREEN
+    // TELEGRAM SCREEN — Cache realtime
     // ══════════════════════════════════════════
     var _tgActiveChatId = null;
+    var _tgCache = {};
+    var _tgUnsubs = {};
+    var _tgChatMeta = {};
+
+    function _tgTodayMidnight() {
+      var d = new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/1000);
+    }
+
+    function _tgFmtLine(msg) {
+      var text = msg.text || (msg.hasMedia ? '[media]' : '');
+      if (!text) return '';
+      var time = msg.date ? new Date(msg.date*1000).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'}) : '';
+      var prefix = msg.out ? 'Saya' : (msg.chatName || 'Dia');
+      return '[' + time + '] ' + prefix + ': ' + text;
+    }
+
+    function _tgRenderLog() {
+      var ta = document.getElementById('tg-log');
+      if (!ta || !_tgActiveChatId) return;
+      ta.value = (_tgCache[_tgActiveChatId] || []).map(_tgFmtLine).filter(Boolean).join('\n');
+      ta.scrollTop = ta.scrollHeight;
+    }
+
+    function _tgSubscribeChat(chatId, chatName) {
+      if (_tgUnsubs[chatId]) return;
+      _tgChatMeta[chatId] = chatName;
+      _tgCache[chatId] = _tgCache[chatId] || [];
+      var midnight = _tgTodayMidnight();
+      _tgUnsubs[chatId] = db.collection('tg_messages').doc(chatId).collection('messages')
+        .where('date', '>=', midnight).orderBy('date', 'asc')
+        .onSnapshot(function(snap) {
+          snap.docChanges().forEach(function(ch) {
+            if (ch.type !== 'added') return;
+            var d = ch.doc.data();
+            if (!_tgCache[chatId].some(function(m){ return m.id === d.id; })) {
+              _tgCache[chatId].push(d);
+            }
+          });
+          if (_tgActiveChatId === chatId) _tgRenderLog();
+        }, function(e) { console.warn('tgSub err:', e); });
+    }
 
     function loadTgChatList() {
       var list = document.getElementById('tg-chat-list');
@@ -4117,10 +4159,13 @@
         empty.style.display = 'none';
         snap.forEach(function(doc) {
           var data = doc.data();
+          var chatId = doc.id;
+          var chatName = data.name || chatId;
+          _tgSubscribeChat(chatId, chatName);
           var div = document.createElement('div');
           div.style.cssText = 'border:1px solid #ccc;border-radius:6px;padding:10px;margin-bottom:8px;cursor:pointer;';
-          div.innerHTML = '<div style="font-weight:bold;font-size:0.88rem;">💬 ' + (data.name || doc.id) + '</div>';
-          div.addEventListener('click', function() { openTgChat(doc.id, data.name || doc.id); });
+          div.innerHTML = '<div style="font-weight:bold;font-size:0.88rem;">💬 ' + chatName + '</div>';
+          div.addEventListener('click', function() { openTgChat(chatId, chatName); });
           list.appendChild(div);
         });
       }).catch(function(e) { document.getElementById('tg-screen-status').textContent = 'Ralat: ' + e.message; });
@@ -4132,40 +4177,26 @@
       document.getElementById('tg-chat-list').style.display = 'none';
       document.getElementById('btn-tg-back-menu').style.display = 'none';
       document.getElementById('tg-msg-view').style.display = 'flex';
-      var body = document.getElementById('tg-msg-body');
-      body.innerHTML = '<div style="color:#888;font-size:0.8rem;text-align:center;">Memuatkan...</div>';
-      db.collection('tg_messages').doc(chatId).collection('messages')
-        .orderBy('date', 'asc').limit(50).get()
-        .then(function(snap) {
-          body.innerHTML = '';
-          if (snap.empty) { body.innerHTML = '<div style="color:#888;font-size:0.8rem;text-align:center;">Tiada mesej.</div>'; return; }
-          snap.forEach(function(m) { appendTgBubble(m.data()); });
-          body.scrollTop = body.scrollHeight;
-        }).catch(function(e) { body.innerHTML = '<div style="color:red;font-size:0.8rem;">' + e.message + '</div>'; });
+      _tgRenderLog();
     }
 
     function appendTgBubble(msg) {
-      var body = document.getElementById('tg-msg-body');
-      var isOut = !!msg.out;
-      var text = msg.text || (msg.hasMedia ? '[media]' : '');
-      if (!text) return;
-      var time = msg.date ? new Date(msg.date * 1000).toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit'}) : '';
-      var div = document.createElement('div');
-      div.style.cssText = 'max-width:85%;padding:6px 10px;border-radius:10px;font-size:0.82rem;line-height:1.4;' +
-        (isOut ? 'align-self:flex-end;background:#0088cc;color:#fff;margin-left:auto;' : 'align-self:flex-start;background:#f0f0f0;color:#000;');
-      div.innerHTML = text.replace(/</g,'&lt;').replace(/>/g,'&gt;') +
-        '<div style="font-size:0.65rem;opacity:0.7;text-align:right;margin-top:2px;">' + time + '</div>';
-      body.appendChild(div);
+      if (!_tgActiveChatId) return;
+      if (!(_tgCache[_tgActiveChatId]||[]).some(function(m){ return m.id === msg.id; })) {
+        _tgCache[_tgActiveChatId] = _tgCache[_tgActiveChatId] || [];
+        _tgCache[_tgActiveChatId].push(msg);
+      }
+      _tgRenderLog();
     }
 
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
       _tgActiveChatId = null;
       document.getElementById('tg-msg-view').style.display = 'none';
       document.getElementById('tg-chat-list').style.display = '';
-      document.getElementById('tg-chat-list').innerHTML = '';
       document.getElementById('btn-tg-back-menu').style.display = '';
       loadTgChatList();
     });
+
 
     document.getElementById('btn-tg-back-menu').addEventListener('click', function() {
       showScreen('screen-menu');
@@ -4177,10 +4208,9 @@
       if (!text || !_tgActiveChatId) return;
       input.value = '';
       var now = Math.floor(Date.now() / 1000);
-      var msg = { text: text, out: true, date: now, hasMedia: false };
-      appendTgBubble(msg);
-      document.getElementById('tg-msg-body').scrollTop = document.getElementById('tg-msg-body').scrollHeight;
+      appendTgBubble({ text: text, out: true, date: now, hasMedia: false });
       db.collection('tg_messages').doc(_tgActiveChatId).collection('outbox').add({
+
         text: text,
         chatId: _tgActiveChatId,
         chatName: document.getElementById('tg-msg-chat-name').textContent,
@@ -4708,6 +4738,8 @@
       if (_tgNotifUnsub) { _tgNotifUnsub(); _tgNotifUnsub = null; }
       _tgNotifChats = [];
       updateTgNotifBadge();
+      Object.keys(_tgUnsubs).forEach(function(k){ if(_tgUnsubs[k]) _tgUnsubs[k](); });
+      _tgUnsubs = {}; _tgCache = {}; _tgChatMeta = {};
     }
 
     function updateTgNotifBadge() {
