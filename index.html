@@ -915,7 +915,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>  
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/telegram@2.26.22/dist/browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/Endlad2/gramjs-browser@telegram-v2026.09.21-0358/telegram.js" onerror="window._tgBundleErr=true"></script>
 
   <script>
     var firebaseConfig = {
@@ -4154,6 +4154,23 @@
       if (el) { el.textContent = msg; el.style.color = color || '#c00'; }
     }
 
+    // Detect nama global yg diexport oleh GramJS bundle
+    function _tgGetLib() {
+      // Cuba semua kemungkinan nama
+      var TG = window.TelegramClient || window.telegram || window.GramJS || window.gramjs;
+      if (!TG) return null;
+      var TC, SS;
+      if (typeof TG === 'function') {
+        TC = TG;
+        SS = window.StringSession || (window.sessions && window.sessions.StringSession);
+      } else {
+        TC = TG.TelegramClient || TG.Client;
+        SS = (TG.sessions && TG.sessions.StringSession) || TG.StringSession || window.StringSession;
+      }
+      if (!TC || !SS) return null;
+      return { TelegramClient: TC, StringSession: SS };
+    }
+
     function _tgFmtLine(msg) {
       var text = msg.text || msg.mediaLabel || (msg.hasMedia ? '[Media]' : '');
       if (!text) return '';
@@ -4229,19 +4246,25 @@
     }
 
     async function _tgInitClient(apiId, apiHash, sessionStr) {
-      var TG = window.telegram || window.TelegramClient;
-      if (!TG) { console.warn('GramJS tidak dimuatkan'); return null; }
-      var TelegramClient = TG.TelegramClient || TG;
-      var StringSession = (TG.sessions && TG.sessions.StringSession) || TG.StringSession;
-      if (!TelegramClient || !StringSession) { console.warn('GramJS: class tidak dijumpai'); return null; }
-      var session = new StringSession(sessionStr || '');
-      return new TelegramClient(session, parseInt(apiId), apiHash, {
+      var lib = _tgGetLib();
+      if (!lib) {
+        // Debug: tunjuk semua global yg ada
+        var tgGlobals = Object.keys(window).filter(function(k){
+          return k.toLowerCase().includes('telegram') || k.toLowerCase().includes('gram') || k.toLowerCase().includes('mtproto');
+        });
+        console.warn('GramJS globals found:', tgGlobals);
+        _tgSetupMsg('Bundle loaded tapi class tak jumpa. Globals: ' + (tgGlobals.join(', ') || 'tiada'));
+        return null;
+      }
+      var session = new lib.StringSession(sessionStr || '');
+      return new lib.TelegramClient(session, parseInt(apiId), apiHash, {
         connectionRetries: 3, useWSS: true
       });
     }
 
     async function _tgConnect() {
       if (_tgConnecting || _tgClient) return;
+      if (window._tgBundleErr) { _tgSetStatus('Gagal muatkan GramJS bundle'); return; }
       _tgConnecting = true;
       _tgSetStatus('Menyambung Telegram...');
       _tgLoadSession(async function(sessionStr) {
@@ -4251,7 +4274,7 @@
           }
           _tgApiId = apiId; _tgApiHash = apiHash;
           var client = await _tgInitClient(apiId, apiHash, sessionStr);
-          if (!client) { _tgConnecting = false; _tgSetStatus('GramJS tidak tersedia'); return; }
+          if (!client) { _tgConnecting = false; return; }
           try {
             await client.connect();
             _tgClient = client;
@@ -4260,7 +4283,7 @@
             loadTgChatList();
           } catch(e) {
             _tgConnecting = false;
-            _tgSetStatus('Sambungan gagal');
+            _tgSetStatus('Sambungan gagal: ' + (e.message || e));
             console.warn('tg connect err:', e);
           }
         });
@@ -4450,8 +4473,16 @@
       _tgApiId = parseInt(apiId); _tgApiHash = apiHash;
       _tgSaveCreds(_tgApiId, _tgApiHash);
       try {
-        var client = await _tgInitClient(apiId, apiHash, '');
-        if (!client) { _tgSetupMsg('GramJS tidak tersedia'); btn.disabled=false; btn.textContent='Hantar Kod OTP'; return; }
+        var lib = _tgGetLib();
+        if (!lib) {
+          var tgGlobals = Object.keys(window).filter(function(k){
+            return k.toLowerCase().includes('telegram') || k.toLowerCase().includes('gram') || k.toLowerCase().includes('mtproto');
+          });
+          _tgSetupMsg('Bundle error. Globals: [' + (tgGlobals.join(', ') || 'tiada') + ']');
+          btn.disabled = false; btn.textContent = 'Hantar Kod OTP'; return;
+        }
+        var session = new lib.StringSession('');
+        var client = new lib.TelegramClient(session, _tgApiId, _tgApiHash, { connectionRetries: 3, useWSS: true });
         await client.connect();
         var result = await client.sendCode({ apiId: _tgApiId, apiHash: _tgApiHash }, phone);
         _tgPhoneCodeHash = result.phoneCodeHash;
