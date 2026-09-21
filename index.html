@@ -527,7 +527,7 @@
   </div>
 
   <!-- SCREEN: TELEGRAM CHAT -->
-  <div id="screen-telegram" class="screen" style="flex-direction:column;height:100vh;padding:0;box-sizing:border-box;">
+  <div id="screen-telegram" class="screen" style="display:none;flex-direction:column;height:100vh;padding:0;box-sizing:border-box;">
     <div class="status-bar" id="tg-screen-status">TELEGRAM</div>
     <div id="tg-chat-list" style="flex:1;overflow-y:auto;padding:8px;">
       <div id="tg-chat-empty" style="color:#555;font-size:0.85rem;text-align:center;padding:20px;">Tiada mesej Telegram.</div>
@@ -4226,25 +4226,32 @@
       showScreen('screen-menu');
     });
 
+    var _tgSending = false;
     document.getElementById('btn-tg-send').addEventListener('click', function() {
+      if (_tgSending) return;
       var input = document.getElementById('tg-msg-input');
       var text = input.value.trim();
       if (!text || !_tgActiveChatId) return;
+      _tgSending = true;
       input.value = '';
       var now = Math.floor(Date.now() / 1000);
-      appendTgBubble({ text: text, out: true, date: now, hasMedia: false });
+      var tempId = 'tmp_' + now + '_' + Math.random().toString(36).slice(2);
+      appendTgBubble({ id: tempId, text: text, out: true, date: now, hasMedia: false });
       db.collection('tg_messages').doc(_tgActiveChatId).collection('outbox').add({
-
         text: text,
         chatId: _tgActiveChatId,
         chatName: document.getElementById('tg-msg-chat-name').textContent,
         date: now,
         sentAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(function(e) { console.warn('outbox err:', e); });
+      }).catch(function(e) { console.warn('outbox err:', e); })
+        .finally(function() { _tgSending = false; });
     });
 
     document.getElementById('btn-go-telegram').onclick = function() {
-      showScreen('screen-telegram');
+      var el = document.getElementById('screen-telegram');
+      document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; s.classList.remove('active'); });
+      el.style.display = 'flex';
+      el.classList.add('active');
       loadTgChatList();
     };
 
