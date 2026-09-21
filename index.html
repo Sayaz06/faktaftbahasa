@@ -3252,9 +3252,15 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
     
     function showScreen(id) {
       var screens = document.querySelectorAll('.screen');
-      for (var i = 0; i < screens.length; i++) screens[i].className = 'screen';
+      for (var i = 0; i < screens.length; i++) {
+        screens[i].className = 'screen';
+        screens[i].style.display = 'none';
+      }
       var el = document.getElementById(id);
-      if (el) el.className = 'screen active';
+      if (el) {
+        el.className = 'screen active';
+        el.style.display = '';
+      }
     }
     function setText(id, t) {
       var el = document.getElementById(id);
