@@ -7465,6 +7465,9 @@ document.getElementById('btn-tg-refresh').onclick = loadDialogs;
     // ══════════════════════════════════════════
     var _tgNotifChats = [];
     var _tgSeenMsgIds = {};
+    var _tgUnsubs = {};
+    var _tgCache = {};
+    var _tgChatMeta = {};
 
     function _tgLoadSeenIds(callback) {
       if (!currentUser) { callback({}); return; }
