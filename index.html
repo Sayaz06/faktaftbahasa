@@ -6712,15 +6712,21 @@ document.getElementById('tg-setup-password').onkeydown = e => { if (e.key === 'E
 
 // ─── Dialogs ──────────────────────────────────────────────
 async function loadDialogs() {
-  document.getElementById('tg-chat-list').innerHTML = '<div style="text-align:center;color:var(--ink-faint);font-size:0.8rem;padding:20px;">Memuatkan...</div>';
+  document.getElementById('tg-chat-list').innerHTML = '<div style="text-align:center;color:#888;font-size:0.8rem;padding:20px;">Memuatkan...</div>';
   try {
-    allDialogs = await tgClient.getDialogs({ limit: 20 });
+    const snap = await db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get();
+    if (!snap.exists || !snap.data().list) {
+      document.getElementById('tg-chat-list').innerHTML = '<div style="color:#888;font-size:0.8rem;padding:12px;text-align:center;">Worker belum sync. Pastikan worker.js sedang berjalan.</div>';
+      return;
+    }
+    allDialogs = snap.data().list; // array of {cid, name, isGrp, unread}
     renderChatList(allDialogs);
-    addLog('Dimuatkan ' + allDialogs.length + ' dialog.', 'ok');
+    addLog('Dimuatkan ' + allDialogs.length + ' dialog dari Firestore.', 'ok');
   } catch(err) {
     addLog('Gagal muatkan dialog: ' + err.message, 'err');
   }
 }
+
 
 function isChatSynced(cid) {
   return localStorage.getItem('tg_kindle_sync_' + cid) === '1';
@@ -6753,22 +6759,14 @@ async function loadKindleSyncFromFS() {
 function renderChatList(dialogs) {
   const list = document.getElementById('tg-chat-list');
   list.innerHTML = '';
-  if (!dialogs.length) {
+  if (!dialogs || !dialogs.length) {
     list.innerHTML = '<div style="color:#888;font-size:0.8rem;padding:12px;text-align:center;">Tiada chat.</div>';
     return;
   }
 
-  // Semak ada tak yang ditick
-  const anyTicked = dialogs.some(d => {
-    const e = d.entity;
-    return e && isChatSynced(e.id ? e.id.toString() : '');
-  });
+  // dialogs dari Firestore: array of {cid, name, isGrp, unread}
+  const anyTicked = dialogs.some(d => isChatSynced(d.cid || ''));
 
-  // Mode pilih: kalau tiada yang ditick, tunjuk semua dengan checkbox untuk pilih
-  // Mode tapis: kalau ada yang ditick, tunjuk SEMUA tapi yang tak ditick dimendap (user boleh toggle)
-  // Logik: selalu tunjuk semua, tapi kalau ada ticked → hanya yang ticked boleh buka chat
-
-  // Header info
   if (!anyTicked) {
     list.insertAdjacentHTML('beforeend',
       '<div style="font-size:0.72rem;color:#888;padding:6px 8px;background:#f9f9f9;border-bottom:1px solid #eee;">' +
@@ -6776,15 +6774,12 @@ function renderChatList(dialogs) {
   }
 
   dialogs.forEach(d => {
-    const e = d.entity;
-    if (!e) return;
-    const cid = e.id ? e.id.toString() : '';
-    const name = e.firstName ? (e.firstName + (e.lastName ? ' ' + e.lastName : '')) : (e.title || 'Unknown');
-    const isGrp = !!(e.megagroup || e.broadcast || e.gigagroup);
-    const unread = d.unreadCount || 0;
+    const cid = d.cid || '';
+    const name = d.name || 'Unknown';
+    const isGrp = !!d.isGrp;
+    const unread = d.unread || 0;
     const ticked = isChatSynced(cid);
 
-    // Kalau ada yang ticked dan chat ini tak ticked → skip (tak tunjuk)
     if (anyTicked && !ticked) return;
 
     const item = document.createElement('div');
@@ -6792,9 +6787,7 @@ function renderChatList(dialogs) {
     item.dataset.cid = cid;
     item.innerHTML =
       '<div class="chat-avatar">' + (isGrp ? '👥' : '👤') + '</div>' +
-      '<div class="chat-info">' +
-        '<div class="chat-name">' + escHtml(name) + '</div>' +
-      '</div>' +
+      '<div class="chat-info"><div class="chat-name">' + escHtml(name) + '</div></div>' +
       (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '') +
       '<label class="chat-sync-toggle" onclick="event.stopPropagation()" title="Pilih chat">' +
         '<input type="checkbox" data-sync-cid="' + cid + '" ' + (ticked ? 'checked' : '') + '>' +
@@ -6806,7 +6799,6 @@ function renderChatList(dialogs) {
   list.querySelectorAll('input[data-sync-cid]').forEach(cb => {
     cb.addEventListener('change', function() {
       setChatSync(this.dataset.syncCid, this.checked);
-      // Re-render supaya senarai dikemaskini
       renderChatList(allDialogs);
     });
   });
@@ -6815,6 +6807,7 @@ function renderChatList(dialogs) {
     list.innerHTML = '<div style="color:#888;font-size:0.8rem;padding:12px;text-align:center;">Tiada chat dipilih.</div>';
   }
 }
+
 
 
 if(document.getElementById('tg-chat-search')) document.getElementById('tg-chat-search').oninput = function() {
@@ -6847,12 +6840,10 @@ function renderChatListAll(dialogs) {
   const list = document.getElementById('tg-chat-list');
   list.innerHTML = '<div style="font-size:0.72rem;color:#888;padding:6px 8px;background:#f9f9f9;border-bottom:1px solid #eee;">Tick chat yang nak dipaparkan, tekan ✅ Selesai</div>';
   dialogs.forEach(d => {
-    const e = d.entity;
-    if (!e) return;
-    const cid = e.id ? e.id.toString() : '';
-    const name = e.firstName ? (e.firstName + (e.lastName ? ' ' + e.lastName : '')) : (e.title || 'Unknown');
-    const isGrp = !!(e.megagroup || e.broadcast || e.gigagroup);
-    const unread = d.unreadCount || 0;
+    const cid = d.cid || '';
+    const name = d.name || 'Unknown';
+    const isGrp = !!d.isGrp;
+    const unread = d.unread || 0;
     const ticked = isChatSynced(cid);
     const item = document.createElement('div');
     item.className = 'chat-item';
@@ -6880,13 +6871,15 @@ function renderChatListAll(dialogs) {
   });
 }
 
+
 // ─── Open chat ────────────────────────────────────────────
+var _activeChatUnsub = null;
 async function openChat(dialog, cid, name) {
   document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
   const el = document.querySelector('.chat-item[data-cid="' + cid + '"]');
   if (el) el.classList.add('active');
   activeChatId = cid;
-  activeChatPeer = dialog.entity;
+  activeChatPeer = cid; // simpan cid sahaja, bukan entity
   const nameEl2 = document.getElementById('tg-msg-chat-name');
   if (nameEl2) nameEl2.textContent = name;
   const msgView = document.getElementById('tg-msg-view');
@@ -6897,20 +6890,62 @@ async function openChat(dialog, cid, name) {
   if (emptyEl) emptyEl.style.display = 'none';
   const sendBtn = document.getElementById('btn-tg-send');
   if (sendBtn) sendBtn.disabled = false;
-  if (document.getElementById('btn-attach')) document.getElementById('btn-attach').disabled = false;
   const body = document.getElementById('tg-log');
-
   body.innerHTML = '<div class="msg-empty">Memuatkan mesej...</div>';
+
+  // Unsubscribe chat sebelum
+  if (_activeChatUnsub) { _activeChatUnsub(); _activeChatUnsub = null; }
+
+  // Baca mesej dari Firestore (worker dah sync)
   try {
-    const msgs = await tgClient.getMessages(dialog.entity, { limit: 30 });
-    renderMessages(msgs.reverse());
-    syncMsgs(msgs, cid, name); // jangan await — biar jalan background
-    addLog('Chat "' + name + '" dibuka & synced.', 'ok');
+    const snap = await db.collection('users/' + currentUser.uid + '/tg_messages/' + cid + '/msgs')
+      .orderBy('date', 'asc').limitToLast(50).get();
+    body.innerHTML = '';
+    if (snap.empty) {
+      body.innerHTML = '<div class="msg-empty">Tiada mesej. Worker sedang sync...</div>';
+    } else {
+      snap.forEach(doc => { appendMsgBubbleFS(doc.data()); });
+      body.scrollTop = body.scrollHeight;
+    }
+    addLog('Chat "' + name + '" dibuka dari Firestore.', 'ok');
   } catch(err) {
     addLog('Gagal muatkan mesej: ' + err.message, 'err');
-    body.innerHTML = '<div class="msg-empty" style="color:var(--red);">Gagal muatkan mesej.</div>';
+    body.innerHTML = '<div class="msg-empty" style="color:red;">Gagal muatkan mesej.</div>';
   }
+
+  // Subscribe mesej baru realtime
+  _activeChatUnsub = db.collection('users/' + currentUser.uid + '/tg_messages/' + cid + '/msgs')
+    .orderBy('date', 'asc').limitToLast(1)
+    .onSnapshot(snap => {
+      snap.docChanges().forEach(change => {
+        if (change.type === 'added') {
+          const d = change.doc.data();
+          // Elak duplicate
+          if (!document.querySelector('[data-msgid="' + d.msgId + '"]')) {
+            appendMsgBubbleFS(d);
+          }
+        }
+      });
+    });
 }
+
+function appendMsgBubbleFS(d) {
+  const body = document.getElementById('tg-log');
+  const isOut = !!d.isOut;
+  const text = d.text || '';
+  const date = d.date ? new Date(d.date) : new Date(d.savedAt && d.savedAt.toDate ? d.savedAt.toDate() : Date.now());
+  const time = date.toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit'});
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble ' + (isOut ? 'msg-out' : 'msg-in');
+  bubble.dataset.msgid = d.msgId || '';
+  const mediaHtml = d.hasMedia ? '<div class="msg-file">📎 <span>[Media]</span></div>' : '';
+  bubble.innerHTML = (mediaHtml || '') + (text ? '<div>' + escHtml(text) + '</div>' : '') + '<div class="msg-time">' + time + '</div>';
+  const empty = body.querySelector('.msg-empty');
+  if (empty) empty.remove();
+  body.appendChild(bubble);
+  body.scrollTop = body.scrollHeight;
+}
+
 
 function renderMessages(msgs) {
   const body = document.getElementById('tg-log');
@@ -7039,28 +7074,47 @@ async function saveMsg(msg, cid, cname) {
   } catch(e) { console.warn('Firestore err:', e); }
 }
 
-// ─── Send message ─────────────────────────────────────────
+// ─── Send message via worker outbox ──────────────────────
 async function sendMessage() {
-  if (!tgClient || !activeChatPeer) return;
+  if (!activeChatId || !currentUser) return;
   const input = document.getElementById('tg-msg-input');
   const text = input.value.trim();
   if (!text) return;
   document.getElementById('btn-tg-send').disabled = true;
   input.value = '';
-  try {
-    const result = await tgClient.sendMessage(activeChatPeer, { message: text });
-    appendMsgBubble(result);
-    if (activeChatId && isChatSynced(activeChatId)) await saveMsg(result, activeChatId, document.getElementById('tg-msg-chat-name').textContent);
-    addLog('Dihantar: "' + text.substring(0,30) + '"', 'ok');
 
+  // Tunjuk bubble segera (optimistic)
+  const tempId = 'temp_' + Date.now();
+  const tempBubble = document.createElement('div');
+  tempBubble.className = 'msg-bubble msg-out';
+  tempBubble.dataset.msgid = tempId;
+  const now = new Date().toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit'});
+  tempBubble.innerHTML = '<div>' + escHtml(text) + '</div><div class="msg-time">' + now + ' ⏳</div>';
+  const body = document.getElementById('tg-log');
+  const empty = body.querySelector('.msg-empty');
+  if (empty) empty.remove();
+  body.appendChild(tempBubble);
+  body.scrollTop = body.scrollHeight;
+
+  try {
+    await db.collection('users/' + currentUser.uid + '/tg_outbox').add({
+      chatId: activeChatId,
+      text: text,
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    tempBubble.querySelector('.msg-time').textContent = now + ' ✅';
+    addLog('Dihantar ke outbox: "' + text.substring(0,30) + '"', 'ok');
   } catch(err) {
     addLog('Gagal hantar: ' + err.message, 'err');
-    input.value = text;
+    tempBubble.querySelector('.msg-time').textContent = now + ' ❌';
     toast('Gagal hantar: ' + err.message);
+    input.value = text;
   }
   document.getElementById('btn-tg-send').disabled = false;
   input.focus();
 }
+
 document.getElementById('btn-tg-send').onclick = sendMessage;
 document.getElementById('tg-msg-input').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
 
@@ -7117,16 +7171,11 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
     document.getElementById('btn-go-telegram').onclick = async function() {
       if (!currentUser) return;
-      if (tgClient) {
-        // Dah ada client
-        _showScreen('screen-telegram');
-        if (allDialogs.length > 0) {
-          // Cache ada — papar terus, refresh senyap di belakang
-          renderChatList(allDialogs);
-          tgClient.getDialogs({ limit: 50 }).then(function(d) {
-            allDialogs = d; renderChatList(d);
-          }).catch(function(){});
-        } else {
+      // Terus buka Telegram screen — baca dari Firestore (worker)
+      _showScreen('screen-telegram');
+      if (allDialogs.length > 0) {
+        renderChatList(allDialogs);
+      } else {
           loadDialogs();
         }
       } else {
