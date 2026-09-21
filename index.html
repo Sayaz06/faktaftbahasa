@@ -526,9 +526,32 @@
     </div>
   </div>
 
+  <!-- SCREEN: TELEGRAM SETUP -->
+  <div id="screen-tg-setup" class="screen" style="display:none;flex-direction:column;padding:12px;box-sizing:border-box;">
+    <div class="status-bar" id="tg-setup-status">TELEGRAM — PERSEDIAAN</div>
+    <div id="tg-setup-step-cred" style="">
+      <div style="font-size:0.78rem;color:#555;margin:8px 0 4px;">Masukkan API ID dan API Hash dari <strong>my.telegram.org</strong>:</div>
+      <input id="tg-setup-apiid" type="number" placeholder="API ID (contoh: 12345678)" style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:4px;box-sizing:border-box;margin-bottom:8px;">
+      <input id="tg-setup-apihash" type="text" placeholder="API Hash (32 aksara)" style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:4px;box-sizing:border-box;margin-bottom:8px;">
+      <input id="tg-setup-phone" type="tel" placeholder="No. telefon (+601xxxxxxx)" style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:4px;box-sizing:border-box;margin-bottom:8px;">
+      <button id="btn-tg-setup-send-code" class="btn btn-primary">Hantar Kod OTP</button>
+    </div>
+    <div id="tg-setup-step-otp" style="display:none;">
+      <div style="font-size:0.78rem;color:#555;margin:8px 0 4px;">Masukkan kod OTP yang diterima di Telegram:</div>
+      <input id="tg-setup-otp" type="number" placeholder="Kod OTP" style="width:100%;padding:10px;font-size:1.2rem;text-align:center;letter-spacing:0.2em;border:2px solid #000;border-radius:4px;box-sizing:border-box;margin-bottom:8px;">
+      <input id="tg-setup-password" type="password" placeholder="Kata laluan 2FA (jika ada)" style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:4px;box-sizing:border-box;margin-bottom:8px;">
+      <button id="btn-tg-setup-verify" class="btn btn-primary">Verify & Sambung</button>
+    </div>
+    <div id="tg-setup-msg" style="font-size:0.78rem;color:#c00;margin-top:8px;text-align:center;min-height:20px;"></div>
+    <button id="btn-tg-setup-back" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">← Menu</button>
+  </div>
+
   <!-- SCREEN: TELEGRAM CHAT -->
   <div id="screen-telegram" class="screen" style="display:none;flex-direction:column;height:100vh;padding:0;box-sizing:border-box;">
-    <div class="status-bar" id="tg-screen-status">TELEGRAM</div>
+    <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
+      <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.72rem;">TELEGRAM</div>
+      <button id="btn-tg-refresh" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄 Refresh</button>
+    </div>
     <div id="tg-chat-list" style="flex:1;overflow-y:auto;padding:8px;">
       <div id="tg-chat-empty" style="color:#555;font-size:0.85rem;text-align:center;padding:20px;">Tiada mesej Telegram.</div>
     </div>
@@ -536,9 +559,9 @@
       <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #ccc;">
         <button id="btn-tg-back-list" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0;">←</button>
         <span id="tg-msg-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+        <button id="btn-tg-chat-refresh" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
       </div>
       <textarea id="tg-log" readonly style="flex:1;overflow-y:auto;padding:8px;font-size:0.82rem;line-height:1.7;font-family:monospace;border:none;outline:none;resize:none;background:#fafafa;color:#000;white-space:pre-wrap;"></textarea>
-
       <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
         <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej..." style="flex:1;font-size:0.85rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
         <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">➤</button>
@@ -841,7 +864,7 @@
   </div>
 
   <!-- ══ TG NOTIFICATION BADGE ══ -->
-  <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span></div>
+  <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span> <button id="btn-tg-notif-refresh" style="background:none;border:none;font-size:0.72rem;cursor:pointer;padding:0;margin-left:4px;color:#0088cc;">🔄</button></div>
   <!-- ══ TG NOTIFICATION OVERLAY ══ -->
   <div id="tg-notif-overlay">
     <div id="tg-notif-box">
@@ -850,7 +873,10 @@
         <button id="btn-tg-notif-tutup" style="width:28px;height:28px;border-radius:50%;border:2px solid #000;background:#fff;color:#000;font-size:1rem;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">×</button>
       </div>
       <div id="tg-notif-list"></div>
-      <button id="btn-tg-notif-semua-baca" style="width:100%;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">✓ Tandakan Semua Dibaca</button>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button id="btn-tg-notif-semua-baca" style="flex:1;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">✓ Semua Dibaca</button>
+        <button id="btn-tg-notif-refresh2" style="padding:8px 12px;background:#fff;color:#000;border:2px solid #000;border-radius:6px;font-size:0.85rem;cursor:pointer;">🔄</button>
+      </div>
     </div>
   </div>
   <!-- ══ WS NOTIFICATION BADGE ══ -->
@@ -889,6 +915,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>  
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/telegram@2.26.22/dist/browser.min.js"></script>
 
   <script>
     var firebaseConfig = {
@@ -4106,22 +4133,32 @@
     // OTHER MOTIVATION
     // ══════════════════════════════════════════
     // ══════════════════════════════════════════
-    // TELEGRAM SCREEN — Cache realtime
+    // TELEGRAM — GramJS Direct MTProto
     // ══════════════════════════════════════════
+    var _tgClient = null;
     var _tgActiveChatId = null;
     var _tgCache = {};
-    var _tgUnsubs = {};
     var _tgChatMeta = {};
+    var _tgUnsubs = {};
+    var _tgConnecting = false;
+    var _tgApiId = null;
+    var _tgApiHash = null;
+    var _tgPhoneCodeHash = null;
 
-    function _tgTodayMidnight() {
-      var d = new Date(); d.setHours(0,0,0,0); return Math.floor(d.getTime()/1000);
+    function _tgSetStatus(msg) {
+      var s = document.getElementById('tg-screen-status');
+      if (s) s.textContent = msg;
+    }
+    function _tgSetupMsg(msg, color) {
+      var el = document.getElementById('tg-setup-msg');
+      if (el) { el.textContent = msg; el.style.color = color || '#c00'; }
     }
 
     function _tgFmtLine(msg) {
       var text = msg.text || msg.mediaLabel || (msg.hasMedia ? '[Media]' : '');
       if (!text) return '';
       var time = msg.date ? new Date(msg.date*1000).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'}) : '';
-      var prefix = msg.out ? 'Saya' : (msg.chatName || 'Dia');
+      var prefix = msg.out ? 'Saya' : (msg.senderName || msg.chatName || 'Dia');
       return '[' + time + '] ' + prefix + ': ' + text;
     }
 
@@ -4133,40 +4170,119 @@
       ta.scrollTop = ta.scrollHeight;
     }
 
-    function _tgSubscribeChat(chatId, chatName) {
-      if (_tgUnsubs[chatId]) return;
-      _tgChatMeta[chatId] = chatName;
-      _tgCache[chatId] = _tgCache[chatId] || [];
-      var midnight = _tgTodayMidnight();
-      _tgUnsubs[chatId] = db.collection('tg_messages').doc(chatId).collection('messages')
-        .where('date', '>=', midnight).orderBy('date', 'asc')
-        .onSnapshot(function(snap) {
-          snap.docChanges().forEach(function(ch) {
-            if (ch.type !== 'added') return;
-            var d = ch.doc.data();
-            var docKey = ch.doc.id;
-            var dupIdx = _tgCache[chatId].findIndex(function(m) {
-              return (m._docKey === docKey) ||
-                (m._isTemp && d.out && m.out && m.text === d.text && Math.abs((m.date||0)-(d.date||0)) <= 5);
-            });
-            if (dupIdx >= 0) {
-              d._docKey = docKey;
-              _tgCache[chatId][dupIdx] = d;
-            } else {
-              d._docKey = docKey;
-              _tgCache[chatId].push(d);
-            }
-          });
-          if (_tgActiveChatId === chatId) _tgRenderLog();
-        }, function(e) { console.warn('tgSub err:', e); });
+    function _tgSaveSession(sessionStr) {
+      if (!currentUser) return;
+      db.doc('users/' + currentUser.uid + '/tg_session/main')
+        .set({ session: sessionStr, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+        .catch(function(e) { console.warn('save tg session err:', e); });
+    }
+    function _tgLoadSession(callback) {
+      if (!currentUser) { callback(null); return; }
+      db.doc('users/' + currentUser.uid + '/tg_session/main').get()
+        .then(function(doc) { callback(doc.exists ? (doc.data().session || null) : null); })
+        .catch(function() { callback(null); });
+    }
+    function _tgLoadCreds(callback) {
+      if (!currentUser) { callback(null, null); return; }
+      db.doc('users/' + currentUser.uid + '/tg_session/main').get()
+        .then(function(doc) {
+          if (doc.exists) { callback(doc.data().apiId || null, doc.data().apiHash || null); }
+          else { callback(null, null); }
+        }).catch(function() { callback(null, null); });
+    }
+    function _tgSaveCreds(apiId, apiHash) {
+      if (!currentUser) return;
+      db.doc('users/' + currentUser.uid + '/tg_session/main')
+        .set({ apiId: apiId, apiHash: apiHash, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+        .catch(function(e) { console.warn('save creds err:', e); });
     }
 
-    function _tgUnsubscribeChat(chatId) {
-      if (_tgUnsubs[chatId]) {
-        _tgUnsubs[chatId]();
-        delete _tgUnsubs[chatId];
-        if (_tgCache[chatId]) _tgCache[chatId] = _tgCache[chatId].slice(-50);
+    function _tgGetMediaLabel(media) {
+      if (!media) return '';
+      if (media.photo) return '[Gambar]';
+      if (media.document) {
+        var attrs = media.document.attributes || [];
+        if (attrs.some(function(a){ return a.className === 'DocumentAttributeSticker'; })) return '[Sticker]';
+        if (attrs.some(function(a){ return a.className === 'DocumentAttributeAudio'; })) return '[Audio]';
+        if (attrs.some(function(a){ return a.className === 'DocumentAttributeVideo'; })) return '[Video]';
+        return '[Fail]';
       }
+      if (media.voice) return '[Suara]';
+      if (media.geo) return '[Lokasi]';
+      return '[Media]';
+    }
+
+    function _tgSaveMsgToFS(chatId, chatName, msg) {
+      var text = msg.message || msg.text || '';
+      var mediaLabel = _tgGetMediaLabel(msg.media);
+      var hasMedia = !!(msg.media);
+      var date = msg.date ? (typeof msg.date === 'object' ? Math.floor(msg.date.getTime()/1000) : msg.date) : Math.floor(Date.now()/1000);
+      var docId = '' + msg.id;
+      db.collection('tg_messages').doc(chatId)
+        .set({ name: chatName, synced: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
+        .catch(function(){});
+      return db.collection('tg_messages').doc(chatId).collection('messages').doc(docId).set({
+        text: text, mediaLabel: mediaLabel, hasMedia: hasMedia,
+        out: msg.out || false, date: date, chatName: chatName,
+        savedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+    }
+
+    async function _tgInitClient(apiId, apiHash, sessionStr) {
+      var TG = window.telegram || window.TelegramClient;
+      if (!TG) { console.warn('GramJS tidak dimuatkan'); return null; }
+      var TelegramClient = TG.TelegramClient || TG;
+      var StringSession = (TG.sessions && TG.sessions.StringSession) || TG.StringSession;
+      if (!TelegramClient || !StringSession) { console.warn('GramJS: class tidak dijumpai'); return null; }
+      var session = new StringSession(sessionStr || '');
+      return new TelegramClient(session, parseInt(apiId), apiHash, {
+        connectionRetries: 3, useWSS: true
+      });
+    }
+
+    async function _tgConnect() {
+      if (_tgConnecting || _tgClient) return;
+      _tgConnecting = true;
+      _tgSetStatus('Menyambung Telegram...');
+      _tgLoadSession(async function(sessionStr) {
+        _tgLoadCreds(async function(apiId, apiHash) {
+          if (!apiId || !apiHash) {
+            _tgConnecting = false; _tgSetStatus('Perlu setup API'); return;
+          }
+          _tgApiId = apiId; _tgApiHash = apiHash;
+          var client = await _tgInitClient(apiId, apiHash, sessionStr);
+          if (!client) { _tgConnecting = false; _tgSetStatus('GramJS tidak tersedia'); return; }
+          try {
+            await client.connect();
+            _tgClient = client;
+            _tgConnecting = false;
+            _tgSetStatus('Telegram ✓');
+            loadTgChatList();
+          } catch(e) {
+            _tgConnecting = false;
+            _tgSetStatus('Sambungan gagal');
+            console.warn('tg connect err:', e);
+          }
+        });
+      });
+    }
+
+    function loadTgChatList() {
+      var list = document.getElementById('tg-chat-list');
+      var empty = document.getElementById('tg-chat-empty');
+      if (!list) return;
+      list.innerHTML = '<div style="color:#555;font-size:0.82rem;text-align:center;padding:12px;">Memuatkan...</div>';
+      db.collection('tg_messages').where('synced', '==', true).get().then(function(snap) {
+        list.innerHTML = '';
+        if (snap.empty) { if (empty) empty.style.display = ''; return; }
+        if (empty) empty.style.display = 'none';
+        snap.forEach(function(doc) {
+          var data = doc.data(); var chatId = doc.id; var chatName = data.name || chatId;
+          _tgChatMeta[chatId] = chatName;
+          _tgCache[chatId] = _tgCache[chatId] || [];
+          list.appendChild(_tgMakeChatDiv(chatId, chatName));
+        });
+      }).catch(function(e) { _tgSetStatus('Ralat: ' + e.message); });
     }
 
     function _tgMakeChatDiv(chatId, chatName) {
@@ -4177,64 +4293,105 @@
       return div;
     }
 
-    function loadTgChatList() {
-      var list = document.getElementById('tg-chat-list');
-      var empty = document.getElementById('tg-chat-empty');
-      if (!list) return;
-      list.innerHTML = '';
-      db.collection('tg_messages').where('synced', '==', true).get().then(function(snap) {
-        if (snap.empty) { if (empty) empty.style.display = ''; return; }
-        if (empty) empty.style.display = 'none';
-        snap.forEach(function(doc) {
-          var data = doc.data();
-          var chatId = doc.id;
-          var chatName = data.name || chatId;
-          _tgChatMeta[chatId] = chatName;
-          _tgCache[chatId] = _tgCache[chatId] || [];
-          list.appendChild(_tgMakeChatDiv(chatId, chatName));
-        });
-      }).catch(function(e) {
-        var s = document.getElementById('tg-screen-status');
-        if (s) s.textContent = 'Ralat: ' + e.message;
-      });
-    }
-
-
-
     function openTgChat(chatId, chatName) {
       _tgActiveChatId = chatId;
+      _tgCache[chatId] = _tgCache[chatId] || [];
       document.getElementById('tg-msg-chat-name').textContent = chatName;
       document.getElementById('tg-chat-list').style.display = 'none';
       document.getElementById('btn-tg-back-menu').style.display = 'none';
       document.getElementById('tg-msg-view').style.display = 'flex';
-      _tgSubscribeChat(chatId, chatName);
-      _tgRenderLog();
+      _tgLoadChatFromFS(chatId, chatName);
     }
 
-    function appendTgBubble(msg) {
-      if (!_tgActiveChatId) return;
-      _tgCache[_tgActiveChatId] = _tgCache[_tgActiveChatId] || [];
-      var hasDup = _tgCache[_tgActiveChatId].some(function(m) {
-        return m._docKey && msg._docKey && m._docKey === msg._docKey;
-      });
-      if (!hasDup) {
-        _tgCache[_tgActiveChatId].push(msg);
+    function _tgLoadChatFromFS(chatId, chatName) {
+      _tgSetStatus('Memuatkan mesej...');
+      db.collection('tg_messages').doc(chatId).collection('messages')
+        .orderBy('date', 'desc').limit(50).get()
+        .then(function(snap) {
+          _tgCache[chatId] = [];
+          snap.forEach(function(doc) { var d = doc.data(); d._docKey = doc.id; _tgCache[chatId].push(d); });
+          _tgRenderLog();
+          _tgSetStatus('TELEGRAM — ' + chatName);
+          _tgSubscribeFirestoreNew(chatId);
+        }).catch(function(e) { _tgSetStatus('Gagal muatkan: ' + e.message); });
+    }
+
+    function _tgSubscribeFirestoreNew(chatId) {
+      if (_tgUnsubs[chatId]) return;
+      var lastDate = 0;
+      (_tgCache[chatId] || []).forEach(function(m){ if ((m.date||0) > lastDate) lastDate = m.date; });
+      _tgUnsubs[chatId] = db.collection('tg_messages').doc(chatId).collection('messages')
+        .where('date', '>', lastDate || 0).orderBy('date', 'asc')
+        .onSnapshot(function(snap) {
+          snap.docChanges().forEach(function(ch) {
+            if (ch.type !== 'added') return;
+            var d = ch.doc.data(); var docKey = ch.doc.id;
+            var arr = _tgCache[chatId] || [];
+            var dupIdx = arr.findIndex(function(m){
+              return m._docKey === docKey ||
+                (m._isTemp && d.out && m.out && m.text === d.text && Math.abs((m.date||0)-(d.date||0)) <= 5);
+            });
+            if (dupIdx >= 0) { d._docKey = docKey; arr[dupIdx] = d; }
+            else { d._docKey = docKey; arr.push(d); }
+            _tgCache[chatId] = arr;
+          });
+          if (_tgActiveChatId === chatId) _tgRenderLog();
+        }, function(e){ console.warn('tg fs sub err:', e); });
+    }
+
+    function _tgUnsubscribeChat(chatId) {
+      if (_tgUnsubs[chatId]) { _tgUnsubs[chatId](); delete _tgUnsubs[chatId]; }
+    }
+
+    async function _tgRefreshChatFromMTProto(chatId, chatName) {
+      if (!_tgClient) { _tgLoadChatFromFS(chatId, chatName); return; }
+      _tgSetStatus('Refresh dari Telegram...');
+      try {
+        var entity = await _tgClient.getEntity(parseInt(chatId));
+        var messages = await _tgClient.getMessages(entity, { limit: 50 });
+        for (var i = 0; i < messages.length; i++) {
+          var msg = messages[i];
+          if (!msg || !msg.id) continue;
+          await _tgSaveMsgToFS(chatId, chatName, msg).catch(function(){});
+        }
+        if (_tgUnsubs[chatId]) { _tgUnsubs[chatId](); delete _tgUnsubs[chatId]; }
+        _tgLoadChatFromFS(chatId, chatName);
+      } catch(e) {
+        console.warn('tg refresh err:', e);
+        _tgLoadChatFromFS(chatId, chatName);
       }
-      _tgRenderLog();
     }
 
-    function renderTgChatListFromCache() {
-      var list = document.getElementById('tg-chat-list');
-      var empty = document.getElementById('tg-chat-empty');
-      if (!list) return;
-      var keys = Object.keys(_tgChatMeta);
-      if (!keys.length) { loadTgChatList(); return; }
-      list.innerHTML = '';
-      if (empty) empty.style.display = 'none';
-      keys.forEach(function(chatId) {
-        list.appendChild(_tgMakeChatDiv(chatId, _tgChatMeta[chatId]));
-      });
-    }
+    var _tgSending = false;
+    document.getElementById('btn-tg-send').addEventListener('click', async function() {
+      if (_tgSending) return;
+      var input = document.getElementById('tg-msg-input');
+      var text = input.value.trim();
+      if (!text || !_tgActiveChatId) return;
+      _tgSending = true; input.value = '';
+      var now = Math.floor(Date.now() / 1000);
+      var tempKey = 'tmp_' + now + '_' + Math.random().toString(36).slice(2);
+      _tgCache[_tgActiveChatId] = _tgCache[_tgActiveChatId] || [];
+      _tgCache[_tgActiveChatId].push({ _docKey: tempKey, _isTemp: true, text: text, out: true, date: now });
+      _tgRenderLog();
+      if (_tgClient) {
+        try {
+          var entity = await _tgClient.getEntity(parseInt(_tgActiveChatId));
+          var result = await _tgClient.sendMessage(entity, { message: text });
+          await _tgSaveMsgToFS(_tgActiveChatId, _tgChatMeta[_tgActiveChatId] || '', result).catch(function(){});
+        } catch(e) {
+          console.warn('send msg err:', e);
+          _tgSetStatus('Gagal hantar: ' + (e.message || e));
+        }
+      } else {
+        db.collection('tg_messages').doc(_tgActiveChatId).collection('outbox').add({
+          text: text, chatId: _tgActiveChatId,
+          chatName: _tgChatMeta[_tgActiveChatId] || '',
+          date: now, sentAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function(e){ console.warn('outbox err:', e); });
+      }
+      _tgSending = false;
+    });
 
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
       if (_tgActiveChatId) _tgUnsubscribeChat(_tgActiveChatId);
@@ -4242,42 +4399,106 @@
       document.getElementById('tg-msg-view').style.display = 'none';
       document.getElementById('tg-chat-list').style.display = '';
       document.getElementById('btn-tg-back-menu').style.display = '';
-      renderTgChatListFromCache();
+      loadTgChatList();
     });
-
 
     document.getElementById('btn-tg-back-menu').addEventListener('click', function() {
       showScreen('screen-menu');
     });
 
-    var _tgSending = false;
-    document.getElementById('btn-tg-send').addEventListener('click', function() {
-      if (_tgSending) return;
-      var input = document.getElementById('tg-msg-input');
-      var text = input.value.trim();
-      if (!text || !_tgActiveChatId) return;
-      _tgSending = true;
-      input.value = '';
-      var now = Math.floor(Date.now() / 1000);
-      var tempKey = 'tmp_' + now + '_' + Math.random().toString(36).slice(2);
-      appendTgBubble({ _docKey: tempKey, _isTemp: true, text: text, out: true, date: now, hasMedia: false });
-      db.collection('tg_messages').doc(_tgActiveChatId).collection('outbox').add({
-        text: text,
-        chatId: _tgActiveChatId,
-        chatName: document.getElementById('tg-msg-chat-name').textContent,
-        date: now,
-        sentAt: firebase.firestore.FieldValue.serverTimestamp()
-      }).catch(function(e) { console.warn('outbox err:', e); })
-        .finally(function() { _tgSending = false; });
+    document.getElementById('btn-tg-chat-refresh').addEventListener('click', function() {
+      if (!_tgActiveChatId) return;
+      _tgUnsubscribeChat(_tgActiveChatId);
+      _tgRefreshChatFromMTProto(_tgActiveChatId, _tgChatMeta[_tgActiveChatId] || _tgActiveChatId);
+    });
+
+    document.getElementById('btn-tg-refresh').addEventListener('click', function() {
+      loadTgChatList();
     });
 
     document.getElementById('btn-go-telegram').onclick = function() {
-      var el = document.getElementById('screen-telegram');
-      document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; s.classList.remove('active'); });
-      el.style.display = 'flex';
-      el.classList.add('active');
-      loadTgChatList();
+      if (!currentUser) return;
+      _tgLoadSession(function(sessionStr) {
+        _tgLoadCreds(function(apiId, apiHash) {
+          var el;
+          document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; s.classList.remove('active'); });
+          if (!apiId || !apiHash || !sessionStr) {
+            el = document.getElementById('screen-tg-setup');
+            el.style.display = 'flex'; el.classList.add('active');
+            document.getElementById('tg-setup-step-cred').style.display = '';
+            document.getElementById('tg-setup-step-otp').style.display = 'none';
+            _tgSetupMsg('');
+            if (apiId) document.getElementById('tg-setup-apiid').value = apiId;
+            if (apiHash) document.getElementById('tg-setup-apihash').value = apiHash;
+          } else {
+            el = document.getElementById('screen-telegram');
+            el.style.display = 'flex'; el.classList.add('active');
+            if (!_tgClient) _tgConnect();
+            else loadTgChatList();
+          }
+        });
+      });
     };
+
+    document.getElementById('btn-tg-setup-send-code').addEventListener('click', async function() {
+      var apiId = document.getElementById('tg-setup-apiid').value.trim();
+      var apiHash = document.getElementById('tg-setup-apihash').value.trim();
+      var phone = document.getElementById('tg-setup-phone').value.trim();
+      if (!apiId || !apiHash || !phone) { _tgSetupMsg('Sila isi semua medan.'); return; }
+      var btn = this; btn.disabled = true; btn.textContent = 'Menghantar...';
+      _tgSetupMsg('Sila tunggu...', '#555');
+      _tgApiId = parseInt(apiId); _tgApiHash = apiHash;
+      _tgSaveCreds(_tgApiId, _tgApiHash);
+      try {
+        var client = await _tgInitClient(apiId, apiHash, '');
+        if (!client) { _tgSetupMsg('GramJS tidak tersedia'); btn.disabled=false; btn.textContent='Hantar Kod OTP'; return; }
+        await client.connect();
+        var result = await client.sendCode({ apiId: _tgApiId, apiHash: _tgApiHash }, phone);
+        _tgPhoneCodeHash = result.phoneCodeHash;
+        _tgClient = client;
+        document.getElementById('tg-setup-step-cred').style.display = 'none';
+        document.getElementById('tg-setup-step-otp').style.display = '';
+        _tgSetupMsg('Kod OTP dihantar!', '#090');
+      } catch(e) {
+        _tgSetupMsg('Ralat: ' + (e.message || e));
+        btn.disabled = false; btn.textContent = 'Hantar Kod OTP';
+      }
+    });
+
+    document.getElementById('btn-tg-setup-verify').addEventListener('click', async function() {
+      var otp = document.getElementById('tg-setup-otp').value.trim();
+      var password = document.getElementById('tg-setup-password').value.trim();
+      var phone = document.getElementById('tg-setup-phone').value.trim();
+      if (!otp) { _tgSetupMsg('Masukkan kod OTP.'); return; }
+      var btn = this; btn.disabled = true; btn.textContent = 'Mengesah...';
+      _tgSetupMsg('Mengesahkan...', '#555');
+      try {
+        await _tgClient.signIn({ apiId: _tgApiId, apiHash: _tgApiHash }, {
+          phoneNumber: phone, phoneCode: otp,
+          phoneCodeHash: _tgPhoneCodeHash,
+          password: password || undefined,
+          onError: function(e){ throw e; }
+        });
+        var sessionStr = _tgClient.session && _tgClient.session.save ? _tgClient.session.save() : '';
+        if (sessionStr) _tgSaveSession(sessionStr);
+        _tgSetupMsg('Berjaya!', '#090');
+        document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; s.classList.remove('active'); });
+        var el = document.getElementById('screen-telegram');
+        el.style.display = 'flex'; el.classList.add('active');
+        loadTgChatList();
+      } catch(e) {
+        if (e.message && e.message.includes('SESSION_PASSWORD_NEEDED')) {
+          _tgSetupMsg('Perlu kata laluan 2FA. Isi medan 2FA dan cuba lagi.');
+        } else {
+          _tgSetupMsg('Gagal: ' + (e.message || e));
+        }
+        btn.disabled = false; btn.textContent = 'Verify & Sambung';
+      }
+    });
+
+    document.getElementById('btn-tg-setup-back').addEventListener('click', function() {
+      showScreen('screen-menu');
+    });
 
     document.getElementById('btn-go-other-motivation').onclick = function() {
       _bukaDenganPin('PIN untuk buka Other Motivation', function() {
@@ -4747,11 +4968,10 @@
 
 
     // ══════════════════════════════════════════
-    // TG NOTIFICATION — REALTIME SUBSCRIBE
+    // TG NOTIFICATION — MANUAL REFRESH (ringan, tanpa onSnapshot)
     // ══════════════════════════════════════════
-    var _tgNotifUnsub = null;
-    var _tgNotifChats = []; // [{chatId, chatName, count, lastMsg}]
-    var _tgSeenMsgIds = {}; // { msgId: true } — loaded from Firestore
+    var _tgNotifChats = [];
+    var _tgSeenMsgIds = {};
 
     function _tgLoadSeenIds(callback) {
       if (!currentUser) { callback({}); return; }
@@ -4768,50 +4988,43 @@
         .catch(function(e) { console.warn('save seen err:', e); });
     }
 
-    function subscribeTgNotif() {
-      if (_tgNotifUnsub) { _tgNotifUnsub(); _tgNotifUnsub = null; }
+    function refreshTgNotif() {
+      if (!currentUser) return;
       _tgLoadSeenIds(function(seenIds) {
         _tgSeenMsgIds = seenIds;
-      _tgNotifUnsub = db.collection('tg_messages')
-        .onSnapshot(function(snap) {
+        db.collection('tg_messages').where('synced', '==', true).get().then(function(snap) {
           _tgNotifChats = [];
           var fetches = [];
           snap.forEach(function(doc) {
-            var data = doc.data();
-            var chatId = doc.id;
-            var chatName = data.name || chatId;
+            var data = doc.data(); var chatId = doc.id; var chatName = data.name || chatId;
             fetches.push(
               db.collection('tg_messages').doc(chatId).collection('messages')
-                .orderBy('date', 'desc').limit(5).get()
+                .orderBy('date', 'desc').limit(10).get()
                 .then(function(msgSnap) {
                   var newMsgs = [];
                   msgSnap.forEach(function(m) {
-                    var d = m.data();
-                    var mid = m.id;
-                    if (!d.out && d.date && !_tgSeenMsgIds[mid]) {
-                      newMsgs.push({ id: mid, data: d });
-                    }
+                    var d = m.data(); var mid = m.id;
+                    if (!d.out && d.date && !seenIds[mid]) newMsgs.push({ id: mid, data: d });
                   });
                   if (newMsgs.length > 0) {
                     var first = newMsgs[0].data;
                     _tgNotifChats.push({
-                      chatId: chatId,
-                      chatName: chatName,
-                      count: newMsgs.length,
+                      chatId: chatId, chatName: chatName, count: newMsgs.length,
                       msgIds: newMsgs.map(function(m){ return m.id; }),
-                      lastMsg: first.text || (first.mediaLabel ? first.mediaLabel : (first.hasMedia ? '[media]' : ''))
+                      lastMsg: first.text || (first.mediaLabel || (first.hasMedia ? '[media]' : ''))
                     });
                   }
-                }).catch(function() {})
+                }).catch(function(){})
             );
           });
           Promise.all(fetches).then(function() { updateTgNotifBadge(); });
-        }, function(e) { console.warn('tgNotif err:', e); });
-      }); // end _tgLoadSeenIds
+        }).catch(function(e){ console.warn('tgNotif refresh err:', e); });
+      });
     }
 
+    function subscribeTgNotif() { refreshTgNotif(); }
+
     function stopTgNotif() {
-      if (_tgNotifUnsub) { _tgNotifUnsub(); _tgNotifUnsub = null; }
       _tgNotifChats = [];
       updateTgNotifBadge();
       Object.keys(_tgUnsubs).forEach(function(k){ if(_tgUnsubs[k]) _tgUnsubs[k](); });
@@ -4846,11 +5059,17 @@
     }
 
     document.getElementById('tg-notif-badge').addEventListener('click', openTgNotifOverlay);
+    document.getElementById('btn-tg-notif-refresh').addEventListener('click', function(e) {
+      e.stopPropagation(); refreshTgNotif();
+    });
     document.getElementById('btn-tg-notif-tutup').addEventListener('click', function() {
       document.getElementById('tg-notif-overlay').className = '';
     });
+    document.getElementById('btn-tg-notif-refresh2').addEventListener('click', function() {
+      refreshTgNotif();
+      document.getElementById('tg-notif-overlay').className = '';
+    });
     document.getElementById('btn-tg-notif-semua-baca').addEventListener('click', function() {
-      // kumpul semua msgId yg ada skrg jadi seen, override
       var newSeen = Object.assign({}, _tgSeenMsgIds);
       _tgNotifChats.forEach(function(c) {
         if (c.msgIds) c.msgIds.forEach(function(id){ newSeen[id] = true; });
