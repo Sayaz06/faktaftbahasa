@@ -493,6 +493,69 @@
     .ws-notif-from { font-weight: bold; font-size: 0.78rem; color: #333; margin-bottom: 2px; }
     .ws-notif-msg { color: #000; }
     #ws-notif-err { color: #c00; font-size: 0.75rem; text-align: center; min-height: 1em; margin-bottom: 4px; }
+
+    /* ── Telegram Chat List ── */
+    .chat-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 8px; border-bottom: 1px solid #eee;
+      cursor: pointer; user-select: none;
+    }
+    .chat-item:active { background: #f5f5f5; }
+    .chat-item.active { background: #f0f0f0; }
+    .chat-avatar {
+      font-size: 1.4rem; flex-shrink: 0;
+      width: 36px; text-align: center;
+    }
+    .chat-info { flex: 1; min-width: 0; }
+    .chat-name {
+      font-weight: bold; font-size: 0.9rem;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .chat-last {
+      font-size: 0.75rem; color: #555;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .chat-unread {
+      background: #000; color: #fff;
+      border-radius: 50%; min-width: 20px; height: 20px;
+      font-size: 0.7rem; font-weight: bold;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; padding: 0 4px;
+    }
+    .chat-sync-toggle {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 1px; flex-shrink: 0; cursor: pointer;
+    }
+    .chat-sync-toggle input { width: 14px; height: 14px; cursor: pointer; }
+    .chat-sync-toggle span {
+      font-size: 0.55rem; color: #aaa; line-height: 1;
+    }
+
+    /* ── Telegram Msg View ── */
+    .msg-bubble {
+      max-width: 80%; padding: 7px 10px;
+      border-radius: 10px; margin-bottom: 6px;
+      font-size: 0.85rem; line-height: 1.45; word-break: break-word;
+    }
+    .msg-bubble.out, .msg-bubble.msg-out {
+      background: #000; color: #fff;
+      align-self: flex-end; border-bottom-right-radius: 3px;
+    }
+    .msg-bubble.in, .msg-bubble.msg-in {
+      background: #f0f0f0; color: #000;
+      align-self: flex-start; border-bottom-left-radius: 3px;
+    }
+    .msg-time { font-size: 0.6rem; opacity: 0.6; margin-top: 3px; }
+    .msg-empty { color: #888; font-size: 0.8rem; text-align: center; padding: 20px; }
+    .msg-sticker { font-size: 2rem; }
+    .msg-file { font-size: 0.8rem; color: #555; }
+    #tg-log .log-ok { color: #080; font-size: 0.72rem; font-family: monospace; }
+    #tg-log .log-err { color: #c00; font-size: 0.72rem; font-family: monospace; }
+    #tg-log .log-info { color: #555; font-size: 0.72rem; font-family: monospace; }
+    #tg-log div:not(.msg-bubble):not(.log-ok):not(.log-err):not(.log-info) {
+      font-size: 0.72rem; color: #666; font-family: monospace;
+    }
   </style>
 
 </head>
@@ -564,7 +627,7 @@
         <span id="tg-msg-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
         <button id="btn-tg-chat-refresh" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
       </div>
-      <textarea id="tg-log" readonly style="flex:1;overflow-y:auto;padding:8px;font-size:0.82rem;line-height:1.7;font-family:monospace;border:none;outline:none;resize:none;background:#fafafa;color:#000;white-space:pre-wrap;"></textarea>
+      <div id="tg-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;background:#fafafa;"></div>
       <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
         <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej..." style="flex:1;font-size:0.85rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
         <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">➤</button>
@@ -6701,9 +6764,9 @@ function renderChatList(dialogs) {
         '<div class="chat-last">' + escHtml(lastMsg.substring(0, 50)) + '</div>' +
       '</div>' +
       (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '') +
-      '<label style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;flex-shrink:0;padding-left:6px;" onclick="event.stopPropagation()">' +
-        '<input type="checkbox" data-sync-cid="' + cid + '" ' + (synced ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;">' +
-        '<span style="font-size:0.6rem;color:var(--ink-faint);">Kindle</span>' +
+      '<label class="chat-sync-toggle" onclick="event.stopPropagation()" title="Sync ke Kindle">' +
+        '<input type="checkbox" data-sync-cid="' + cid + '" ' + (synced ? 'checked' : '') + '>' +
+        '<span>Kindle</span>' +
       '</label>';
     item.onclick = () => openChat(d, cid, name);
     list.appendChild(item);
