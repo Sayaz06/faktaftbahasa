@@ -4720,27 +4720,10 @@
     // ══════════════════════════════════════════
     var _tgNotifUnsub = null;
     var _tgNotifChats = []; // [{chatId, chatName, count, lastMsg}]
-    var _tgSeenMsgIds = {}; // { msgId: true } — loaded from Firestore
-
-    function _tgLoadSeenIds(callback) {
-      if (!currentUser) { callback({}); return; }
-      db.doc('users/' + currentUser.uid + '/tg_notif_seen/data')
-        .get().then(function(doc) {
-          callback(doc.exists ? (doc.data().ids || {}) : {});
-        }).catch(function() { callback({}); });
-    }
-
-    function _tgSaveSeenIds(ids) {
-      if (!currentUser) return;
-      db.doc('users/' + currentUser.uid + '/tg_notif_seen/data')
-        .set({ ids: ids, updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
-        .catch(function(e) { console.warn('save seen err:', e); });
-    }
+    var _tgLastReadTs = parseInt(localStorage.getItem('tg_last_read') || '0');
 
     function subscribeTgNotif() {
       if (_tgNotifUnsub) { _tgNotifUnsub(); _tgNotifUnsub = null; }
-      _tgLoadSeenIds(function(seenIds) {
-        _tgSeenMsgIds = seenIds;
       _tgNotifUnsub = db.collection('tg_messages')
         .onSnapshot(function(snap) {
           _tgNotifChats = [];
@@ -4756,19 +4739,16 @@
                   var newMsgs = [];
                   msgSnap.forEach(function(m) {
                     var d = m.data();
-                    var mid = m.id;
-                    if (!d.out && d.date && !_tgSeenMsgIds[mid]) {
-                      newMsgs.push({ id: mid, data: d });
+                    if (!d.out && d.date && d.date > _tgLastReadTs) {
+                      newMsgs.push(d);
                     }
                   });
                   if (newMsgs.length > 0) {
-                    var first = newMsgs[0].data;
                     _tgNotifChats.push({
                       chatId: chatId,
                       chatName: chatName,
                       count: newMsgs.length,
-                      msgIds: newMsgs.map(function(m){ return m.id; }),
-                      lastMsg: first.text || (first.mediaLabel ? first.mediaLabel : (first.hasMedia ? '[media]' : ''))
+                      lastMsg: newMsgs[0].text || (newMsgs[0].hasMedia ? '[media]' : '')
                     });
                   }
                 }).catch(function() {})
@@ -4776,7 +4756,6 @@
           });
           Promise.all(fetches).then(function() { updateTgNotifBadge(); });
         }, function(e) { console.warn('tgNotif err:', e); });
-      }); // end _tgLoadSeenIds
     }
 
     function stopTgNotif() {
@@ -4819,13 +4798,8 @@
       document.getElementById('tg-notif-overlay').className = '';
     });
     document.getElementById('btn-tg-notif-semua-baca').addEventListener('click', function() {
-      // kumpul semua msgId yg ada skrg jadi seen, override
-      var newSeen = Object.assign({}, _tgSeenMsgIds);
-      _tgNotifChats.forEach(function(c) {
-        if (c.msgIds) c.msgIds.forEach(function(id){ newSeen[id] = true; });
-      });
-      _tgSeenMsgIds = newSeen;
-      _tgSaveSeenIds(newSeen);
+      _tgLastReadTs = Math.floor(Date.now() / 1000);
+      localStorage.setItem('tg_last_read', String(_tgLastReadTs));
       _tgNotifChats = [];
       updateTgNotifBadge();
       document.getElementById('tg-notif-overlay').className = '';
