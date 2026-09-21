@@ -6383,6 +6383,9 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
     var _tgApiId = null;
     var _tgApiHash = null;
     var _tgPhoneCodeHash = null;
+    var _tgResolveOtp = null;
+    var _tgResolve2fa = null;
+
 
     function _tgSetStatus(msg) {
       var s = document.getElementById('tg-screen-status');
@@ -6707,7 +6710,7 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
       var apiHash = document.getElementById('tg-setup-apihash').value.trim();
       var phone = document.getElementById('tg-setup-phone').value.trim();
       if (!apiId || !apiHash || !phone) { _tgSetupMsg('Sila isi semua medan.'); return; }
-      var btn = this; btn.disabled = true; btn.textContent = 'Menghantar...';
+      var btn = this; btn.disabled = true; btn.textContent = 'Menyambung...';
       _tgSetupMsg('Sila tunggu...', '#555');
       _tgApiId = parseInt(apiId); _tgApiHash = apiHash;
       _tgSaveCreds(_tgApiId, _tgApiHash);
@@ -6721,48 +6724,58 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
           btn.disabled = false; btn.textContent = 'Hantar Kod OTP'; return;
         }
         var session = new lib.StringSession('');
-        var client = new lib.TelegramClient(session, _tgApiId, _tgApiHash, { connectionRetries: 3, useWSS: true });
-        await client.connect();
-        var result = await client.sendCode({ apiId: _tgApiId, apiHash: _tgApiHash }, phone);
-        _tgPhoneCodeHash = result.phoneCodeHash;
-        _tgClient = client;
-        document.getElementById('tg-setup-step-cred').style.display = 'none';
-        document.getElementById('tg-setup-step-otp').style.display = '';
-        _tgSetupMsg('Kod OTP dihantar!', '#090');
+        _tgClient = new lib.TelegramClient(session, _tgApiId, _tgApiHash, { connectionRetries: 3, useWSS: true });
+
+        // Guna start() dengan callback — sama macam telegram.html
+        _tgClient.start({
+          phoneNumber: async function() { return phone; },
+          phoneCode: async function() {
+            document.getElementById('tg-setup-step-cred').style.display = 'none';
+            document.getElementById('tg-setup-step-otp').style.display = '';
+            _tgSetupMsg('Kod OTP dihantar! Masukkan kod.', '#090');
+            btn.disabled = false; btn.textContent = 'Hantar Kod OTP';
+            return new Promise(function(resolve) { _tgResolveOtp = resolve; });
+          },
+          password: async function() {
+            _tgSetupMsg('Perlu kata laluan 2FA. Isi dan tekan Verify.', '#555');
+            return new Promise(function(resolve) { _tgResolve2fa = resolve; });
+          },
+          onError: function(e) {
+            _tgSetupMsg('Ralat: ' + (e.message || e));
+          }
+        }).then(async function() {
+          var sessionStr = _tgClient.session && _tgClient.session.save ? _tgClient.session.save() : '';
+          if (sessionStr) _tgSaveSession(sessionStr);
+          _tgSetupMsg('Berjaya!', '#090');
+          document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; s.classList.remove('active'); });
+          var el = document.getElementById('screen-telegram');
+          el.style.display = 'flex'; el.classList.add('active');
+          loadTgChatList();
+        }).catch(function(e) {
+          _tgSetupMsg('Gagal: ' + (e.message || e));
+          btn.disabled = false; btn.textContent = 'Hantar Kod OTP';
+        });
+
       } catch(e) {
         _tgSetupMsg('Ralat: ' + (e.message || e));
         btn.disabled = false; btn.textContent = 'Hantar Kod OTP';
       }
     });
 
-    document.getElementById('btn-tg-setup-verify').addEventListener('click', async function() {
+    document.getElementById('btn-tg-setup-verify').addEventListener('click', function() {
       var otp = document.getElementById('tg-setup-otp').value.trim();
       var password = document.getElementById('tg-setup-password').value.trim();
-      var phone = document.getElementById('tg-setup-phone').value.trim();
-      if (!otp) { _tgSetupMsg('Masukkan kod OTP.'); return; }
-      var btn = this; btn.disabled = true; btn.textContent = 'Mengesah...';
+      if (!otp && !password) { _tgSetupMsg('Masukkan kod OTP atau kata laluan 2FA.'); return; }
       _tgSetupMsg('Mengesahkan...', '#555');
-      try {
-        await _tgClient.signIn({ apiId: _tgApiId, apiHash: _tgApiHash }, {
-          phoneNumber: phone, phoneCode: otp,
-          phoneCodeHash: _tgPhoneCodeHash,
-          password: password || undefined,
-          onError: function(e){ throw e; }
-        });
-        var sessionStr = _tgClient.session && _tgClient.session.save ? _tgClient.session.save() : '';
-        if (sessionStr) _tgSaveSession(sessionStr);
-        _tgSetupMsg('Berjaya!', '#090');
-        document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; s.classList.remove('active'); });
-        var el = document.getElementById('screen-telegram');
-        el.style.display = 'flex'; el.classList.add('active');
-        loadTgChatList();
-      } catch(e) {
-        if (e.message && e.message.includes('SESSION_PASSWORD_NEEDED')) {
-          _tgSetupMsg('Perlu kata laluan 2FA. Isi medan 2FA dan cuba lagi.');
-        } else {
-          _tgSetupMsg('Gagal: ' + (e.message || e));
-        }
-        btn.disabled = false; btn.textContent = 'Verify & Sambung';
+      if (otp && _tgResolveOtp) {
+        var r = _tgResolveOtp;
+        _tgResolveOtp = null;
+        r(otp);
+      }
+      if (password && _tgResolve2fa) {
+        var r2 = _tgResolve2fa;
+        _tgResolve2fa = null;
+        r2(password);
       }
     });
 
