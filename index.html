@@ -269,6 +269,39 @@
       padding: 1px 6px; border-radius: 4px; margin-left: 4px;
     }
 
+    /* ── TG NOTIFICATION BADGE ── */
+    #tg-notif-badge {
+      display: none;
+      position: fixed; top: 8px; left: 8px;
+      background: #0088cc; color: #fff;
+      border: 2px solid #006699; border-radius: 10px;
+      padding: 5px 12px; font-size: 0.78rem; font-weight: bold;
+      cursor: pointer; z-index: 10000;
+      letter-spacing: 0.03em;
+      line-height: 1.6; white-space: pre-line; text-align: left;
+      max-width: 160px;
+    }
+    #tg-notif-badge.active { display: block; }
+    #tg-notif-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 10001;
+      align-items: center; justify-content: center;
+    }
+    #tg-notif-overlay.active { display: flex; }
+    #tg-notif-box {
+      background: #fff; border: 3px solid #000; border-radius: 10px;
+      padding: 16px; width: 90%; max-width: 340px;
+    }
+    #tg-notif-list { max-height: 220px; overflow-y: auto; margin-bottom: 12px; }
+    .tg-notif-item {
+      border: 1px solid #ddd; border-radius: 6px;
+      padding: 8px 10px; margin-bottom: 6px;
+      font-size: 0.82rem; line-height: 1.5;
+    }
+    .tg-notif-from { font-weight: bold; font-size: 0.78rem; color: #0088cc; margin-bottom: 2px; }
+    .tg-notif-msg { color: #000; font-size: 0.8rem; }
+
     /* ── WS NOTIFICATION BADGE ── */
     #ws-notif-badge {
       display: none;
@@ -278,6 +311,7 @@
       padding: 5px 12px; font-size: 0.78rem; font-weight: bold;
       cursor: pointer; z-index: 10000;
       letter-spacing: 0.03em;
+
       line-height: 1.6; white-space: pre-line; text-align: left;
       max-width: 160px;
     }
@@ -781,8 +815,22 @@
     </div>
   </div>
 
+  <!-- ══ TG NOTIFICATION BADGE ══ -->
+  <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span></div>
+  <!-- ══ TG NOTIFICATION OVERLAY ══ -->
+  <div id="tg-notif-overlay">
+    <div id="tg-notif-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;border-bottom:1px solid #ccc;padding-bottom:8px;">
+        <div style="font-size:0.85rem;font-weight:bold;">📱 Telegram Baru</div>
+        <button id="btn-tg-notif-tutup" style="width:28px;height:28px;border-radius:50%;border:2px solid #000;background:#fff;color:#000;font-size:1rem;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;">×</button>
+      </div>
+      <div id="tg-notif-list"></div>
+      <button id="btn-tg-notif-semua-baca" style="width:100%;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">✓ Tandakan Semua Dibaca</button>
+    </div>
+  </div>
   <!-- ══ WS NOTIFICATION BADGE ══ -->
   <div id="ws-notif-badge"><span id="ws-notif-names"></span></div>
+
   <!-- ══ BUTTON JENIS SETERUSNYA ══ -->
   <button id="btn-jenis-seterusnya-float"></button>
 
@@ -4500,10 +4548,99 @@
 
 
     // ══════════════════════════════════════════
+    // TG NOTIFICATION — REALTIME SUBSCRIBE
+    // ══════════════════════════════════════════
+    var _tgNotifUnsub = null;
+    var _tgNotifChats = []; // [{chatId, chatName, count, lastMsg}]
+    var _tgLastReadTs = parseInt(localStorage.getItem('tg_last_read') || '0');
+
+    function subscribeTgNotif() {
+      if (_tgNotifUnsub) { _tgNotifUnsub(); _tgNotifUnsub = null; }
+      _tgNotifUnsub = db.collection('tg_messages')
+        .onSnapshot(function(snap) {
+          _tgNotifChats = [];
+          var fetches = [];
+          snap.forEach(function(doc) {
+            var data = doc.data();
+            var chatId = doc.id;
+            var chatName = data.name || chatId;
+            fetches.push(
+              db.collection('tg_messages').doc(chatId).collection('messages')
+                .orderBy('date', 'desc').limit(5).get()
+                .then(function(msgSnap) {
+                  var newMsgs = [];
+                  msgSnap.forEach(function(m) {
+                    var d = m.data();
+                    if (!d.out && d.date && d.date > _tgLastReadTs) {
+                      newMsgs.push(d);
+                    }
+                  });
+                  if (newMsgs.length > 0) {
+                    _tgNotifChats.push({
+                      chatId: chatId,
+                      chatName: chatName,
+                      count: newMsgs.length,
+                      lastMsg: newMsgs[0].text || (newMsgs[0].hasMedia ? '[media]' : '')
+                    });
+                  }
+                }).catch(function() {})
+            );
+          });
+          Promise.all(fetches).then(function() { updateTgNotifBadge(); });
+        }, function(e) { console.warn('tgNotif err:', e); });
+    }
+
+    function stopTgNotif() {
+      if (_tgNotifUnsub) { _tgNotifUnsub(); _tgNotifUnsub = null; }
+      _tgNotifChats = [];
+      updateTgNotifBadge();
+    }
+
+    function updateTgNotifBadge() {
+      var badge = document.getElementById('tg-notif-badge');
+      var countEl = document.getElementById('tg-notif-count');
+      if (!badge) return;
+      var total = _tgNotifChats.reduce(function(s, c) { return s + c.count; }, 0);
+      if (total > 0) {
+        badge.className = 'active';
+        if (countEl) countEl.textContent = total + ' baru';
+      } else {
+        badge.className = '';
+        if (countEl) countEl.textContent = '';
+      }
+    }
+
+    function openTgNotifOverlay() {
+      var list = document.getElementById('tg-notif-list');
+      list.innerHTML = '';
+      _tgNotifChats.forEach(function(c) {
+        var div = document.createElement('div');
+        div.className = 'tg-notif-item';
+        div.innerHTML = '<div class="tg-notif-from">💬 ' + c.chatName + ' (' + c.count + ')</div>' +
+          '<div class="tg-notif-msg">' + (c.lastMsg ? c.lastMsg.substring(0,80) : '') + '</div>';
+        list.appendChild(div);
+      });
+      document.getElementById('tg-notif-overlay').className = 'active';
+    }
+
+    document.getElementById('tg-notif-badge').addEventListener('click', openTgNotifOverlay);
+    document.getElementById('btn-tg-notif-tutup').addEventListener('click', function() {
+      document.getElementById('tg-notif-overlay').className = '';
+    });
+    document.getElementById('btn-tg-notif-semua-baca').addEventListener('click', function() {
+      _tgLastReadTs = Math.floor(Date.now() / 1000);
+      localStorage.setItem('tg_last_read', String(_tgLastReadTs));
+      _tgNotifChats = [];
+      updateTgNotifBadge();
+      document.getElementById('tg-notif-overlay').className = '';
+    });
+
+    // ══════════════════════════════════════════
     // WS NOTIFICATION — REALTIME SUBSCRIBE
     // ══════════════════════════════════════════
     var _wsNotifUnsub = null;
     var _wsNotifDocs  = [];
+
 
     function subscribeWsNotif(uid) {
       if (_wsNotifUnsub) { _wsNotifUnsub(); _wsNotifUnsub = null; }
@@ -5916,6 +6053,8 @@
         subscribeJoggingMotivasi();
         subscribeChampion();
         subscribeWsNotif(user.uid);
+        subscribeTgNotif();
+
         window._azanInit(user.uid);
         if (window._loadManualLockState) window._loadManualLockState();
         subscribeReminderKindle();
@@ -5956,6 +6095,7 @@
         if (_omUnsub) { _omUnsub(); _omUnsub = null; }
         allOtherMotivation = [];
         stopWsNotif();
+        stopTgNotif();
         showScreen('screen-login');
         setText('login-msg', '');
       }
