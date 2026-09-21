@@ -4128,7 +4128,8 @@
     function _tgRenderLog() {
       var ta = document.getElementById('tg-log');
       if (!ta || !_tgActiveChatId) return;
-      ta.value = (_tgCache[_tgActiveChatId] || []).map(_tgFmtLine).filter(Boolean).join('\n');
+      var msgs = (_tgCache[_tgActiveChatId] || []).slice().sort(function(a,b){ return (a.date||0)-(b.date||0); });
+      ta.value = msgs.map(_tgFmtLine).filter(Boolean).join('\n');
       ta.scrollTop = ta.scrollHeight;
     }
 
@@ -4138,7 +4139,7 @@
       _tgCache[chatId] = _tgCache[chatId] || [];
       var midnight = _tgTodayMidnight();
       _tgUnsubs[chatId] = db.collection('tg_messages').doc(chatId).collection('messages')
-        .where('date', '>=', midnight).orderBy('date', 'asc').limit(50)
+        .where('date', '>=', midnight).orderBy('date', 'desc').limit(50)
         .onSnapshot(function(snap) {
           snap.docChanges().forEach(function(ch) {
             if (ch.type !== 'added') return;
