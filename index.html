@@ -7176,23 +7176,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (allDialogs.length > 0) {
         renderChatList(allDialogs);
       } else {
-          loadDialogs();
-        }
-      } else {
-        // Semak ada session tersimpan
-        var savedSess = await loadSessionFS();
-        if (savedSess) {
-          // Ada session — pergi ke telegram screen, connect di belakang
-          _showScreen('screen-telegram');
-          document.getElementById('tg-chat-list').innerHTML =
-            '<div style="text-align:center;color:#555;font-size:0.85rem;padding:20px;">Menyambung semula...</div>';
-          await loadCreds();
-          connectTelegram();
-        } else {
-          // Tiada session — pergi ke setup screen
-          _showScreen('screen-tg-setup');
-          loadCreds();
-        }
+        loadDialogs();
       }
     };
 
