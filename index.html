@@ -494,6 +494,7 @@
     .ws-notif-msg { color: #000; }
     #ws-notif-err { color: #c00; font-size: 0.75rem; text-align: center; min-height: 1em; margin-bottom: 4px; }
   </style>
+
 </head>
 <body>
 
@@ -917,6 +918,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>  
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+
   <script>
 (function(){var e=Object.defineProperty,t=Object.getOwnPropertyDescriptor,n=Object.getOwnPropertyNames,r=Object.prototype.hasOwnProperty,i=(e,t,n)=>()=>{if(n)throw n[0];try{return e&&(t=e(e=0)),t}catch(e){throw n=[e],e}},a=(e,t)=>()=>(t||(e((t={exports:{}}).exports,t),e=null),t.exports),o=(t,n)=>{let r={};for(var i in t)e(r,i,{get:t[i],enumerable:!0});return n||e(r,Symbol.toStringTag,{value:`Module`}),r},s=(i,a,o,s)=>{if(a&&typeof a==`object`||typeof a==`function`)for(var c=n(a),l=0,u=c.length,d;l<u;l++)d=c[l],!r.call(i,d)&&d!==o&&e(i,d,{get:(e=>a[e]).bind(null,d),enumerable:!(s=t(a,d))||s.enumerable});return i},c=t=>r.call(t,`module.exports`)?t[`module.exports`]:s(e({},`__esModule`,{value:!0}),t);function l(e){var t=e.length;if(t%4>0)throw Error(`Invalid string. Length must be a multiple of 4`);var n=e.indexOf(`=`);n===-1&&(n=t);var r=n===t?0:4-n%4;return[n,r]}function u(e){var t=l(e),n=t[0],r=t[1];return(n+r)*3/4-r}function d(e,t,n){return(t+n)*3/4-n}function f(e){for(var t,n=l(e),r=n[0],i=n[1],a=new b(d(e,r,i)),o=0,s=i>0?r-4:r,c=0;c<s;c+=4)t=y[e.charCodeAt(c)]<<18|y[e.charCodeAt(c+1)]<<12|y[e.charCodeAt(c+2)]<<6|y[e.charCodeAt(c+3)],a[o++]=t>>16&255,a[o++]=t>>8&255,a[o++]=t&255;return i===2&&(t=y[e.charCodeAt(c)]<<2|y[e.charCodeAt(c+1)]>>4,a[o++]=t&255),i===1&&(t=y[e.charCodeAt(c)]<<10|y[e.charCodeAt(c+1)]<<4|y[e.charCodeAt(c+2)]>>2,a[o++]=t>>8&255,a[o++]=t&255),a}function p(e){return v[e>>18&63]+v[e>>12&63]+v[e>>6&63]+v[e&63]}function m(e,t,n){for(var r,i=[],a=t;a<n;a+=3)r=(e[a]<<16&16711680)+(e[a+1]<<8&65280)+(e[a+2]&255),i.push(p(r));return i.join(``)}function h(e){for(var t,n=e.length,r=n%3,i=[],a=16383,o=0,s=n-r;o<s;o+=a)i.push(m(e,o,o+a>s?s:o+a));return r===1?(t=e[n-1],i.push(v[t>>2]+v[t<<4&63]+`==`)):r===2&&(t=(e[n-2]<<8)+e[n-1],i.push(v[t>>10]+v[t>>4&63]+v[t<<2&63]+`=`)),i.join(``)}var g,_,v,y,b,x,S,C,w,T,E=i((()=>{for(g={},_={},_.byteLength=u,_.toByteArray=f,_.fromByteArray=h,v=[],y=[],b=typeof Uint8Array<`u`?Uint8Array:Array,x=`ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/`,S=0,C=x.length;S<C;++S)v[S]=x[S],y[x.charCodeAt(S)]=S;y[45]=62,y[95]=63,w={},w.read=function(e,t,n,r,i){var a,o,s=i*8-r-1,c=(1<<s)-1,l=c>>1,u=-7,d=n?i-1:0,f=n?-1:1,p=e[t+d];for(d+=f,a=p&(1<<-u)-1,p>>=-u,u+=s;u>0;a=a*256+e[t+d],d+=f,u-=8);for(o=a&(1<<-u)-1,a>>=-u,u+=r;u>0;o=o*256+e[t+d],d+=f,u-=8);if(a===0)a=1-l;else if(a===c)return o?NaN:(p?-1:1)*(1/0);else o+=2**r,a-=l;return(p?-1:1)*o*2**(a-r)},w.write=function(e,t,n,r,i,a){var o,s,c,l=a*8-i-1,u=(1<<l)-1,d=u>>1,f=i===23?2**-24-2**-77:0,p=r?0:a-1,m=r?1:-1,h=+(t<0||t===0&&1/t<0);for(t=Math.abs(t),isNaN(t)||t===1/0?(s=+!!isNaN(t),o=u):(o=Math.floor(Math.log(t)/Math.LN2),t*(c=2**-o)<1&&(o--,c*=2),o+d>=1?t+=f/c:t+=f*2**(1-d),t*c>=2&&(o++,c/=2),o+d>=u?(s=0,o=u):o+d>=1?(s=(t*c-1)*2**i,o+=d):(s=t*2**(d-1)*2**i,o=0));i>=8;e[n+p]=s&255,p+=m,s/=256,i-=8);for(o=o<<i|s,l+=i;l>0;e[n+p]=o&255,p+=m,o/=256,l-=8);e[n+p-m]|=h*128},(function(e){let t=_,n=w,r=typeof Symbol==`function`&&typeof Symbol.for==`function`?Symbol.for(`nodejs.util.inspect.custom`):null;e.Buffer=u,e.SlowBuffer=S,e.INSPECT_MAX_BYTES=50;let i=2147483647;e.kMaxLength=i;let{Uint8Array:a,ArrayBuffer:o,SharedArrayBuffer:s}=globalThis;u.TYPED_ARRAY_SUPPORT=c(),!u.TYPED_ARRAY_SUPPORT&&typeof console<`u`&&typeof console.error==`function`&&console.error("This browser lacks typed array (Uint8Array) support which is required by `buffer` v5.x. Use `buffer` v4.x if you require old browser support.");function c(){try{let e=new a(1),t={foo:function(){return 42}};return Object.setPrototypeOf(t,a.prototype),Object.setPrototypeOf(e,t),e.foo()===42}catch{return!1}}Object.defineProperty(u.prototype,"parent",{enumerable:!0,get:function(){if(u.isBuffer(this))return this.buffer}}),Object.defineProperty(u.prototype,"offset",{enumerable:!0,get:function(){if(u.isBuffer(this))return this.byteOffset}});function l(e){if(e>i)throw RangeError(`The value "`+e+`" is invalid for option "size"`);let t=new a(e);return Object.setPrototypeOf(t,u.prototype),t}function u(e,t,n){if(typeof e==`number`){if(typeof t==`string`)throw TypeError(`The "string" argument must be of type string. Received type number`);return m(e)}return d(e,t,n)}u.poolSize=8192;function d(e,t,n){if(typeof e==`string`)return h(e,t);if(o.isView(e))return v(e);if(e==null)throw TypeError(`The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type `+typeof e);if(Z(e,o)||e&&Z(e.buffer,o)||s!==void 0&&(Z(e,s)||e&&Z(e.buffer,s)))return y(e,t,n);if(typeof e==`number`)throw TypeError(`The "value" argument must not be of type number. Received type number`);let r=e.valueOf&&e.valueOf();if(r!=null&&r!==e)return u.from(r,t,n);let i=b(e);if(i)return i;if(typeof Symbol<`u`&&Symbol.toPrimitive!=null&&typeof e[Symbol.toPrimitive]==`function`)return u.from(e[Symbol.toPrimitive](`string`),t,n);throw TypeError(`The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type `+typeof e)}u.from=function(e,t,n){return d(e,t,n)},Object.setPrototypeOf(u.prototype,a.prototype),Object.setPrototypeOf(u,a);function f(e){if(typeof e!=`number`)throw TypeError(`"size" argument must be of type number`);if(e<0)throw RangeError(`The value "`+e+`" is invalid for option "size"`)}function p(e,t,n){return f(e),e<=0||t===void 0?l(e):typeof n==`string`?l(e).fill(t,n):l(e).fill(t)}u.alloc=function(e,t,n){return p(e,t,n)};function m(e){return f(e),l(e<0?0:x(e)|0)}u.allocUnsafe=function(e){return m(e)},u.allocUnsafeSlow=function(e){return m(e)};function h(e,t){if((typeof t!=`string`||t===``)&&(t=`utf8`),!u.isEncoding(t))throw TypeError(`Unknown encoding: `+t);let n=C(e,t)|0,r=l(n),i=r.write(e,t);return i!==n&&(r=r.slice(0,i)),r}function g(e){let t=e.length<0?0:x(e.length)|0,n=l(t);for(let r=0;r<t;r+=1)n[r]=e[r]&255;return n}function v(e){if(Z(e,a)){let t=new a(e);return y(t.buffer,t.byteOffset,t.byteLength)}return g(e)}function y(e,t,n){if(t<0||e.byteLength<t)throw RangeError(`"offset" is outside of buffer bounds`);if(e.byteLength<t+(n||0))throw RangeError(`"length" is outside of buffer bounds`);let r;return r=t===void 0&&n===void 0?new a(e):n===void 0?new a(e,t):new a(e,t,n),Object.setPrototypeOf(r,u.prototype),r}function b(e){if(u.isBuffer(e)){let t=x(e.length)|0,n=l(t);return n.length===0||e.copy(n,0,0,t),n}if(e.length!==void 0)return typeof e.length!=`number`||fe(e.length)?l(0):g(e);if(e.type===`Buffer`&&Array.isArray(e.data))return g(e.data)}function x(e){if(e>=i)throw RangeError(`Attempt to allocate Buffer larger than maximum size: 0x`+i.toString(16)+` bytes`);return e|0}function S(e){return+e!=e&&(e=0),u.alloc(+e)}u.isBuffer=function(e){return e!=null&&e._isBuffer===!0&&e!==u.prototype},u.compare=function(e,t){if(Z(e,a)&&(e=u.from(e,e.offset,e.byteLength)),Z(t,a)&&(t=u.from(t,t.offset,t.byteLength)),!u.isBuffer(e)||!u.isBuffer(t))throw TypeError(`The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array`);if(e===t)return 0;let n=e.length,r=t.length;for(let i=0,a=Math.min(n,r);i<a;++i)if(e[i]!==t[i]){n=e[i],r=t[i];break}return n<r?-1:+(r<n)},u.isEncoding=function(e){switch(String(e).toLowerCase()){case`hex`:case`utf8`:case`utf-8`:case`ascii`:case`latin1`:case`binary`:case`base64`:case`ucs2`:case`ucs-2`:case`utf16le`:case`utf-16le`:return!0;default:return!1}},u.concat=function(e,t){if(!Array.isArray(e))throw TypeError(`"list" argument must be an Array of Buffers`);if(e.length===0)return u.alloc(0);let n;if(t===void 0)for(t=0,n=0;n<e.length;++n)t+=e[n].length;let r=u.allocUnsafe(t),i=0;for(n=0;n<e.length;++n){let t=e[n];if(Z(t,a))i+t.length>r.length?(u.isBuffer(t)||(t=u.from(t)),t.copy(r,i)):a.prototype.set.call(r,t,i);else if(u.isBuffer(t))t.copy(r,i);else throw TypeError(`"list" argument must be an Array of Buffers`);i+=t.length}return r};function C(e,t){if(u.isBuffer(e))return e.length;if(o.isView(e)||Z(e,o))return e.byteLength;if(typeof e!=`string`)throw TypeError(`The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type `+typeof e);let n=e.length,r=arguments.length>2&&arguments[2]===!0;if(!r&&n===0)return 0;let i=!1;for(;;)switch(t){case`ascii`:case`latin1`:case`binary`:return n;case`utf8`:case`utf-8`:return ue(e).length;case`ucs2`:case`ucs-2`:case`utf16le`:case`utf-16le`:return n*2;case`hex`:return n>>>1;case`base64`:return de(e).length;default:if(i)return r?-1:ue(e).length;t=(``+t).toLowerCase(),i=!0}}u.byteLength=C;function T(e,t,n){let r=!1;if((t===void 0||t<0)&&(t=0),t>this.length||((n===void 0||n>this.length)&&(n=this.length),n<=0)||(n>>>=0,t>>>=0,n<=t))return``;for(e||=`utf8`;;)switch(e){case`hex`:return ie(this,t,n);case`utf8`:case`utf-8`:return M(this,t,n);case`ascii`:return P(this,t,n);case`latin1`:case`binary`:return F(this,t,n);case`base64`:return ne(this,t,n);case`ucs2`:case`ucs-2`:case`utf16le`:case`utf-16le`:return I(this,t,n);default:if(r)throw TypeError(`Unknown encoding: `+e);e=(e+``).toLowerCase(),r=!0}}u.prototype._isBuffer=!0;function E(e,t,n){let r=e[t];e[t]=e[n],e[n]=r}u.prototype.swap16=function(){let e=this.length;if(e%2!=0)throw RangeError(`Buffer size must be a multiple of 16-bits`);for(let t=0;t<e;t+=2)E(this,t,t+1);return this},u.prototype.swap32=function(){let e=this.length;if(e%4!=0)throw RangeError(`Buffer size must be a multiple of 32-bits`);for(let t=0;t<e;t+=4)E(this,t,t+3),E(this,t+1,t+2);return this},u.prototype.swap64=function(){let e=this.length;if(e%8!=0)throw RangeError(`Buffer size must be a multiple of 64-bits`);for(let t=0;t<e;t+=8)E(this,t,t+7),E(this,t+1,t+6),E(this,t+2,t+5),E(this,t+3,t+4);return this},u.prototype.toString=function(){let e=this.length;return e===0?``:arguments.length===0?M(this,0,e):T.apply(this,arguments)},u.prototype.toLocaleString=u.prototype.toString,u.prototype.equals=function(e){if(!u.isBuffer(e))throw TypeError(`Argument must be a Buffer`);return this===e||u.compare(this,e)===0},u.prototype.inspect=function(){let t=``,n=e.INSPECT_MAX_BYTES;return t=this.toString(`hex`,0,n).replace(/(.{2})/g,`$1 `).trim(),this.length>n&&(t+=` ... `),`<Buffer `+t+`>`},r&&(u.prototype[r]=u.prototype.inspect),u.prototype.compare=function(e,t,n,r,i){if(Z(e,a)&&(e=u.from(e,e.offset,e.byteLength)),!u.isBuffer(e))throw TypeError(`The "target" argument must be one of type Buffer or Uint8Array. Received type `+typeof e);if(t===void 0&&(t=0),n===void 0&&(n=e?e.length:0),r===void 0&&(r=0),i===void 0&&(i=this.length),t<0||n>e.length||r<0||i>this.length)throw RangeError(`out of range index`);if(r>=i&&t>=n)return 0;if(r>=i)return-1;if(t>=n)return 1;if(t>>>=0,n>>>=0,r>>>=0,i>>>=0,this===e)return 0;let o=i-r,s=n-t,c=Math.min(o,s),l=this.slice(r,i),d=e.slice(t,n);for(let e=0;e<c;++e)if(l[e]!==d[e]){o=l[e],s=d[e];break}return o<s?-1:+(s<o)};function D(e,t,n,r,i){if(e.length===0)return-1;if(typeof n==`string`?(r=n,n=0):n>2147483647?n=2147483647:n<-2147483648&&(n=-2147483648),n=+n,fe(n)&&(n=i?0:e.length-1),n<0&&(n=e.length+n),n>=e.length){if(i)return-1;n=e.length-1}else if(n<0){if(i)n=0;else return-1}if(typeof t==`string`&&(t=u.from(t,r)),u.isBuffer(t))return t.length===0?-1:ee(e,t,n,r,i);if(typeof t==`number`)return t&=255,typeof a.prototype.indexOf==`function`?i?a.prototype.indexOf.call(e,t,n):a.prototype.lastIndexOf.call(e,t,n):ee(e,[t],n,r,i);throw TypeError(`val must be string, number or Buffer`)}function ee(e,t,n,r,i){let a=1,o=e.length,s=t.length;if(r!==void 0&&(r=String(r).toLowerCase(),r===`ucs2`||r===`ucs-2`||r===`utf16le`||r===`utf-16le`)){if(e.length<2||t.length<2)return-1;a=2,o/=2,s/=2,n/=2}function c(e,t){return a===1?e[t]:e.readUInt16BE(t*a)}let l;if(i){let r=-1;for(l=n;l<o;l++)if(c(e,l)===c(t,r===-1?0:l-r)){if(r===-1&&(r=l),l-r+1===s)return r*a}else r!==-1&&(l-=l-r),r=-1}else for(n+s>o&&(n=o-s),l=n;l>=0;l--){let n=!0;for(let r=0;r<s;r++)if(c(e,l+r)!==c(t,r)){n=!1;break}if(n)return l}return-1}u.prototype.includes=function(e,t,n){return this.indexOf(e,t,n)!==-1},u.prototype.indexOf=function(e,t,n){return D(this,e,t,n,!0)},u.prototype.lastIndexOf=function(e,t,n){return D(this,e,t,n,!1)};function O(e,t,n,r){n=Number(n)||0;let i=e.length-n;r?(r=Number(r),r>i&&(r=i)):r=i;let a=t.length;r>a/2&&(r=a/2);let o=0;for(;o<r;++o){let r=parseInt(t.substr(o*2,2),16);if(fe(r))return o;e[n+o]=r}return o}function k(e,t,n,r){return X(ue(t,e.length-n),e,n,r)}function te(e,t,n,r){return X(J(t),e,n,r)}function A(e,t,n,r){return X(de(t),e,n,r)}function j(e,t,n,r){return X(Y(t,e.length-n),e,n,r)}u.prototype.write=function(e,t,n,r){if(t===void 0)r=`utf8`,n=this.length,t=0;else if(n===void 0&&typeof t==`string`)r=t,n=this.length,t=0;else if(isFinite(t))t>>>=0,isFinite(n)?(n>>>=0,r===void 0&&(r=`utf8`)):(r=n,n=void 0);else throw Error(`Buffer.write(string, encoding, offset[, length]) is no longer supported`);let i=this.length-t;if((n===void 0||n>i)&&(n=i),e.length>0&&(n<0||t<0)||t>this.length)throw RangeError(`Attempt to write outside buffer bounds`);r||=`utf8`;let a=!1;for(;;)switch(r){case`hex`:return O(this,e,t,n);case`utf8`:case`utf-8`:return k(this,e,t,n);case`ascii`:case`latin1`:case`binary`:return te(this,e,t,n);case`base64`:return A(this,e,t,n);case`ucs2`:case`ucs-2`:case`utf16le`:case`utf-16le`:return j(this,e,t,n);default:if(a)throw TypeError(`Unknown encoding: `+r);r=(``+r).toLowerCase(),a=!0}},u.prototype.toJSON=function(){return{type:`Buffer`,data:Array.prototype.slice.call(this._arr||this,0)}};function ne(e,n,r){return n===0&&r===e.length?t.fromByteArray(e):t.fromByteArray(e.slice(n,r))}function M(e,t,n){n=Math.min(e.length,n);let r=[],i=t;for(;i<n;){let t=e[i],a=null,o=t>239?4:t>223?3:t>191?2:1;if(i+o<=n){let n,r,s,c;switch(o){case 1:t<128&&(a=t);break;case 2:n=e[i+1],(n&192)==128&&(c=(t&31)<<6|n&63,c>127&&(a=c));break;case 3:n=e[i+1],r=e[i+2],(n&192)==128&&(r&192)==128&&(c=(t&15)<<12|(n&63)<<6|r&63,c>2047&&(c<55296||c>57343)&&(a=c));break;case 4:n=e[i+1],r=e[i+2],s=e[i+3],(n&192)==128&&(r&192)==128&&(s&192)==128&&(c=(t&15)<<18|(n&63)<<12|(r&63)<<6|s&63,c>65535&&c<1114112&&(a=c))}}a===null?(a=65533,o=1):a>65535&&(a-=65536,r.push(a>>>10&1023|55296),a=56320|a&1023),r.push(a),i+=o}return re(r)}let N=4096;function re(e){let t=e.length;if(t<=N)return String.fromCharCode.apply(String,e);let n=``,r=0;for(;r<t;)n+=String.fromCharCode.apply(String,e.slice(r,r+=N));return n}function P(e,t,n){let r=``;n=Math.min(e.length,n);for(let i=t;i<n;++i)r+=String.fromCharCode(e[i]&127);return r}function F(e,t,n){let r=``;n=Math.min(e.length,n);for(let i=t;i<n;++i)r+=String.fromCharCode(e[i]);return r}function ie(e,t,n){let r=e.length;(!t||t<0)&&(t=0),(!n||n<0||n>r)&&(n=r);let i=``;for(let r=t;r<n;++r)i+=Q[e[r]];return i}function I(e,t,n){let r=e.slice(t,n),i=``;for(let e=0;e<r.length-1;e+=2)i+=String.fromCharCode(r[e]+r[e+1]*256);return i}u.prototype.slice=function(e,t){let n=this.length;e=~~e,t=t===void 0?n:~~t,e<0?(e+=n,e<0&&(e=0)):e>n&&(e=n),t<0?(t+=n,t<0&&(t=0)):t>n&&(t=n),t<e&&(t=e);let r=this.subarray(e,t);return Object.setPrototypeOf(r,u.prototype),r};function L(e,t,n){if(e%1!=0||e<0)throw RangeError(`offset is not uint`);if(e+t>n)throw RangeError(`Trying to access beyond buffer length`)}u.prototype.readUintLE=u.prototype.readUIntLE=function(e,t,n){e>>>=0,t>>>=0,n||L(e,t,this.length);let r=this[e],i=1,a=0;for(;++a<t&&(i*=256);)r+=this[e+a]*i;return r},u.prototype.readUintBE=u.prototype.readUIntBE=function(e,t,n){e>>>=0,t>>>=0,n||L(e,t,this.length);let r=this[e+--t],i=1;for(;t>0&&(i*=256);)r+=this[e+--t]*i;return r},u.prototype.readUint8=u.prototype.readUInt8=function(e,t){return e>>>=0,t||L(e,1,this.length),this[e]},u.prototype.readUint16LE=u.prototype.readUInt16LE=function(e,t){return e>>>=0,t||L(e,2,this.length),this[e]|this[e+1]<<8},u.prototype.readUint16BE=u.prototype.readUInt16BE=function(e,t){return e>>>=0,t||L(e,2,this.length),this[e]<<8|this[e+1]},u.prototype.readUint32LE=u.prototype.readUInt32LE=function(e,t){return e>>>=0,t||L(e,4,this.length),(this[e]|this[e+1]<<8|this[e+2]<<16)+this[e+3]*16777216},u.prototype.readUint32BE=u.prototype.readUInt32BE=function(e,t){return e>>>=0,t||L(e,4,this.length),this[e]*16777216+(this[e+1]<<16|this[e+2]<<8|this[e+3])},u.prototype.readBigUInt64LE=$(function(e){e>>>=0,G(e,`offset`);let t=this[e],n=this[e+7];(t===void 0||n===void 0)&&le(e,this.length-8);let r=t+this[++e]*256+this[++e]*2**16+this[++e]*2**24,i=this[++e]+this[++e]*256+this[++e]*2**16+n*2**24;return BigInt(r)+(BigInt(i)<<BigInt(32))}),u.prototype.readBigUInt64BE=$(function(e){e>>>=0,G(e,`offset`);let t=this[e],n=this[e+7];(t===void 0||n===void 0)&&le(e,this.length-8);let r=t*2**24+this[++e]*2**16+this[++e]*256+this[++e],i=this[++e]*2**24+this[++e]*2**16+this[++e]*256+n;return(BigInt(r)<<BigInt(32))+BigInt(i)}),u.prototype.readIntLE=function(e,t,n){e>>>=0,t>>>=0,n||L(e,t,this.length);let r=this[e],i=1,a=0;for(;++a<t&&(i*=256);)r+=this[e+a]*i;return i*=128,r>=i&&(r-=2**(8*t)),r},u.prototype.readIntBE=function(e,t,n){e>>>=0,t>>>=0,n||L(e,t,this.length);let r=t,i=1,a=this[e+--r];for(;r>0&&(i*=256);)a+=this[e+--r]*i;return i*=128,a>=i&&(a-=2**(8*t)),a},u.prototype.readInt8=function(e,t){return e>>>=0,t||L(e,1,this.length),this[e]&128?(255-this[e]+1)*-1:this[e]},u.prototype.readInt16LE=function(e,t){e>>>=0,t||L(e,2,this.length);let n=this[e]|this[e+1]<<8;return n&32768?n|4294901760:n},u.prototype.readInt16BE=function(e,t){e>>>=0,t||L(e,2,this.length);let n=this[e+1]|this[e]<<8;return n&32768?n|4294901760:n},u.prototype.readInt32LE=function(e,t){return e>>>=0,t||L(e,4,this.length),this[e]|this[e+1]<<8|this[e+2]<<16|this[e+3]<<24},u.prototype.readInt32BE=function(e,t){return e>>>=0,t||L(e,4,this.length),this[e]<<24|this[e+1]<<16|this[e+2]<<8|this[e+3]},u.prototype.readBigInt64LE=$(function(e){e>>>=0,G(e,`offset`);let t=this[e],n=this[e+7];(t===void 0||n===void 0)&&le(e,this.length-8);let r=this[e+4]+this[e+5]*256+this[e+6]*2**16+(n<<24);return(BigInt(r)<<BigInt(32))+BigInt(t+this[++e]*256+this[++e]*2**16+this[++e]*2**24)}),u.prototype.readBigInt64BE=$(function(e){e>>>=0,G(e,`offset`);let t=this[e],n=this[e+7];(t===void 0||n===void 0)&&le(e,this.length-8);let r=(t<<24)+this[++e]*2**16+this[++e]*256+this[++e];return(BigInt(r)<<BigInt(32))+BigInt(this[++e]*2**24+this[++e]*2**16+this[++e]*256+n)}),u.prototype.readFloatLE=function(e,t){return e>>>=0,t||L(e,4,this.length),n.read(this,e,!0,23,4)},u.prototype.readFloatBE=function(e,t){return e>>>=0,t||L(e,4,this.length),n.read(this,e,!1,23,4)},u.prototype.readDoubleLE=function(e,t){return e>>>=0,t||L(e,8,this.length),n.read(this,e,!0,52,8)},u.prototype.readDoubleBE=function(e,t){return e>>>=0,t||L(e,8,this.length),n.read(this,e,!1,52,8)};function ae(e,t,n,r,i,a){if(!u.isBuffer(e))throw TypeError(`"buffer" argument must be a Buffer instance`);if(t>i||t<a)throw RangeError(`"value" argument is out of bounds`);if(n+r>e.length)throw RangeError(`Index out of range`)}u.prototype.writeUintLE=u.prototype.writeUIntLE=function(e,t,n,r){if(e=+e,t>>>=0,n>>>=0,!r){let r=2**(8*n)-1;ae(this,e,t,n,r,0)}let i=1,a=0;for(this[t]=e&255;++a<n&&(i*=256);)this[t+a]=e/i&255;return t+n},u.prototype.writeUintBE=u.prototype.writeUIntBE=function(e,t,n,r){if(e=+e,t>>>=0,n>>>=0,!r){let r=2**(8*n)-1;ae(this,e,t,n,r,0)}let i=n-1,a=1;for(this[t+i]=e&255;--i>=0&&(a*=256);)this[t+i]=e/a&255;return t+n},u.prototype.writeUint8=u.prototype.writeUInt8=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,1,255,0),this[t]=e&255,t+1},u.prototype.writeUint16LE=u.prototype.writeUInt16LE=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,2,65535,0),this[t]=e&255,this[t+1]=e>>>8,t+2},u.prototype.writeUint16BE=u.prototype.writeUInt16BE=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,2,65535,0),this[t]=e>>>8,this[t+1]=e&255,t+2},u.prototype.writeUint32LE=u.prototype.writeUInt32LE=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,4,4294967295,0),this[t+3]=e>>>24,this[t+2]=e>>>16,this[t+1]=e>>>8,this[t]=e&255,t+4},u.prototype.writeUint32BE=u.prototype.writeUInt32BE=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,4,4294967295,0),this[t]=e>>>24,this[t+1]=e>>>16,this[t+2]=e>>>8,this[t+3]=e&255,t+4};function R(e,t,n,r,i){W(t,r,i,e,n,7);let a=Number(t&BigInt(4294967295));e[n++]=a,a>>=8,e[n++]=a,a>>=8,e[n++]=a,a>>=8,e[n++]=a;let o=Number(t>>BigInt(32)&BigInt(4294967295));return e[n++]=o,o>>=8,e[n++]=o,o>>=8,e[n++]=o,o>>=8,e[n++]=o,n}function z(e,t,n,r,i){W(t,r,i,e,n,7);let a=Number(t&BigInt(4294967295));e[n+7]=a,a>>=8,e[n+6]=a,a>>=8,e[n+5]=a,a>>=8,e[n+4]=a;let o=Number(t>>BigInt(32)&BigInt(4294967295));return e[n+3]=o,o>>=8,e[n+2]=o,o>>=8,e[n+1]=o,o>>=8,e[n]=o,n+8}u.prototype.writeBigUInt64LE=$(function(e,t=0){return R(this,e,t,BigInt(0),BigInt(`0xffffffffffffffff`))}),u.prototype.writeBigUInt64BE=$(function(e,t=0){return z(this,e,t,BigInt(0),BigInt(`0xffffffffffffffff`))}),u.prototype.writeIntLE=function(e,t,n,r){if(e=+e,t>>>=0,!r){let r=2**(8*n-1);ae(this,e,t,n,r-1,-r)}let i=0,a=1,o=0;for(this[t]=e&255;++i<n&&(a*=256);)e<0&&o===0&&this[t+i-1]!==0&&(o=1),this[t+i]=(e/a>>0)-o&255;return t+n},u.prototype.writeIntBE=function(e,t,n,r){if(e=+e,t>>>=0,!r){let r=2**(8*n-1);ae(this,e,t,n,r-1,-r)}let i=n-1,a=1,o=0;for(this[t+i]=e&255;--i>=0&&(a*=256);)e<0&&o===0&&this[t+i+1]!==0&&(o=1),this[t+i]=(e/a>>0)-o&255;return t+n},u.prototype.writeInt8=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,1,127,-128),e<0&&(e=255+e+1),this[t]=e&255,t+1},u.prototype.writeInt16LE=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,2,32767,-32768),this[t]=e&255,this[t+1]=e>>>8,t+2},u.prototype.writeInt16BE=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,2,32767,-32768),this[t]=e>>>8,this[t+1]=e&255,t+2},u.prototype.writeInt32LE=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,4,2147483647,-2147483648),this[t]=e&255,this[t+1]=e>>>8,this[t+2]=e>>>16,this[t+3]=e>>>24,t+4},u.prototype.writeInt32BE=function(e,t,n){return e=+e,t>>>=0,n||ae(this,e,t,4,2147483647,-2147483648),e<0&&(e=4294967295+e+1),this[t]=e>>>24,this[t+1]=e>>>16,this[t+2]=e>>>8,this[t+3]=e&255,t+4},u.prototype.writeBigInt64LE=$(function(e,t=0){return R(this,e,t,-BigInt(`0x8000000000000000`),BigInt(`0x7fffffffffffffff`))}),u.prototype.writeBigInt64BE=$(function(e,t=0){return z(this,e,t,-BigInt(`0x8000000000000000`),BigInt(`0x7fffffffffffffff`))});function oe(e,t,n,r,i,a){if(n+r>e.length||n<0)throw RangeError(`Index out of range`)}function B(e,t,r,i,a){return t=+t,r>>>=0,a||oe(e,t,r,4),n.write(e,t,r,i,23,4),r+4}u.prototype.writeFloatLE=function(e,t,n){return B(this,e,t,!0,n)},u.prototype.writeFloatBE=function(e,t,n){return B(this,e,t,!1,n)};function se(e,t,r,i,a){return t=+t,r>>>=0,a||oe(e,t,r,8),n.write(e,t,r,i,52,8),r+8}u.prototype.writeDoubleLE=function(e,t,n){return se(this,e,t,!0,n)},u.prototype.writeDoubleBE=function(e,t,n){return se(this,e,t,!1,n)},u.prototype.copy=function(e,t,n,r){if(!u.isBuffer(e))throw TypeError(`argument should be a Buffer`);if(n||=0,!r&&r!==0&&(r=this.length),t>=e.length&&(t=e.length),t||=0,r>0&&r<n&&(r=n),r===n||e.length===0||this.length===0)return 0;if(t<0)throw RangeError(`targetStart out of bounds`);if(n<0||n>=this.length)throw RangeError(`Index out of range`);if(r<0)throw RangeError(`sourceEnd out of bounds`);r>this.length&&(r=this.length),e.length-t<r-n&&(r=e.length-t+n);let i=r-n;return this===e&&typeof a.prototype.copyWithin==`function`?this.copyWithin(t,n,r):a.prototype.set.call(e,this.subarray(n,r),t),i},u.prototype.fill=function(e,t,n,r){if(typeof e==`string`){if(typeof t==`string`?(r=t,t=0,n=this.length):typeof n==`string`&&(r=n,n=this.length),r!==void 0&&typeof r!=`string`)throw TypeError(`encoding must be a string`);if(typeof r==`string`&&!u.isEncoding(r))throw TypeError(`Unknown encoding: `+r);if(e.length===1){let t=e.charCodeAt(0);(r===`utf8`&&t<128||r===`latin1`)&&(e=t)}}else typeof e==`number`?e&=255:typeof e==`boolean`&&(e=Number(e));if(t<0||this.length<t||this.length<n)throw RangeError(`Out of range index`);if(n<=t)return this;t>>>=0,n=n===void 0?this.length:n>>>0,e||=0;let i;if(typeof e==`number`)for(i=t;i<n;++i)this[i]=e;else{let a=u.isBuffer(e)?e:u.from(e,r),o=a.length;if(o===0)throw TypeError(`The value "`+e+`" is invalid for argument "value"`);for(i=0;i<n-t;++i)this[i+t]=a[i%o]}return this};let ce={};function V(e,t,n){ce[e]=class extends n{constructor(){super(),Object.defineProperty(this,"message",{value:t.apply(this,arguments),writable:!0,configurable:!0}),this.name=`${this.name} [${e}]`,this.stack,delete this.name}get code(){return e}set code(e){Object.defineProperty(this,"code",{configurable:!0,enumerable:!0,value:e,writable:!0})}toString(){return`${this.name} [${e}]: ${this.message}`}}}V(`ERR_BUFFER_OUT_OF_BOUNDS`,function(e){return e?`${e} is outside of buffer bounds`:`Attempt to access memory outside buffer bounds`},RangeError),V(`ERR_INVALID_ARG_TYPE`,function(e,t){return`The "${e}" argument must be of type number. Received type ${typeof t}`},TypeError),V(`ERR_OUT_OF_RANGE`,function(e,t,n){let r=`The value of "${e}" is out of range.`,i=n;return Number.isInteger(n)&&Math.abs(n)>2**32?i=H(String(n)):typeof n==`bigint`&&(i=String(n),(n>BigInt(2)**BigInt(32)||n<-(BigInt(2)**BigInt(32)))&&(i=H(i)),i+=`n`),r+=` It must be ${t}. Received ${i}`,r},RangeError);function H(e){let t=``,n=e.length,r=+(e[0]===`-`);for(;n>=r+4;n-=3)t=`_${e.slice(n-3,n)}${t}`;return`${e.slice(0,n)}${t}`}function U(e,t,n){G(t,`offset`),(e[t]===void 0||e[t+n]===void 0)&&le(t,e.length-(n+1))}function W(e,t,n,r,i,a){if(e>n||e<t){let r=typeof t==`bigint`?`n`:``,i;throw i=a>3?t===0||t===BigInt(0)?`>= 0${r} and < 2${r} ** ${(a+1)*8}${r}`:`>= -(2${r} ** ${(a+1)*8-1}${r}) and < 2 ** ${(a+1)*8-1}${r}`:`>= ${t}${r} and <= ${n}${r}`,new ce.ERR_OUT_OF_RANGE(`value`,i,e)}U(r,i,a)}function G(e,t){if(typeof e!=`number`)throw new ce.ERR_INVALID_ARG_TYPE(t,`number`,e)}function le(e,t,n){throw Math.floor(e)===e?t<0?new ce.ERR_BUFFER_OUT_OF_BOUNDS:new ce.ERR_OUT_OF_RANGE(n||`offset`,`>= ${+!!n} and <= ${t}`,e):(G(e,n),new ce.ERR_OUT_OF_RANGE(n||`offset`,`an integer`,e))}let K=/[^+/0-9A-Za-z-_]/g;function q(e){if(e=e.split(`=`)[0],e=e.trim().replace(K,``),e.length<2)return``;for(;e.length%4!=0;)e+=`=`;return e}function ue(e,t){t||=1/0;let n,r=e.length,i=null,a=[];for(let o=0;o<r;++o){if(n=e.charCodeAt(o),n>55295&&n<57344){if(!i){if(n>56319){(t-=3)>-1&&a.push(239,191,189);continue}if(o+1===r){(t-=3)>-1&&a.push(239,191,189);continue}i=n;continue}if(n<56320){(t-=3)>-1&&a.push(239,191,189),i=n;continue}n=(i-55296<<10|n-56320)+65536}else i&&(t-=3)>-1&&a.push(239,191,189);if(i=null,n<128){if(--t<0)break;a.push(n)}else if(n<2048){if((t-=2)<0)break;a.push(n>>6|192,n&63|128)}else if(n<65536){if((t-=3)<0)break;a.push(n>>12|224,n>>6&63|128,n&63|128)}else if(n<1114112){if((t-=4)<0)break;a.push(n>>18|240,n>>12&63|128,n>>6&63|128,n&63|128)}else throw Error(`Invalid code point`)}return a}function J(e){let t=[];for(let n=0;n<e.length;++n)t.push(e.charCodeAt(n)&255);return t}function Y(e,t){let n,r,i,a=[];for(let o=0;o<e.length&&!((t-=2)<0);++o)n=e.charCodeAt(o),r=n>>8,i=n%256,a.push(i),a.push(r);return a}function de(e){return t.toByteArray(q(e))}function X(e,t,n,r){let i=0;for(;i<r&&!(i+n>=t.length||i>=e.length);++i)t[i+n]=e[i];return i}function Z(e,t){return e instanceof t||e!=null&&e.constructor!=null&&e.constructor.name!=null&&e.constructor.name===t.name}function fe(e){return e!==e}let Q=(function(){let e=`0123456789abcdef`,t=Array(256);for(let n=0;n<16;++n){let r=n*16;for(let i=0;i<16;++i)t[r+i]=e[n]+e[i]}return t})();function $(e){return typeof BigInt>`u`?pe:e}function pe(){throw Error(`BigInt not supported`)}})(g),T=g.Buffer,g.Blob,g.BlobOptions,g.Buffer,g.File,g.FileOptions,g.INSPECT_MAX_BYTES,g.SlowBuffer,g.TranscodeEncoding,g.atob,g.btoa,g.constants,g.isAscii,g.isUtf8,g.kMaxLength,g.kStringMaxLength,g.resolveObjectURL,g.transcode}));function D(e){return e&&e.__esModule&&Object.prototype.hasOwnProperty.call(e,`default`)?e.default:e}function ee(){throw Error(`setTimeout has not been defined`)}function O(){throw Error(`clearTimeout has not been defined`)}function k(e){if(P===setTimeout)return setTimeout(e,0);if((P===ee||!P)&&setTimeout)return P=setTimeout,setTimeout(e,0);try{return P(e,0)}catch{try{return P.call(null,e,0)}catch{return P.call(this,e,0)}}}function te(e){if(F===clearTimeout)return clearTimeout(e);if((F===O||!F)&&clearTimeout)return F=clearTimeout,clearTimeout(e);try{return F(e)}catch{try{return F.call(null,e)}catch{return F.call(this,e)}}}function A(){I&&L&&(I=!1,L.length?ie=L.concat(ie):ae=-1,ie.length&&j())}function j(){if(!I){var e=k(A);I=!0;for(var t=ie.length;t;){for(L=ie,ie=[];++ae<t;)L&&L[ae].run();ae=-1,t=ie.length}L=null,I=!1,te(e)}}function ne(e,t){this.fun=e,this.array=t}function M(){}var N,re,P,F,ie,I,L,ae,R,z,oe=i((()=>{N={exports:{}},re=N.exports={},(function(){try{P=typeof setTimeout==`function`?setTimeout:ee}catch{P=ee}try{F=typeof clearTimeout==`function`?clearTimeout:O}catch{F=O}})(),ie=[],I=!1,ae=-1,re.nextTick=function(e){var t=Array(arguments.length-1);if(arguments.length>1)for(var n=1;n<arguments.length;n++)t[n-1]=arguments[n];ie.push(new ne(e,t)),ie.length===1&&!I&&k(j)},ne.prototype.run=function(){this.fun.apply(null,this.array)},re.title=`browser`,re.browser=!0,re.env={},re.argv=[],re.version=``,re.versions={},re.on=M,re.addListener=M,re.once=M,re.off=M,re.removeListener=M,re.removeAllListeners=M,re.emit=M,re.prependListener=M,re.prependOnceListener=M,re.listeners=function(e){return[]},re.binding=function(e){throw Error(`process.binding is not supported`)},re.cwd=function(){return`/`},re.chdir=function(e){throw Error(`process.chdir is not supported`)},re.umask=function(){return 0},R=N.exports,z=D(R)})),B=a(((e,t)=>{t.exports=function(){if(typeof Symbol!=`function`||typeof Object.getOwnPropertySymbols!=`function`)return!1;if(typeof Symbol.iterator==`symbol`)return!0;var e={},t=Symbol(`test`),n=Object(t);if(typeof t==`string`||Object.prototype.toString.call(t)!==`[object Symbol]`||Object.prototype.toString.call(n)!==`[object Symbol]`)return!1;var r=42;for(var i in e[t]=r,e)return!1;if(typeof Object.keys==`function`&&Object.keys(e).length!==0||typeof Object.getOwnPropertyNames==`function`&&Object.getOwnPropertyNames(e).length!==0)return!1;var a=Object.getOwnPropertySymbols(e);if(a.length!==1||a[0]!==t||!Object.prototype.propertyIsEnumerable.call(e,t))return!1;if(typeof Object.getOwnPropertyDescriptor==`function`){var o=Object.getOwnPropertyDescriptor(e,t);if(o.value!==r||o.enumerable!==!0)return!1}return!0}})),se=a(((e,t)=>{var n=B();t.exports=function(){return n()&&!!Symbol.toStringTag}})),ce=a(((e,t)=>{t.exports=Object})),V=a(((e,t)=>{t.exports=Error})),H=a(((e,t)=>{t.exports=EvalError})),U=a(((e,t)=>{t.exports=RangeError})),W=a(((e,t)=>{t.exports=ReferenceError})),G=a(((e,t)=>{t.exports=SyntaxError})),le=a(((e,t)=>{t.exports=TypeError})),K=a(((e,t)=>{t.exports=URIError})),q=a(((e,t)=>{t.exports=Math.abs})),ue=a(((e,t)=>{t.exports=Math.floor})),J=a(((e,t)=>{t.exports=Math.max})),Y=a(((e,t)=>{t.exports=Math.min})),de=a(((e,t)=>{t.exports=Math.pow})),X=a(((e,t)=>{t.exports=Math.round})),Z=a(((e,t)=>{t.exports=Number.isNaN||function(e){return e!==e}})),fe=a(((e,t)=>{var n=Z();t.exports=function(e){return n(e)||e===0?e:e<0?-1:1}})),Q=a(((e,t)=>{t.exports=Object.getOwnPropertyDescriptor})),$=a(((e,t)=>{var n=Q();if(n)try{n([],`length`)}catch{n=null}t.exports=n})),pe=a(((e,t)=>{var n=Object.defineProperty||!1;if(n)try{n({},`a`,{value:1})}catch{n=!1}t.exports=n})),me=a(((e,t)=>{var n=typeof Symbol<`u`&&Symbol,r=B();t.exports=function(){return typeof n!=`function`||typeof Symbol!=`function`||typeof n(`foo`)!=`symbol`||typeof Symbol(`bar`)!=`symbol`?!1:r()}})),he=a(((e,t)=>{t.exports=typeof Reflect<`u`&&Reflect.getPrototypeOf||null})),ge=a(((e,t)=>{t.exports=ce().getPrototypeOf||null})),_e=a(((e,t)=>{var n=Object.prototype.toString,r=Math.max,i=`[object Function]`,a=function(e,t){for(var n=[],r=0;r<e.length;r+=1)n[r]=e[r];for(var i=0;i<t.length;i+=1)n[i+e.length]=t[i];return n},o=function(e,t){for(var n=[],r=t||0,i=0;r<e.length;r+=1,i+=1)n[i]=e[r];return n},s=function(e,t){for(var n=``,r=0;r<e.length;r+=1)n+=e[r],r+1<e.length&&(n+=t);return n};t.exports=function(e){var t=this;if(typeof t!=`function`||n.apply(t)!==i)throw TypeError(`Function.prototype.bind called on incompatible `+t);for(var c=o(arguments,1),l,u=function(){if(this instanceof l){var n=t.apply(this,a(c,arguments));return Object(n)===n?n:this}return t.apply(e,a(c,arguments))},d=r(0,t.length-c.length),f=[],p=0;p<d;p++)f[p]=`$`+p;if(l=Function(`binder`,`return function (`+s(f,`,`)+`){ return binder.apply(this,arguments); }`)(u),t.prototype){var m=function(){};m.prototype=t.prototype,l.prototype=new m,m.prototype=null}return l}})),ve=a(((e,t)=>{var n=_e();t.exports=Function.prototype.bind||n})),ye=a(((e,t)=>{t.exports=Function.prototype.call})),be=a(((e,t)=>{t.exports=Function.prototype.apply})),xe=a(((e,t)=>{t.exports=typeof Reflect<`u`&&Reflect&&Reflect.apply})),Se=a(((e,t)=>{var n=ve(),r=be(),i=ye();t.exports=xe()||n.call(i,r)})),Ce=a(((e,t)=>{var n=ve(),r=le(),i=ye(),a=Se();t.exports=function(e){if(e.length<1||typeof e[0]!=`function`)throw new r(`a function is required`);return a(n,i,e)}})),we=a(((e,t)=>{var n=Ce(),r=$(),i;try{i=[].__proto__===Array.prototype}catch(e){if(!e||typeof e!=`object`||!(`code`in e)||e.code!==`ERR_PROTO_ACCESS`)throw e}var a=!!i&&r&&r(Object.prototype,`__proto__`),o=Object,s=o.getPrototypeOf;t.exports=a&&typeof a.get==`function`?n([a.get]):typeof s==`function`&&function(e){return s(e==null?e:o(e))}})),Te=a(((e,t)=>{var n=he(),r=ge(),i=we();t.exports=n?function(e){return n(e)}:r?function(e){if(!e||typeof e!=`object`&&typeof e!=`function`)throw TypeError(`getProto: not an object`);return r(e)}:i?function(e){return i(e)}:null})),Ee=a(((e,t)=>{var n=Function.prototype.call,r=Object.prototype.hasOwnProperty;t.exports=ve().call(n,r)})),De=a(((e,t)=>{var n,r=ce(),i=V(),a=H(),o=U(),s=W(),c=G(),l=le(),u=K(),d=q(),f=ue(),p=J(),m=Y(),h=de(),g=X(),_=fe(),v=Function,y=function(e){try{return v(`"use strict"; return (`+e+`).constructor;`)()}catch{}},b=$(),x=pe(),S=function(){throw new l},C=b?function(){try{return arguments.callee,S}catch{try{return b(arguments,`callee`).get}catch{return S}}}():S,w=me()(),T=Te(),E=ge(),D=he(),ee=be(),O=ye(),k={},te=typeof Uint8Array>`u`||!T?n:T(Uint8Array),A={__proto__:null,"%AggregateError%":typeof AggregateError>`u`?n:AggregateError,"%Array%":Array,"%ArrayBuffer%":typeof ArrayBuffer>`u`?n:ArrayBuffer,"%ArrayIteratorPrototype%":w&&T?T([][Symbol.iterator]()):n,"%AsyncFromSyncIteratorPrototype%":n,"%AsyncFunction%":k,"%AsyncGenerator%":k,"%AsyncGeneratorFunction%":k,"%AsyncIteratorPrototype%":k,"%Atomics%":typeof Atomics>`u`?n:Atomics,"%BigInt%":typeof BigInt>`u`?n:BigInt,"%BigInt64Array%":typeof BigInt64Array>`u`?n:BigInt64Array,"%BigUint64Array%":typeof BigUint64Array>`u`?n:BigUint64Array,"%Boolean%":Boolean,"%DataView%":typeof DataView>`u`?n:DataView,"%Date%":Date,"%decodeURI%":decodeURI,"%decodeURIComponent%":decodeURIComponent,"%encodeURI%":encodeURI,"%encodeURIComponent%":encodeURIComponent,"%Error%":i,"%eval%":eval,"%EvalError%":a,"%Float16Array%":typeof Float16Array>`u`?n:Float16Array,"%Float32Array%":typeof Float32Array>`u`?n:Float32Array,"%Float64Array%":typeof Float64Array>`u`?n:Float64Array,"%FinalizationRegistry%":typeof FinalizationRegistry>`u`?n:FinalizationRegistry,"%Function%":v,"%GeneratorFunction%":k,"%Int8Array%":typeof Int8Array>`u`?n:Int8Array,"%Int16Array%":typeof Int16Array>`u`?n:Int16Array,"%Int32Array%":typeof Int32Array>`u`?n:Int32Array,"%isFinite%":isFinite,"%isNaN%":isNaN,"%IteratorPrototype%":w&&T?T(T([][Symbol.iterator]())):n,"%JSON%":typeof JSON==`object`?JSON:n,"%Map%":typeof Map>`u`?n:Map,"%MapIteratorPrototype%":typeof Map>`u`||!w||!T?n:T(new Map()[Symbol.iterator]()),"%Math%":Math,"%Number%":Number,"%Object%":r,"%Object.getOwnPropertyDescriptor%":b,"%parseFloat%":parseFloat,"%parseInt%":parseInt,"%Promise%":typeof Promise>`u`?n:Promise,"%Proxy%":typeof Proxy>`u`?n:Proxy,"%RangeError%":o,"%ReferenceError%":s,"%Reflect%":typeof Reflect>`u`?n:Reflect,"%RegExp%":RegExp,"%Set%":typeof Set>`u`?n:Set,"%SetIteratorPrototype%":typeof Set>`u`||!w||!T?n:T(new Set()[Symbol.iterator]()),"%SharedArrayBuffer%":typeof SharedArrayBuffer>`u`?n:SharedArrayBuffer,"%String%":String,"%StringIteratorPrototype%":w&&T?T(``[Symbol.iterator]()):n,"%Symbol%":w?Symbol:n,"%SyntaxError%":c,"%ThrowTypeError%":C,"%TypedArray%":te,"%TypeError%":l,"%Uint8Array%":typeof Uint8Array>`u`?n:Uint8Array,"%Uint8ClampedArray%":typeof Uint8ClampedArray>`u`?n:Uint8ClampedArray,"%Uint16Array%":typeof Uint16Array>`u`?n:Uint16Array,"%Uint32Array%":typeof Uint32Array>`u`?n:Uint32Array,"%URIError%":u,"%WeakMap%":typeof WeakMap>`u`?n:WeakMap,"%WeakRef%":typeof WeakRef>`u`?n:WeakRef,"%WeakSet%":typeof WeakSet>`u`?n:WeakSet,"%Function.prototype.call%":O,"%Function.prototype.apply%":ee,"%Object.defineProperty%":x,"%Object.getPrototypeOf%":E,"%Math.abs%":d,"%Math.floor%":f,"%Math.max%":p,"%Math.min%":m,"%Math.pow%":h,"%Math.round%":g,"%Math.sign%":_,"%Reflect.getPrototypeOf%":D};if(T)try{null.error}catch(e){A[`%Error.prototype%`]=T(T(e))}var j=function e(t){var n;if(t===`%AsyncFunction%`)n=y(`async function () {}`);else if(t===`%GeneratorFunction%`)n=y(`function* () {}`);else if(t===`%AsyncGeneratorFunction%`)n=y(`async function* () {}`);else if(t===`%AsyncGenerator%`){var r=e(`%AsyncGeneratorFunction%`);r&&(n=r.prototype)}else if(t===`%AsyncIteratorPrototype%`){var i=e(`%AsyncGenerator%`);i&&T&&(n=T(i.prototype))}return A[t]=n,n},ne={__proto__:null,"%ArrayBufferPrototype%":[`ArrayBuffer`,`prototype`],"%ArrayPrototype%":[`Array`,`prototype`],"%ArrayProto_entries%":[`Array`,`prototype`,`entries`],"%ArrayProto_forEach%":[`Array`,`prototype`,`forEach`],"%ArrayProto_keys%":[`Array`,`prototype`,`keys`],"%ArrayProto_values%":[`Array`,`prototype`,`values`],"%AsyncFunctionPrototype%":[`AsyncFunction`,`prototype`],"%AsyncGenerator%":[`AsyncGeneratorFunction`,`prototype`],"%AsyncGeneratorPrototype%":[`AsyncGeneratorFunction`,`prototype`,`prototype`],"%BooleanPrototype%":[`Boolean`,`prototype`],"%DataViewPrototype%":[`DataView`,`prototype`],"%DatePrototype%":[`Date`,`prototype`],"%ErrorPrototype%":[`Error`,`prototype`],"%EvalErrorPrototype%":[`EvalError`,`prototype`],"%Float32ArrayPrototype%":[`Float32Array`,`prototype`],"%Float64ArrayPrototype%":[`Float64Array`,`prototype`],"%FunctionPrototype%":[`Function`,`prototype`],"%Generator%":[`GeneratorFunction`,`prototype`],"%GeneratorPrototype%":[`GeneratorFunction`,`prototype`,`prototype`],"%Int8ArrayPrototype%":[`Int8Array`,`prototype`],"%Int16ArrayPrototype%":[`Int16Array`,`prototype`],"%Int32ArrayPrototype%":[`Int32Array`,`prototype`],"%JSONParse%":[`JSON`,`parse`],"%JSONStringify%":[`JSON`,`stringify`],"%MapPrototype%":[`Map`,`prototype`],"%NumberPrototype%":[`Number`,`prototype`],"%ObjectPrototype%":[`Object`,`prototype`],"%ObjProto_toString%":[`Object`,`prototype`,`toString`],"%ObjProto_valueOf%":[`Object`,`prototype`,`valueOf`],"%PromisePrototype%":[`Promise`,`prototype`],"%PromiseProto_then%":[`Promise`,`prototype`,`then`],"%Promise_all%":[`Promise`,`all`],"%Promise_reject%":[`Promise`,`reject`],"%Promise_resolve%":[`Promise`,`resolve`],"%RangeErrorPrototype%":[`RangeError`,`prototype`],"%ReferenceErrorPrototype%":[`ReferenceError`,`prototype`],"%RegExpPrototype%":[`RegExp`,`prototype`],"%SetPrototype%":[`Set`,`prototype`],"%SharedArrayBufferPrototype%":[`SharedArrayBuffer`,`prototype`],"%StringPrototype%":[`String`,`prototype`],"%SymbolPrototype%":[`Symbol`,`prototype`],"%SyntaxErrorPrototype%":[`SyntaxError`,`prototype`],"%TypedArrayPrototype%":[`TypedArray`,`prototype`],"%TypeErrorPrototype%":[`TypeError`,`prototype`],"%Uint8ArrayPrototype%":[`Uint8Array`,`prototype`],"%Uint8ClampedArrayPrototype%":[`Uint8ClampedArray`,`prototype`],"%Uint16ArrayPrototype%":[`Uint16Array`,`prototype`],"%Uint32ArrayPrototype%":[`Uint32Array`,`prototype`],"%URIErrorPrototype%":[`URIError`,`prototype`],"%WeakMapPrototype%":[`WeakMap`,`prototype`],"%WeakSetPrototype%":[`WeakSet`,`prototype`]},M=ve(),N=Ee(),re=M.call(O,Array.prototype.concat),P=M.call(ee,Array.prototype.splice),F=M.call(O,String.prototype.replace),ie=M.call(O,String.prototype.slice),I=M.call(O,RegExp.prototype.exec),L=/[^%.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|%$))/g,ae=/\\(\\)?/g,R=function(e){var t=ie(e,0,1),n=ie(e,-1);if(t===`%`&&n!==`%`)throw new c("invalid intrinsic syntax, expected closing `%`");if(n===`%`&&t!==`%`)throw new c("invalid intrinsic syntax, expected opening `%`");var r=[];return F(e,L,function(e,t,n,i){r[r.length]=n?F(i,ae,`$1`):t||e}),r},z=function(e,t){var n=e,r;if(N(ne,n)&&(r=ne[n],n=`%`+r[0]+`%`),N(A,n)){var i=A[n];if(i===k&&(i=j(n)),i===void 0&&!t)throw new l(`intrinsic `+e+` exists, but is not available. Please file an issue!`);return{alias:r,name:n,value:i}}throw new c(`intrinsic `+e+` does not exist!`)};t.exports=function(e,t){if(typeof e!=`string`||e.length===0)throw new l(`intrinsic name must be a non-empty string`);if(arguments.length>1&&typeof t!=`boolean`)throw new l(`"allowMissing" argument must be a boolean`);if(I(/^%?[^%]*%?$/,e)===null)throw new c("`%` may not be present anywhere but at the beginning and end of the intrinsic name");var n=R(e),r=n.length>0?n[0]:``,i=z(`%`+r+`%`,t),a=i.name,o=i.value,s=!1,u=i.alias;u&&(r=u[0],P(n,re([0,1],u)));for(var d=1,f=!0;d<n.length;d+=1){var p=n[d],m=ie(p,0,1),h=ie(p,-1);if((m===`"`||m===`'`||m==="`"||h===`"`||h===`'`||h==="`")&&m!==h)throw new c(`property names with quotes must have matching quotes`);if((p===`constructor`||!f)&&(s=!0),r+=`.`+p,a=`%`+r+`%`,N(A,a))o=A[a];else if(o!=null){if(!(p in o)){if(!t)throw new l(`base intrinsic for `+e+` exists, but the property is not available.`);return}if(b&&d+1>=n.length){var g=b(o,p);f=!!g,o=f&&`get`in g&&!(`originalValue`in g.get)?g.get:o[p]}else f=N(o,p),o=o[p];f&&!s&&(A[a]=o)}}return o}})),Oe=a(((e,t)=>{var n=De(),r=Ce(),i=r([n(`%String.prototype.indexOf%`)]);t.exports=function(e,t){var a=n(e,!!t);return typeof a==`function`&&i(e,`.prototype.`)>-1?r([a]):a}})),ke=a(((e,t)=>{var n=se()(),r=Oe()(`Object.prototype.toString`),i=function(e){return n&&e&&typeof e==`object`&&Symbol.toStringTag in e?!1:r(e)===`[object Arguments]`},a=function(e){return i(e)?!0:typeof e==`object`&&!!e&&`length`in e&&typeof e.length==`number`&&e.length>=0&&r(e)!==`[object Array]`&&`callee`in e&&r(e.callee)===`[object Function]`},o=function(){return i(arguments)}();i.isLegacyArguments=a,t.exports=o?i:a})),Ae=a(((e,t)=>{var n=Oe(),r=se()(),i=Ee(),a=$(),o;if(r){var s=n(`RegExp.prototype.exec`),c={},l=function(){throw c},u={toString:l,valueOf:l};typeof Symbol.toPrimitive==`symbol`&&(u[Symbol.toPrimitive]=l),o=function(e){if(!e||typeof e!=`object`)return!1;var t=a(e,`lastIndex`);if(!(t&&i(t,`value`)))return!1;try{s(e,u)}catch(e){return e===c}}}else{var d=n(`Object.prototype.toString`),f=`[object RegExp]`;o=function(e){return!e||typeof e!=`object`&&typeof e!=`function`?!1:d(e)===f}}t.exports=o})),je=a(((e,t)=>{var n=Oe(),r=Ae(),i=n(`RegExp.prototype.exec`),a=le();t.exports=function(e){if(!r(e))throw new a("`regex` must be a RegExp");return function(t){return i(e,t)!==null}}})),Me=a(((e,t)=>{var n=function*(){}.constructor;t.exports=()=>n})),Ne=a(((e,t)=>{var n=Oe(),r=je()(/^\s*(?:function)?\*/),i=se()(),a=Te(),o=n(`Object.prototype.toString`),s=n(`Function.prototype.toString`),c=Me();t.exports=function(e){if(typeof e!=`function`)return!1;if(r(s(e)))return!0;if(!i)return o(e)===`[object GeneratorFunction]`;if(!a)return!1;var t=c();return t&&a(e)===t.prototype}})),Pe,Fe=i((()=>{Pe=globalThis||self})),Ie=a(((e,t)=>{var n=Function.prototype.toString,r=typeof Reflect==`object`&&Reflect!==null&&Reflect.apply,i,a;if(typeof r==`function`&&typeof Object.defineProperty==`function`)try{i=Object.defineProperty({},"length",{get:function(){throw a}}),a={},r(function(){throw 42},null,i)}catch(e){e!==a&&(r=null)}else r=null;var o=/^\s*class\b/,s=function(e){try{var t=n.call(e);return o.test(t)}catch{return!1}},c=function(e){try{return!s(e)&&(n.call(e),!0)}catch{return!1}},l=Object.prototype.toString,u=`[object Object]`,d=`[object Function]`,f=`[object GeneratorFunction]`,p=`[object HTMLAllCollection]`,m=`[object HTML document.all class]`,h=`[object HTMLCollection]`,g=typeof Symbol==`function`&&!!Symbol.toStringTag,_=!(0 in[,]),v=function(){return!1};if(typeof document==`object`){var y=document.all;l.call(y)===l.call(document.all)&&(v=function(e){if((_||!e)&&(e===void 0||typeof e==`object`))try{var t=l.call(e);return(t===p||t===m||t===h||t===u)&&e(``)==null}catch{}return!1})}t.exports=r?function(e){if(v(e))return!0;if(!e||typeof e!=`function`&&typeof e!=`object`)return!1;try{r(e,null,i)}catch(e){if(e!==a)return!1}return!s(e)&&c(e)}:function(e){if(v(e))return!0;if(!e||typeof e!=`function`&&typeof e!=`object`)return!1;if(g)return c(e);if(s(e))return!1;var t=l.call(e);return t!==d&&t!==f&&!/^\[object HTML/.test(t)?!1:c(e)}})),Le=a(((e,t)=>{var n=Ie(),r=Object.prototype.toString,i=Object.prototype.hasOwnProperty,a=function(e,t,n){for(var r=0,a=e.length;r<a;r++)i.call(e,r)&&(n==null?t(e[r],r,e):t.call(n,e[r],r,e))},o=function(e,t,n){for(var r=0,i=e.length;r<i;r++)n==null?t(e.charAt(r),r,e):t.call(n,e.charAt(r),r,e)},s=function(e,t,n){for(var r in e)i.call(e,r)&&(n==null?t(e[r],r,e):t.call(n,e[r],r,e))};function c(e){return r.call(e)===`[object Array]`}t.exports=function(e,t,r){if(!n(t))throw TypeError(`iterator must be a function`);var i;arguments.length>=3&&(i=r),c(e)?a(e,t,i):typeof e==`string`?o(e,t,i):s(e,t,i)}})),Re=a(((e,t)=>{t.exports=[`Float16Array`,`Float32Array`,`Float64Array`,`Int8Array`,`Int16Array`,`Int32Array`,`Uint8Array`,`Uint8ClampedArray`,`Uint16Array`,`Uint32Array`,`BigInt64Array`,`BigUint64Array`]})),ze=a(((e,t)=>{Fe();var n=Re(),r=typeof globalThis>`u`?Pe:globalThis;t.exports=function(){for(var e=[],t=0;t<n.length;t++)typeof r[n[t]]==`function`&&(e[e.length]=n[t]);return e}})),Be=a(((e,t)=>{var n=pe(),r=G(),i=le(),a=$();t.exports=function(e,t,o){if(!e||typeof e!=`object`&&typeof e!=`function`)throw new i("`obj` must be an object or a function`");if(typeof t!=`string`&&typeof t!=`symbol`)throw new i("`property` must be a string or a symbol`");if(arguments.length>3&&typeof arguments[3]!=`boolean`&&arguments[3]!==null)throw new i("`nonEnumerable`, if provided, must be a boolean or null");if(arguments.length>4&&typeof arguments[4]!=`boolean`&&arguments[4]!==null)throw new i("`nonWritable`, if provided, must be a boolean or null");if(arguments.length>5&&typeof arguments[5]!=`boolean`&&arguments[5]!==null)throw new i("`nonConfigurable`, if provided, must be a boolean or null");if(arguments.length>6&&typeof arguments[6]!=`boolean`)throw new i("`loose`, if provided, must be a boolean");var s=arguments.length>3?arguments[3]:null,c=arguments.length>4?arguments[4]:null,l=arguments.length>5?arguments[5]:null,u=arguments.length>6&&arguments[6],d=!!a&&a(e,t);if(n)n(e,t,{configurable:l===null&&d?d.configurable:!l,enumerable:s===null&&d?d.enumerable:!s,value:o,writable:c===null&&d?d.writable:!c});else if(u||!s&&!c&&!l)e[t]=o;else throw new r(`This environment does not support defining a property as non-configurable, non-writable, or non-enumerable.`)}})),Ve=a(((e,t)=>{var n=pe(),r=function(){return!!n};r.hasArrayLengthDefineBug=function(){if(!n)return null;try{return n([],`length`,{value:1}).length!==1}catch{return!0}},t.exports=r})),He=a(((e,t)=>{var n=De(),r=Be(),i=Ve()(),a=$(),o=le(),s=n(`%Math.floor%`);t.exports=function(e,t){if(typeof e!=`function`)throw new o("`fn` is not a function");if(typeof t!=`number`||t<0||t>4294967295||s(t)!==t)throw new o("`length` must be a positive 32-bit integer");var n=arguments.length>2&&!!arguments[2],c=!0,l=!0;if(`length`in e&&a){var u=a(e,`length`);u&&!u.configurable&&(c=!1),u&&!u.writable&&(l=!1)}return(c||l||!n)&&(i?r(e,`length`,t,!0,!0):r(e,`length`,t)),e}})),Ue=a(((e,t)=>{var n=ve(),r=be(),i=Se();t.exports=function(){return i(n,r,arguments)}})),We=a(((e,t)=>{var n=He(),r=pe(),i=Ce(),a=Ue();t.exports=function(e){var t=i(arguments),r=1+e.length-(arguments.length-1);return n(t,r>0?r:0,!0)},r?r(t.exports,`apply`,{value:a}):t.exports.apply=a})),Ge=a(((e,t)=>{Fe();var n=Le(),r=ze(),i=We(),a=Oe(),o=$(),s=Te(),c=a(`Object.prototype.toString`),l=se()(),u=typeof globalThis>`u`?Pe:globalThis,d=r(),f=a(`String.prototype.slice`),p=a(`Array.prototype.indexOf`,!0)||function(e,t){for(var n=0;n<e.length;n+=1)if(e[n]===t)return n;return-1},m={__proto__:null};l&&o&&s?n(d,function(e){var t=new u[e];if(Symbol.toStringTag in t&&s){var n=s(t),r=o(n,Symbol.toStringTag);if(!r&&n&&(r=o(s(n),Symbol.toStringTag)),r&&r.get){var a=i(r.get);m[`$`+e]=a}}}):n(d,function(e){var t=new u[e],n=t.slice||t.set;if(n){var r=i(n);m[`$`+e]=r}});function h(e){var t=!1;return n(m,function(n,r){if(!t)try{`$`+n(e)===r&&(t=f(r,1))}catch{}}),t}function g(e){var t=!1;return n(m,function(n,r){if(!t)try{n(e),t=f(r,1)}catch{}}),t}function _(e){return p(d,e)>-1}function v(e){if(!e||typeof e!=`object`)return!1;if(!l){var t=f(c(e),8,-1);return _(t)?t:t===`Object`&&g(e)}return o?h(e):null}t.exports=v})),Ke=a(((e,t)=>{var n=Ge();t.exports=function(e){return!!n(e)}})),qe=a((e=>{var t=ke(),n=Ne(),r=Ge(),i=Ke();function a(e){return e.call.bind(e)}var o=typeof BigInt<`u`,s=typeof Symbol<`u`,c=a(Object.prototype.toString),l=a(Number.prototype.valueOf),u=a(String.prototype.valueOf),d=a(Boolean.prototype.valueOf);if(o)var f=a(BigInt.prototype.valueOf);if(s)var p=a(Symbol.prototype.valueOf);function m(e,t){if(typeof e!=`object`)return!1;try{return t(e),!0}catch{return!1}}e.isArgumentsObject=t,e.isGeneratorFunction=n,e.isTypedArray=i;function h(e){return typeof Promise<`u`&&e instanceof Promise||typeof e==`object`&&!!e&&typeof e.then==`function`&&typeof e.catch==`function`}e.isPromise=h;function g(e){return typeof ArrayBuffer<`u`&&ArrayBuffer.isView?ArrayBuffer.isView(e):i(e)||F(e)}e.isArrayBufferView=g;function _(e){return r(e)===`Uint8Array`}e.isUint8Array=_;function v(e){return r(e)===`Uint8ClampedArray`}e.isUint8ClampedArray=v;function y(e){return r(e)===`Uint16Array`}e.isUint16Array=y;function b(e){return r(e)===`Uint32Array`}e.isUint32Array=b;function x(e){return r(e)===`Int8Array`}e.isInt8Array=x;function S(e){return r(e)===`Int16Array`}e.isInt16Array=S;function C(e){return r(e)===`Int32Array`}e.isInt32Array=C;function w(e){return r(e)===`Float32Array`}e.isFloat32Array=w;function T(e){return r(e)===`Float64Array`}e.isFloat64Array=T;function E(e){return r(e)===`BigInt64Array`}e.isBigInt64Array=E;function D(e){return r(e)===`BigUint64Array`}e.isBigUint64Array=D;function ee(e){return c(e)===`[object Map]`}ee.working=typeof Map<`u`&&ee(new Map);function O(e){return typeof Map>`u`?!1:ee.working?ee(e):e instanceof Map}e.isMap=O;function k(e){return c(e)===`[object Set]`}k.working=typeof Set<`u`&&k(new Set);function te(e){return typeof Set>`u`?!1:k.working?k(e):e instanceof Set}e.isSet=te;function A(e){return c(e)===`[object WeakMap]`}A.working=typeof WeakMap<`u`&&A(new WeakMap);function j(e){return typeof WeakMap>`u`?!1:A.working?A(e):e instanceof WeakMap}e.isWeakMap=j;function ne(e){return c(e)===`[object WeakSet]`}ne.working=typeof WeakSet<`u`&&ne(new WeakSet);function M(e){return ne(e)}e.isWeakSet=M;function N(e){return c(e)===`[object ArrayBuffer]`}N.working=typeof ArrayBuffer<`u`&&N(new ArrayBuffer);function re(e){return typeof ArrayBuffer>`u`?!1:N.working?N(e):e instanceof ArrayBuffer}e.isArrayBuffer=re;function P(e){return c(e)===`[object DataView]`}P.working=typeof ArrayBuffer<`u`&&typeof DataView<`u`&&P(new DataView(new ArrayBuffer(1),0,1));function F(e){return typeof DataView>`u`?!1:P.working?P(e):e instanceof DataView}e.isDataView=F;var ie=typeof SharedArrayBuffer<`u`?SharedArrayBuffer:void 0;function I(e){return c(e)===`[object SharedArrayBuffer]`}function L(e){return ie!==void 0&&(I.working===void 0&&(I.working=I(new ie)),I.working?I(e):e instanceof ie)}e.isSharedArrayBuffer=L;function ae(e){return c(e)===`[object AsyncFunction]`}e.isAsyncFunction=ae;function R(e){return c(e)===`[object Map Iterator]`}e.isMapIterator=R;function z(e){return c(e)===`[object Set Iterator]`}e.isSetIterator=z;function oe(e){return c(e)===`[object Generator]`}e.isGeneratorObject=oe;function B(e){return c(e)===`[object WebAssembly.Module]`}e.isWebAssemblyCompiledModule=B;function se(e){return m(e,l)}e.isNumberObject=se;function ce(e){return m(e,u)}e.isStringObject=ce;function V(e){return m(e,d)}e.isBooleanObject=V;function H(e){return o&&m(e,f)}e.isBigIntObject=H;function U(e){return s&&m(e,p)}e.isSymbolObject=U;function W(e){return se(e)||ce(e)||V(e)||H(e)||U(e)}e.isBoxedPrimitive=W;function G(e){return typeof Uint8Array<`u`&&(re(e)||L(e))}e.isAnyArrayBuffer=G,[`isProxy`,`isExternal`,`isModuleNamespaceObject`].forEach(function(t){Object.defineProperty(e,t,{enumerable:!1,value:function(){throw Error(t+` is not supported in userland`)}})})})),Je=a(((e,t)=>{t.exports=function(e){return e&&typeof e==`object`&&typeof e.copy==`function`&&typeof e.fill==`function`&&typeof e.readUInt8==`function`}})),Ye=a(((e,t)=>{t.exports=typeof Object.create==`function`?function(e,t){t&&(e.super_=t,e.prototype=Object.create(t.prototype,{constructor:{value:e,enumerable:!1,writable:!0,configurable:!0}}))}:function(e,t){if(t){e.super_=t;var n=function(){};n.prototype=t.prototype,e.prototype=new n,e.prototype.constructor=e}}})),Xe=a((e=>{oe();var t=Object.getOwnPropertyDescriptors||function(e){for(var t=Object.keys(e),n={},r=0;r<t.length;r++)n[t[r]]=Object.getOwnPropertyDescriptor(e,t[r]);return n},n=/%[sdj%]/g;e.format=function(e){if(!x(e)){for(var t=[],r=0;r<arguments.length;r++)t.push(o(arguments[r]));return t.join(` `)}for(var r=1,i=arguments,a=i.length,s=String(e).replace(n,function(e){if(e===`%%`)return`%`;if(r>=a)return e;switch(e){case`%s`:return String(i[r++]);case`%d`:return Number(i[r++]);case`%j`:try{return JSON.stringify(i[r++])}catch{return`[Circular]`}default:return e}}),c=i[r];r<a;c=i[++r])v(c)||!T(c)?s+=` `+c:s+=` `+o(c);return s},e.deprecate=function(t,n){if(z!==void 0&&z.noDeprecation===!0)return t;if(z===void 0)return function(){return e.deprecate(t,n).apply(this,arguments)};var r=!1;function i(){if(!r){if(z.throwDeprecation)throw Error(n);z.traceDeprecation?console.trace(n):console.error(n),r=!0}return t.apply(this,arguments)}return i};var r={},i=/^$/;if(z.env.NODE_DEBUG){var a=z.env.NODE_DEBUG;a=a.replace(/[|\\{}()[\]^$+?.]/g,`\\$&`).replace(/\*/g,`.*`).replace(/,/g,`$|^`).toUpperCase(),i=RegExp(`^`+a+`$`,`i`)}e.debuglog=function(t){if(t=t.toUpperCase(),!r[t]){if(i.test(t)){var n=z.pid;r[t]=function(){var r=e.format.apply(e,arguments);console.error(`%s %d: %s`,t,n,r)}}else r[t]=function(){}}return r[t]};function o(t,n){var r={seen:[],stylize:c};return arguments.length>=3&&(r.depth=arguments[2]),arguments.length>=4&&(r.colors=arguments[3]),_(n)?r.showHidden=n:n&&e._extend(r,n),C(r.showHidden)&&(r.showHidden=!1),C(r.depth)&&(r.depth=2),C(r.colors)&&(r.colors=!1),C(r.customInspect)&&(r.customInspect=!0),r.colors&&(r.stylize=s),u(r,t,r.depth)}e.inspect=o,o.colors={bold:[1,22],italic:[3,23],underline:[4,24],inverse:[7,27],white:[37,39],grey:[90,39],black:[30,39],blue:[34,39],cyan:[36,39],green:[32,39],magenta:[35,39],red:[31,39],yellow:[33,39]},o.styles={special:`cyan`,number:`yellow`,boolean:`yellow`,undefined:`grey`,null:`bold`,string:`green`,date:`magenta`,regexp:`red`};function s(e,t){var n=o.styles[t];return n?`\x1B[`+o.colors[n][0]+`m`+e+`\x1B[`+o.colors[n][1]+`m`:e}function c(e,t){return e}function l(e){var t={};return e.forEach(function(e,n){t[e]=!0}),t}function u(t,n,r){if(t.customInspect&&n&&ee(n.inspect)&&n.inspect!==e.inspect&&!(n.constructor&&n.constructor.prototype===n)){var i=n.inspect(r,t);return x(i)||(i=u(t,i,r)),i}var a=d(t,n);if(a)return a;var o=Object.keys(n),s=l(o);if(t.showHidden&&(o=Object.getOwnPropertyNames(n)),D(n)&&(o.indexOf(`message`)>=0||o.indexOf(`description`)>=0))return f(n);if(o.length===0){if(ee(n)){var c=n.name?`: `+n.name:``;return t.stylize(`[Function`+c+`]`,`special`)}if(w(n))return t.stylize(RegExp.prototype.toString.call(n),`regexp`);if(E(n))return t.stylize(Date.prototype.toString.call(n),`date`);if(D(n))return f(n)}var _=``,v=!1,y=[`{`,`}`];if(g(n)&&(v=!0,y=[`[`,`]`]),ee(n)&&(_=` [Function`+(n.name?`: `+n.name:``)+`]`),w(n)&&(_=` `+RegExp.prototype.toString.call(n)),E(n)&&(_=` `+Date.prototype.toUTCString.call(n)),D(n)&&(_=` `+f(n)),o.length===0&&(!v||n.length==0))return y[0]+_+y[1];if(r<0)return w(n)?t.stylize(RegExp.prototype.toString.call(n),`regexp`):t.stylize(`[Object]`,`special`);t.seen.push(n);var b=v?p(t,n,r,s,o):o.map(function(e){return m(t,n,r,s,e,v)});return t.seen.pop(),h(b,_,y)}function d(e,t){if(C(t))return e.stylize(`undefined`,`undefined`);if(x(t)){var n=`'`+JSON.stringify(t).replace(/^"|"$/g,``).replace(/'/g,`\\'`).replace(/\\"/g,`"`)+`'`;return e.stylize(n,`string`)}if(b(t))return e.stylize(``+t,`number`);if(_(t))return e.stylize(``+t,`boolean`);if(v(t))return e.stylize(`null`,`null`)}function f(e){return`[`+Error.prototype.toString.call(e)+`]`}function p(e,t,n,r,i){for(var a=[],o=0,s=t.length;o<s;++o)ne(t,String(o))?a.push(m(e,t,n,r,String(o),!0)):a.push(``);return i.forEach(function(i){i.match(/^\d+$/)||a.push(m(e,t,n,r,i,!0))}),a}function m(e,t,n,r,i,a){var o,s,c=Object.getOwnPropertyDescriptor(t,i)||{value:t[i]};if(c.get?s=c.set?e.stylize(`[Getter/Setter]`,`special`):e.stylize(`[Getter]`,`special`):c.set&&(s=e.stylize(`[Setter]`,`special`)),ne(r,i)||(o=`[`+i+`]`),s||(e.seen.indexOf(c.value)<0?(s=v(n)?u(e,c.value,null):u(e,c.value,n-1),s.indexOf(`
 `)>-1&&(s=a?s.split(`
@@ -6380,453 +6382,580 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
     // OTHER MOTIVATION
     // ══════════════════════════════════════════
     // ══════════════════════════════════════════
-    // TELEGRAM — GramJS Direct MTProto
+
     // ══════════════════════════════════════════
-    var _tgClient = null;
-    var _tgActiveChatId = null;
-    var _tgCache = {};
-    var _tgChatMeta = {};
-    var _tgUnsubs = {};
-    var _tgConnecting = false;
-    var _tgApiId = null;
-    var _tgApiHash = null;
-    var _tgPhoneCodeHash = null;
-    var _tgResolveOtp = null;
-    var _tgResolve2fa = null;
+    // TELEGRAM — logic terus dari telegram.html
+    // ══════════════════════════════════════════
+// ─── Creds (localStorage + Firestore) + Session (Firestore) ───────────
+const TG_LS_KEY = 'tg_bridge_creds';
+// currentUser defined by Kindle
 
-
-    function _tgSetStatus(msg) {
-      var s = document.getElementById('tg-screen-status');
-      if (s) s.textContent = msg;
+function saveCreds() {
+  const data = {
+    apiId: document.getElementById('tg-setup-apiid').value.trim(),
+    apiHash: document.getElementById('tg-setup-apihash').value.trim(),
+    phone: document.getElementById('tg-setup-phone').value.trim()
+  };
+  localStorage.setItem(TG_LS_KEY, JSON.stringify(data));
+  if (currentUser) {
+    db.doc('users/' + currentUser.uid + '/tg_session/creds')
+      .set(data).catch(e => console.warn('saveCreds err:', e));
+  }
+}
+async function loadCreds() {
+  try {
+    const d = JSON.parse(localStorage.getItem(TG_LS_KEY) || '{}');
+    if (d.apiId && d.apiHash) {
+      if (d.apiId) document.getElementById('tg-setup-apiid').value = d.apiId;
+      if (d.apiHash) document.getElementById('tg-setup-apihash').value = d.apiHash;
+      if (d.phone) document.getElementById('tg-setup-phone').value = d.phone;
+      return;
     }
-    function _tgSetupMsg(msg, color) {
-      var el = document.getElementById('tg-setup-msg');
-      if (el) { el.textContent = msg; el.style.color = color || '#c00'; }
+  } catch(e) {}
+  // localStorage kosong — cuba dari Firestore
+  if (!currentUser) return;
+  try {
+    const snap = await db.doc('users/' + currentUser.uid + '/tg_session/creds').get();
+    if (snap.exists) {
+      const d = snap.data();
+      if (d.apiId) document.getElementById('tg-setup-apiid').value = d.apiId;
+      if (d.apiHash) document.getElementById('tg-setup-apihash').value = d.apiHash;
+      if (d.phone) document.getElementById('tg-setup-phone').value = d.phone;
+      localStorage.setItem(TG_LS_KEY, JSON.stringify(d));
     }
+  } catch(e) {}
+}
 
-    // Detect nama global yg diexport oleh GramJS bundle
-    function _tgGetLib() {
-      // Cuba semua kemungkinan nama
-      var TG = window.TelegramClient || window.telegram || window.GramJS || window.gramjs;
-      if (!TG) return null;
-      var TC, SS;
-      if (typeof TG === 'function') {
-        TC = TG;
-        SS = window.StringSession || (window.sessions && window.sessions.StringSession);
-      } else {
-        TC = TG.TelegramClient || TG.Client;
-        SS = (TG.sessions && TG.sessions.StringSession) || TG.StringSession || window.StringSession;
+async function saveSessionFS(str) {
+  if (!currentUser || !str) return;
+  try {
+    await db.doc('users/' + currentUser.uid + '/tg_session/main')
+      .set({ session: str, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  } catch(e) { console.warn('saveSession err:', e); }
+}
+async function loadSessionFS() {
+  if (!currentUser) return '';
+  try {
+    const snap = await db.doc('users/' + currentUser.uid + '/tg_session/main').get();
+    return snap.exists ? (snap.data().session || '') : '';
+  } catch(e) { return ''; }
+}
+async function clearSessionFS() {
+  if (!currentUser) return;
+  try { await db.doc('users/' + currentUser.uid + '/tg_session/main').delete(); } catch(e) {}
+}
+function toast(msg, dur=3000) {
+  const el = document.getElementById('tg-toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+function addLog(msg, type='') {
+  const box = document.getElementById('tg-log');
+  const now = new Date().toLocaleTimeString('ms-MY');
+  const line = document.createElement('div');
+  line.className = type ? 'log-' + type : '';
+  line.textContent = '[' + now + '] ' + msg;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+function setBadge(state) {
+  const b = document.getElementById('tg-screen-status');
+  b.className = 'status-badge';
+  if (state === 'on') { b.classList.add('badge-on'); b.textContent = '● Bersambung'; }
+  else if (state === 'connecting') { b.classList.add('badge-connecting'); b.textContent = '○ Menyambung...'; }
+  else if (state === 'error') { b.classList.add('badge-error'); b.textContent = 'Ralat'; }
+  else { b.classList.add('badge-off'); b.textContent = 'Tidak Bersambung'; }
+}
+function escHtml(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── GramJS state ─────────────────────────────────────────
+let tgClient = null, tgMe = null;
+let activeChatId = null, activeChatPeer = null;
+let resolveOtp = null, resolve2fa = null;
+let allDialogs = [];
+
+// ─── Connect ──────────────────────────────────────────────
+async function connectTelegram() {
+  const apiId = parseInt(document.getElementById('tg-setup-apiid').value.trim());
+  const apiHash = document.getElementById('tg-setup-apihash').value.trim();
+  const phone = document.getElementById('tg-setup-phone').value.trim();
+  if (!apiId || !apiHash || !phone) { toast('Isi semua maklumat!'); return; }
+
+  if (!window.telegram || !window.telegram.TelegramClient) {
+    addLog('GramJS belum load. Muat semula halaman.', 'err');
+    return;
+  }
+
+  saveCreds();
+  setBadge('connecting');
+  addLog('Menyambung ke Telegram...', 'info');
+  document.getElementById('btn-tg-setup-send-code').disabled = true;
+
+  try {
+    const { TelegramClient } = window.telegram;
+    const { StringSession } = window.telegram.sessions;
+    const { NewMessage } = window.telegram.events;
+
+    const savedSession = await loadSessionFS();
+    const session = new StringSession(savedSession);
+
+    tgClient = new TelegramClient(session, apiId, apiHash, {
+      connectionRetries: 5,
+      useWSS: true,
+    });
+
+    if (savedSession) {
+      // Ada session tersimpan — connect terus tanpa OTP
+      addLog('Session ditemui, reconnect tanpa OTP...', 'info');
+      await tgClient.connect();
+      const ok = await tgClient.checkAuthorization();
+      if (!ok) {
+        addLog('Session tamat tempoh. Perlu login semula.', 'err');
+        await clearSessionFS();
+        setBadge('error');
+        document.getElementById('btn-tg-setup-send-code').disabled = false;
+        document.getElementById('btn-tg-setup-send-code').textContent = '⚡ Sambung Telegram';
+        toast('Session tamat. Sila sambung semula.', 5000);
+        return;
       }
-      if (!TC || !SS) return null;
-      return { TelegramClient: TC, StringSession: SS };
-    }
-
-    function _tgFmtLine(msg) {
-      var text = msg.text || msg.mediaLabel || (msg.hasMedia ? '[Media]' : '');
-      if (!text) return '';
-      var time = msg.date ? new Date(msg.date*1000).toLocaleTimeString('ms-MY',{hour:'2-digit',minute:'2-digit'}) : '';
-      var prefix = msg.out ? 'Saya' : (msg.senderName || msg.chatName || 'Dia');
-      return '[' + time + '] ' + prefix + ': ' + text;
-    }
-
-    function _tgRenderLog() {
-      var ta = document.getElementById('tg-log');
-      if (!ta || !_tgActiveChatId) return;
-      var msgs = (_tgCache[_tgActiveChatId] || []).slice().sort(function(a,b){ return (a.date||0)-(b.date||0); });
-      ta.value = msgs.map(_tgFmtLine).filter(Boolean).join('\n');
-      ta.scrollTop = ta.scrollHeight;
-    }
-
-    function _tgSaveSession(sessionStr) {
-      if (!currentUser) return;
-      db.doc('users/' + currentUser.uid + '/tg_session/main')
-        .set({ session: sessionStr, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
-        .catch(function(e) { console.warn('save tg session err:', e); });
-    }
-    function _tgLoadSession(callback) {
-      if (!currentUser) { callback(null); return; }
-      db.doc('users/' + currentUser.uid + '/tg_session/main').get()
-        .then(function(doc) { callback(doc.exists ? (doc.data().session || null) : null); })
-        .catch(function() { callback(null); });
-    }
-    function _tgLoadCreds(callback) {
-      if (!currentUser) { callback(null, null); return; }
-      db.doc('users/' + currentUser.uid + '/tg_session/main').get()
-        .then(function(doc) {
-          if (doc.exists) { callback(doc.data().apiId || null, doc.data().apiHash || null); }
-          else { callback(null, null); }
-        }).catch(function() { callback(null, null); });
-    }
-    function _tgSaveCreds(apiId, apiHash) {
-      if (!currentUser) return;
-      db.doc('users/' + currentUser.uid + '/tg_session/main')
-        .set({ apiId: apiId, apiHash: apiHash, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
-        .catch(function(e) { console.warn('save creds err:', e); });
-    }
-
-    function _tgGetMediaLabel(media) {
-      if (!media) return '';
-      if (media.photo) return '[Gambar]';
-      if (media.document) {
-        var attrs = media.document.attributes || [];
-        if (attrs.some(function(a){ return a.className === 'DocumentAttributeSticker'; })) return '[Sticker]';
-        if (attrs.some(function(a){ return a.className === 'DocumentAttributeAudio'; })) return '[Audio]';
-        if (attrs.some(function(a){ return a.className === 'DocumentAttributeVideo'; })) return '[Video]';
-        return '[Fail]';
-      }
-      if (media.voice) return '[Suara]';
-      if (media.geo) return '[Lokasi]';
-      return '[Media]';
-    }
-
-    function _tgSaveMsgToFS(chatId, chatName, msg) {
-      var text = msg.message || msg.text || '';
-      var mediaLabel = _tgGetMediaLabel(msg.media);
-      var hasMedia = !!(msg.media);
-      var date = msg.date ? (typeof msg.date === 'object' ? Math.floor(msg.date.getTime()/1000) : msg.date) : Math.floor(Date.now()/1000);
-      var docId = '' + msg.id;
-      db.collection('tg_messages').doc(chatId)
-        .set({ name: chatName, synced: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true })
-        .catch(function(){});
-      return db.collection('tg_messages').doc(chatId).collection('messages').doc(docId).set({
-        text: text, mediaLabel: mediaLabel, hasMedia: hasMedia,
-        out: msg.out || false, date: date, chatName: chatName,
-        savedAt: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
-    }
-
-    async function _tgInitClient(apiId, apiHash, sessionStr) {
-      var lib = _tgGetLib();
-      if (!lib) {
-        // Debug: tunjuk semua global yg ada
-        var tgGlobals = Object.keys(window).filter(function(k){
-          return k.toLowerCase().includes('telegram') || k.toLowerCase().includes('gram') || k.toLowerCase().includes('mtproto');
-        });
-        console.warn('GramJS globals found:', tgGlobals);
-        _tgSetupMsg('Bundle loaded tapi class tak jumpa. Globals: ' + (tgGlobals.join(', ') || 'tiada'));
-        return null;
-      }
-      var session = new lib.StringSession(sessionStr || '');
-      return new lib.TelegramClient(session, parseInt(apiId), apiHash, {
-        connectionRetries: 3, useWSS: true
+    } else {
+      // Tiada session — login penuh dengan OTP
+      await tgClient.start({
+        phoneNumber: async () => phone,
+        password: async () => {
+          document.getElementById('tg-setup-2fa').style.display = 'block';
+          addLog('2FA diperlukan.', 'info');
+          return new Promise(r => { resolve2fa = r; });
+        },
+        phoneCode: async () => {
+          document.getElementById('tg-setup-step-otp').style.display = 'block';
+          addLog('OTP dihantar ke Telegram anda.', 'info');
+          return new Promise(r => { resolveOtp = r; });
+        },
+        onError: err => addLog('Ralat: ' + err.message, 'err')
       });
     }
 
-    async function _tgConnect() {
-      if (_tgConnecting || _tgClient) return;
-      if (window._tgBundleErr) { _tgSetStatus('Gagal muatkan GramJS bundle'); return; }
-      _tgConnecting = true;
-      _tgSetStatus('Menyambung Telegram...');
-      _tgLoadSession(async function(sessionStr) {
-        _tgLoadCreds(async function(apiId, apiHash) {
-          if (!apiId || !apiHash) {
-            _tgConnecting = false; _tgSetStatus('Perlu setup API'); return;
-          }
-          _tgApiId = apiId; _tgApiHash = apiHash;
-          var client = await _tgInitClient(apiId, apiHash, sessionStr);
-          if (!client) { _tgConnecting = false; return; }
-          try {
-            await client.connect();
-            _tgClient = client;
-            _tgConnecting = false;
-            _tgSetStatus('Telegram ✓');
-            loadTgChatList();
-          } catch(e) {
-            _tgConnecting = false;
-            _tgSetStatus('Sambungan gagal: ' + (e.message || e));
-            console.warn('tg connect err:', e);
-          }
-        });
-      });
-    }
+    // Simpan/kemaskini session
+    await saveSessionFS(tgClient.session.save());
+    tgMe = await tgClient.getMe();
+    addLog('Berjaya: @' + (tgMe.username || tgMe.firstName), 'ok');
 
-    async function loadTgChatList() {
-      var list = document.getElementById('tg-chat-list');
-      var empty = document.getElementById('tg-chat-empty');
-      if (!list) return;
-      list.innerHTML = '<div style="color:#555;font-size:0.82rem;text-align:center;padding:12px;">Memuatkan...</div>';
+    setBadge('on');
+    document.getElementById('btn-tg-setup-send-code').style.display = 'none';
+    document.getElementById('btn-tg-disconnect').style.display = '';
+    document.getElementById('tg-setup-step-otp').style.display = 'none';
+    document.getElementById('tg-setup-2fa').style.display = 'none';
+    document.getElementById('tg-chat-list-wrapper').style.display = 'block';
+    document.getElementById('btn-attach').disabled = true;
 
-      // Cuba load dari MTProto dulu kalau ada client
-      if (_tgClient) {
-        try {
-          _tgSetStatus('Memuatkan senarai chat...');
-          var dialogs = await _tgClient.getDialogs({ limit: 50 });
-          list.innerHTML = '';
-          if (!dialogs || !dialogs.length) {
-            _tgSetStatus('Tiada chat dijumpai');
-            if (empty) empty.style.display = '';
-            return;
-          }
-          if (empty) empty.style.display = 'none';
-          _tgSetStatus('TELEGRAM ✓ (' + dialogs.length + ' chat)');
-          for (var i = 0; i < dialogs.length; i++) {
-            var d = dialogs[i];
-            var chatId = String(d.id || (d.entity && d.entity.id) || i);
-            var chatName = d.title || d.name || (d.entity && (d.entity.title || d.entity.firstName || d.entity.username)) || chatId;
-            _tgChatMeta[chatId] = chatName;
-            _tgCache[chatId] = _tgCache[chatId] || [];
-            db.collection('tg_messages').doc(chatId).set({ synced: true, name: chatName }, { merge: true });
-            list.appendChild(_tgMakeChatDiv(chatId, chatName));
-          }
-          return;
-        } catch(e) {
-          _tgSetStatus('getDialogs gagal: ' + (e.message || e));
-          console.warn('getDialogs error:', e);
-          // Fallback ke Firestore
-        }
+    await loadDialogs();
+
+    // Monitor mesej baru
+    tgClient.addEventHandler(async (event) => {
+      const msg = event.message;
+      if (!msg) return;
+      const cid = msg.chatId ? msg.chatId.toString() : null;
+      if (cid === activeChatId) appendMsgBubble(msg);
+      if (cid) {
+        const dlg = allDialogs.find(d => d.entity && d.entity.id && d.entity.id.toString() === cid);
+        const cname = dlg ? (dlg.entity.firstName || dlg.entity.title || 'Chat') : 'Chat';
+        if (isChatSynced(cid)) await saveMsg(msg, cid, cname);
+        const lastEl = document.querySelector('.chat-item[data-cid="' + cid + '"] .chat-last');
+        if (lastEl) lastEl.textContent = (msg.message || '').substring(0, 50);
+
       }
+    }, new NewMessage({}));
 
-      // Fallback: load dari Firestore
-      db.collection('tg_messages').where('synced', '==', true).get().then(function(snap) {
-        list.innerHTML = '';
-        if (snap.empty) { if (empty) empty.style.display = ''; return; }
-        if (empty) empty.style.display = 'none';
-        snap.forEach(function(doc) {
-          var data = doc.data(); var chatId = doc.id; var chatName = data.name || chatId;
-          _tgChatMeta[chatId] = chatName;
-          _tgCache[chatId] = _tgCache[chatId] || [];
-          list.appendChild(_tgMakeChatDiv(chatId, chatName));
-        });
-      }).catch(function(e) { _tgSetStatus('Ralat: ' + e.message); });
-    }
+    addLog('Monitoring mesej baru aktif.', 'ok');
 
-
-    function _tgMakeChatDiv(chatId, chatName) {
-      var div = document.createElement('div');
-      div.style.cssText = 'border:1px solid #ccc;border-radius:6px;padding:10px;margin-bottom:8px;cursor:pointer;';
-      div.innerHTML = '<div style="font-weight:bold;font-size:0.88rem;">💬 ' + chatName + '</div>';
-      div.addEventListener('click', function() { openTgChat(chatId, chatName); });
-      return div;
-    }
-
-    function openTgChat(chatId, chatName) {
-      _tgActiveChatId = chatId;
-      _tgCache[chatId] = _tgCache[chatId] || [];
-      document.getElementById('tg-msg-chat-name').textContent = chatName;
-      document.getElementById('tg-chat-list').style.display = 'none';
-      document.getElementById('btn-tg-back-menu').style.display = 'none';
-      document.getElementById('tg-msg-view').style.display = 'flex';
-      _tgLoadChatFromFS(chatId, chatName);
-    }
-
-    function _tgLoadChatFromFS(chatId, chatName) {
-      _tgSetStatus('Memuatkan mesej...');
-      db.collection('tg_messages').doc(chatId).collection('messages')
-        .orderBy('date', 'desc').limit(50).get()
-        .then(function(snap) {
-          _tgCache[chatId] = [];
-          snap.forEach(function(doc) { var d = doc.data(); d._docKey = doc.id; _tgCache[chatId].push(d); });
-          _tgRenderLog();
-          _tgSetStatus('TELEGRAM — ' + chatName);
-          _tgSubscribeFirestoreNew(chatId);
-        }).catch(function(e) { _tgSetStatus('Gagal muatkan: ' + e.message); });
-    }
-
-    function _tgSubscribeFirestoreNew(chatId) {
-      if (_tgUnsubs[chatId]) return;
-      var lastDate = 0;
-      (_tgCache[chatId] || []).forEach(function(m){ if ((m.date||0) > lastDate) lastDate = m.date; });
-      _tgUnsubs[chatId] = db.collection('tg_messages').doc(chatId).collection('messages')
-        .where('date', '>', lastDate || 0).orderBy('date', 'asc')
-        .onSnapshot(function(snap) {
-          snap.docChanges().forEach(function(ch) {
-            if (ch.type !== 'added') return;
-            var d = ch.doc.data(); var docKey = ch.doc.id;
-            var arr = _tgCache[chatId] || [];
-            var dupIdx = arr.findIndex(function(m){
-              return m._docKey === docKey ||
-                (m._isTemp && d.out && m.out && m.text === d.text && Math.abs((m.date||0)-(d.date||0)) <= 5);
-            });
-            if (dupIdx >= 0) { d._docKey = docKey; arr[dupIdx] = d; }
-            else { d._docKey = docKey; arr.push(d); }
-            _tgCache[chatId] = arr;
+    // ─── Monitor outbox dari Kindle ───────────────────────
+    db.collection('tg_messages').get().then(async (snap) => {
+      snap.forEach((chatDoc) => {
+        const chatId = chatDoc.id;
+        db.collection('tg_messages').doc(chatId).collection('outbox')
+          .onSnapshot(async (outSnap) => {
+            for (const change of outSnap.docChanges()) {
+              if (change.type !== 'added') continue;
+              const data = change.doc.data();
+              if (!data.text) continue;
+              try {
+                const dlg = allDialogs.find(d => d.entity && d.entity.id && d.entity.id.toString() === chatId);
+                if (!dlg) { addLog('Peer tidak jumpa untuk chatId: ' + chatId, 'err'); continue; }
+                const result = await tgClient.sendMessage(dlg.entity, { message: data.text });
+                appendMsgBubble(result);
+                await saveMsg(result, chatId, data.chatName || chatId);
+                await change.doc.ref.delete();
+                addLog('Relay dari Kindle: "' + data.text.substring(0,30) + '"', 'ok');
+              } catch(e) {
+                addLog('Gagal relay: ' + e.message, 'err');
+              }
+            }
           });
-          if (_tgActiveChatId === chatId) _tgRenderLog();
-        }, function(e){ console.warn('tg fs sub err:', e); });
-    }
-
-    function _tgUnsubscribeChat(chatId) {
-      if (_tgUnsubs[chatId]) { _tgUnsubs[chatId](); delete _tgUnsubs[chatId]; }
-    }
-
-    async function _tgRefreshChatFromMTProto(chatId, chatName) {
-      if (!_tgClient) { _tgLoadChatFromFS(chatId, chatName); return; }
-      _tgSetStatus('Refresh dari Telegram...');
-      try {
-        var entity = await _tgClient.getEntity(parseInt(chatId));
-        var messages = await _tgClient.getMessages(entity, { limit: 50 });
-        for (var i = 0; i < messages.length; i++) {
-          var msg = messages[i];
-          if (!msg || !msg.id) continue;
-          await _tgSaveMsgToFS(chatId, chatName, msg).catch(function(){});
-        }
-        if (_tgUnsubs[chatId]) { _tgUnsubs[chatId](); delete _tgUnsubs[chatId]; }
-        _tgLoadChatFromFS(chatId, chatName);
-      } catch(e) {
-        console.warn('tg refresh err:', e);
-        _tgLoadChatFromFS(chatId, chatName);
-      }
-    }
-
-    var _tgSending = false;
-    document.getElementById('btn-tg-send').addEventListener('click', async function() {
-      if (_tgSending) return;
-      var input = document.getElementById('tg-msg-input');
-      var text = input.value.trim();
-      if (!text || !_tgActiveChatId) return;
-      _tgSending = true; input.value = '';
-      var now = Math.floor(Date.now() / 1000);
-      var tempKey = 'tmp_' + now + '_' + Math.random().toString(36).slice(2);
-      _tgCache[_tgActiveChatId] = _tgCache[_tgActiveChatId] || [];
-      _tgCache[_tgActiveChatId].push({ _docKey: tempKey, _isTemp: true, text: text, out: true, date: now });
-      _tgRenderLog();
-      if (_tgClient) {
-        try {
-          var entity = await _tgClient.getEntity(parseInt(_tgActiveChatId));
-          var result = await _tgClient.sendMessage(entity, { message: text });
-          await _tgSaveMsgToFS(_tgActiveChatId, _tgChatMeta[_tgActiveChatId] || '', result).catch(function(){});
-        } catch(e) {
-          console.warn('send msg err:', e);
-          _tgSetStatus('Gagal hantar: ' + (e.message || e));
-        }
-      } else {
-        db.collection('tg_messages').doc(_tgActiveChatId).collection('outbox').add({
-          text: text, chatId: _tgActiveChatId,
-          chatName: _tgChatMeta[_tgActiveChatId] || '',
-          date: now, sentAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(function(e){ console.warn('outbox err:', e); });
-      }
-      _tgSending = false;
-    });
-
-    document.getElementById('btn-tg-back-list').addEventListener('click', function() {
-      if (_tgActiveChatId) _tgUnsubscribeChat(_tgActiveChatId);
-      _tgActiveChatId = null;
-      document.getElementById('tg-msg-view').style.display = 'none';
-      document.getElementById('tg-chat-list').style.display = '';
-      document.getElementById('btn-tg-back-menu').style.display = '';
-      loadTgChatList();
-    });
-
-    document.getElementById('btn-tg-back-menu').addEventListener('click', function() {
-      document.querySelectorAll('.screen').forEach(function(s){
-        s.style.display = 'none'; s.classList.remove('active');
       });
-      var el = document.getElementById('screen-menu');
-      if (el) { el.style.display = 'flex'; el.classList.add('active'); }
-    });
+    }).catch(e => addLog('Outbox monitor gagal: ' + e.message, 'err'));
 
-    document.getElementById('btn-tg-chat-refresh').addEventListener('click', function() {
-      if (!_tgActiveChatId) return;
-      _tgUnsubscribeChat(_tgActiveChatId);
-      _tgRefreshChatFromMTProto(_tgActiveChatId, _tgChatMeta[_tgActiveChatId] || _tgActiveChatId);
-    });
+  } catch(err) {
+    addLog('Gagal: ' + err.message, 'err');
+    setBadge('error');
+    document.getElementById('btn-tg-setup-send-code').disabled = false;
+    toast('Gagal: ' + err.message, 5000);
+  }
+}
 
-    document.getElementById('btn-tg-refresh').addEventListener('click', function() {
-      loadTgChatList();
-    });
+// ─── OTP / 2FA ────────────────────────────────────────────
+document.getElementById('btn-tg-setup-verify').onclick = () => {
+  const c = document.getElementById('tg-setup-otp').value.trim();
+  if (!c) { toast('Masukkan OTP!'); return; }
+  if (resolveOtp) { resolveOtp(c); resolveOtp = null; }
+  document.getElementById('tg-setup-step-otp').style.display = 'none';
+};
+document.getElementById('btn-tg-setup-verify').onclick = () => {
+  const p = document.getElementById('tg-setup-password').value;
+  if (!p) { toast('Masukkan kata laluan!'); return; }
+  if (resolve2fa) { resolve2fa(p); resolve2fa = null; }
+  document.getElementById('tg-setup-2fa').style.display = 'none';
+};
+document.getElementById('tg-setup-otp').onkeydown = e => { if (e.key === 'Enter') document.getElementById('btn-tg-setup-verify').click(); };
+document.getElementById('tg-setup-password').onkeydown = e => { if (e.key === 'Enter') document.getElementById('btn-tg-setup-verify').click(); };
 
+// ─── Dialogs ──────────────────────────────────────────────
+async function loadDialogs() {
+  document.getElementById('tg-chat-list').innerHTML = '<div style="text-align:center;color:var(--ink-faint);font-size:0.8rem;padding:20px;">Memuatkan...</div>';
+  try {
+    allDialogs = await tgClient.getDialogs({ limit: 50 });
+    renderChatList(allDialogs);
+    addLog('Dimuatkan ' + allDialogs.length + ' dialog.', 'ok');
+  } catch(err) {
+    addLog('Gagal muatkan dialog: ' + err.message, 'err');
+  }
+}
+
+function isChatSynced(cid) {
+  return localStorage.getItem('tg_kindle_sync_' + cid) === '1';
+}
+function setChatSync(cid, val) {
+  if (val) localStorage.setItem('tg_kindle_sync_' + cid, '1');
+  else localStorage.removeItem('tg_kindle_sync_' + cid);
+  if (currentUser) {
+    db.doc('users/' + currentUser.uid + '/tg_kindle_sync/' + cid)
+      .set({ synced: !!val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
+      .catch(e => console.warn('sync save err:', e));
+  }
+  const nameEl = document.querySelector('.chat-item[data-cid="' + cid + '"] .chat-name');
+  const chatName = nameEl ? nameEl.textContent : cid;
+  db.doc('tg_messages/' + cid)
+    .set({ name: chatName, synced: !!val }, { merge: true })
+    .catch(e => console.warn('tg_messages sync err:', e));
+}
+async function loadKindleSyncFromFS() {
+  if (!currentUser) return;
+  try {
+    const snap = await db.collection('users/' + currentUser.uid + '/tg_kindle_sync').get();
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (d.synced) localStorage.setItem('tg_kindle_sync_' + doc.id, '1');
+      else localStorage.removeItem('tg_kindle_sync_' + doc.id);
+    });
+  } catch(e) { console.warn('loadSync err:', e); }
+}
+function renderChatList(dialogs) {
+  const list = document.getElementById('tg-chat-list');
+  list.innerHTML = '';
+  if (!dialogs.length) {
+    list.innerHTML = '<div style="color:var(--ink-faint);font-size:0.8rem;padding:12px;text-align:center;">Tiada chat.</div>';
+    return;
+  }
+  dialogs.forEach(d => {
+    const e = d.entity;
+    if (!e) return;
+    const cid = e.id ? e.id.toString() : '';
+    const name = e.firstName ? (e.firstName + (e.lastName ? ' ' + e.lastName : '')) : (e.title || 'Unknown');
+    const isGrp = !!(e.megagroup || e.broadcast || e.gigagroup);
+    const lastMsg = d.message && d.message.message ? d.message.message : '';
+    const unread = d.unreadCount || 0;
+    const synced = isChatSynced(cid);
+    const item = document.createElement('div');
+    item.className = 'chat-item';
+    item.dataset.cid = cid;
+    item.innerHTML =
+      '<div class="chat-avatar">' + (isGrp ? '👥' : '👤') + '</div>' +
+      '<div class="chat-info">' +
+        '<div class="chat-name">' + escHtml(name) + '</div>' +
+        '<div class="chat-last">' + escHtml(lastMsg.substring(0, 50)) + '</div>' +
+      '</div>' +
+      (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '') +
+      '<label style="display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;flex-shrink:0;padding-left:6px;" onclick="event.stopPropagation()">' +
+        '<input type="checkbox" data-sync-cid="' + cid + '" ' + (synced ? 'checked' : '') + ' style="width:16px;height:16px;cursor:pointer;">' +
+        '<span style="font-size:0.6rem;color:var(--ink-faint);">Kindle</span>' +
+      '</label>';
+    item.onclick = () => openChat(d, cid, name);
+    list.appendChild(item);
+  });
+  list.querySelectorAll('input[data-sync-cid]').forEach(cb => {
+    cb.addEventListener('change', function() {
+      setChatSync(this.dataset.syncCid, this.checked);
+    });
+  });
+}
+
+
+document.getElementById('tg-chat-search').oninput = function() {
+  const q = this.value.toLowerCase();
+  renderChatList(allDialogs.filter(d => {
+    const e = d.entity;
+    if (!e) return false;
+    return ((e.firstName || '') + ' ' + (e.lastName || '') + ' ' + (e.title || '')).toLowerCase().includes(q);
+  }));
+};
+document.getElementById('btn-tg-refresh').onclick = loadDialogs;
+
+// ─── Open chat ────────────────────────────────────────────
+async function openChat(dialog, cid, name) {
+  document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
+  const el = document.querySelector('.chat-item[data-cid="' + cid + '"]');
+  if (el) el.classList.add('active');
+  activeChatId = cid;
+  activeChatPeer = dialog.entity;
+  document.getElementById('tg-msg-chat-name').textContent = name;
+  document.getElementById('tg-msg-view').style.display = 'flex';
+  document.getElementById('tg-chat-empty').style.display = 'none';
+  document.getElementById('btn-tg-send').disabled = false;
+  document.getElementById('btn-attach').disabled = false;
+  const body = document.getElementById('tg-log');
+
+  body.innerHTML = '<div class="msg-empty">Memuatkan mesej...</div>';
+  try {
+    const msgs = await tgClient.getMessages(dialog.entity, { limit: 50 });
+    renderMessages(msgs.reverse());
+    await syncMsgs(msgs, cid, name);
+    addLog('Chat "' + name + '" dibuka & synced.', 'ok');
+  } catch(err) {
+    addLog('Gagal muatkan mesej: ' + err.message, 'err');
+    body.innerHTML = '<div class="msg-empty" style="color:var(--red);">Gagal muatkan mesej.</div>';
+  }
+}
+
+function renderMessages(msgs) {
+  const body = document.getElementById('tg-log');
+  body.innerHTML = '';
+  if (!msgs || !msgs.length) { body.innerHTML = '<div class="msg-empty">Tiada mesej.</div>'; return; }
+  msgs.forEach(m => { if (m.message || m.media) appendMsgBubble(m); });
+  body.scrollTop = body.scrollHeight;
+}
+
+function getMediaHtml(msg) {
+  const media = msg.media;
+  if (!media) return '';
+  const type = media.className || (media.constructor && media.constructor.name) || '';
+  if (type === 'MessageMediaDocument' && media.document && media.document.attributes) {
+    const isSticker = media.document.attributes.some(a =>
+      (a.className || '') === 'DocumentAttributeSticker' ||
+      (a.constructor && a.constructor.name === 'DocumentAttributeSticker'));
+    if (isSticker) return '<div class="msg-sticker">🎭</div><div style="font-size:0.7rem;opacity:0.6">[Sticker]</div>';
+  }
+  if (type === 'MessageMediaPhoto' || (media.photo && media.photo.id)) {
+    return '<div class="msg-file">🖼️ <span>[Gambar — buka Telegram untuk lihat]</span></div>';
+  }
+  if (type === 'MessageMediaDocument' && media.document) {
+    const nameAttr = media.document.attributes && media.document.attributes.find(a => a.fileName || (a.className||'').includes('Filename'));
+    const fname = nameAttr ? (nameAttr.fileName || 'fail') : 'Dokumen';
+    const size = media.document.size ? ' (' + (media.document.size / 1024).toFixed(0) + ' KB)' : '';
+    return '<div class="msg-file">📎 <span>' + escHtml(fname) + size + '</span></div>';
+  }
+  return '<div class="msg-file">📦 <span>[Media]</span></div>';
+}
+
+function appendMsgBubble(msg) {
+  const body = document.getElementById('tg-log');
+  const isOut = !!msg.out;
+  const text = msg.message || '';
+  const time = new Date(msg.date * 1000).toLocaleTimeString('ms-MY', {hour:'2-digit', minute:'2-digit'});
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble ' + (isOut ? 'msg-out' : 'msg-in');
+  const mediaHtml = getMediaHtml(msg);
+  bubble.innerHTML = (mediaHtml || '') + (text ? '<div>' + escHtml(text) + '</div>' : '') + '<div class="msg-time">' + time + '</div>';
+  const empty = body.querySelector('.msg-empty');
+  if (empty) empty.remove();
+  body.appendChild(bubble);
+  body.scrollTop = body.scrollHeight;
+}
+
+
+// ─── Firestore sync ───────────────────────────────────────
+async function syncMsgs(msgs, cid, cname) {
+  const synced = isChatSynced(cid);
+  await db.doc('tg_messages/' + cid).set({ name: cname, chatId: cid, synced: synced, lastSync: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+  if (!synced) return; // kalau tak ditick, jangan sync mesej
+  const col = db.collection('tg_messages/' + cid + '/messages');
+  for (const msg of msgs.slice(0, 30)) {
+    if (!msg.message && !msg.media) continue;
+    let mediaLabel = '';
+    if (msg.media) {
+      const t = msg.media.className || (msg.media.constructor && msg.media.constructor.name) || '';
+      const doc = msg.media.document;
+      if (doc && doc.attributes) {
+        const isSticker = doc.attributes.some(a => (a.className||'') === 'DocumentAttributeSticker' || (a.constructor && a.constructor.name === 'DocumentAttributeSticker'));
+        const isVideo = doc.attributes.some(a => (a.className||'') === 'DocumentAttributeVideo' || (a.constructor && a.constructor.name === 'DocumentAttributeVideo'));
+        const isAudio = doc.attributes.some(a => (a.className||'') === 'DocumentAttributeAudio' || (a.constructor && a.constructor.name === 'DocumentAttributeAudio'));
+        const nameAttr = doc.attributes.find(a => a.fileName);
+        if (isSticker || (doc.mimeType && doc.mimeType.includes('webp'))) mediaLabel = '[Sticker]';
+        else if (isVideo) mediaLabel = '[Video]';
+        else if (isAudio) mediaLabel = '[Audio]';
+        else if (nameAttr) mediaLabel = '[Fail: ' + nameAttr.fileName + ']';
+        else mediaLabel = '[Fail]';
+      } else if (t.includes('Photo') || msg.media.photo) mediaLabel = '[Gambar]';
+      else mediaLabel = '[Media]';
+    }
+    await col.doc(String(msg.id)).set({
+      id: msg.id, text: msg.message || '', hasMedia: !!msg.media,
+      mediaLabel: mediaLabel,
+      out: !!msg.out, date: msg.date,
+      chatId: cid, chatName: cname,
+      syncedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  }
+}
+
+async function saveMsg(msg, cid, cname) {
+  if (!msg.message && !msg.media) return;
+  try {
+    await db.doc('tg_messages/' + cid).set({ name: cname, synced: true }, { merge: true });
+    let mediaLabel = '';
+    if (msg.media) {
+      const t = msg.media.className || (msg.media.constructor && msg.media.constructor.name) || '';
+      const doc = msg.media.document;
+      if (doc && doc.attributes) {
+        const isSticker = doc.attributes.some(a =>
+          (a.className || '') === 'DocumentAttributeSticker' ||
+          (a.constructor && a.constructor.name === 'DocumentAttributeSticker'));
+        const isVideo = doc.attributes.some(a =>
+          (a.className || '') === 'DocumentAttributeVideo' ||
+          (a.constructor && a.constructor.name === 'DocumentAttributeVideo'));
+        const isAudio = doc.attributes.some(a =>
+          (a.className || '') === 'DocumentAttributeAudio' ||
+          (a.constructor && a.constructor.name === 'DocumentAttributeAudio'));
+        const nameAttr = doc.attributes.find(a => a.fileName);
+        if (isSticker || (doc.mimeType && doc.mimeType.includes('webp'))) mediaLabel = '[Sticker]';
+        else if (isVideo) mediaLabel = '[Video]';
+        else if (isAudio) mediaLabel = '[Audio]';
+        else if (nameAttr) mediaLabel = '[Fail: ' + nameAttr.fileName + ']';
+        else mediaLabel = '[Fail]';
+      } else if (t.includes('Photo') || msg.media.photo) mediaLabel = '[Gambar]';
+      else mediaLabel = '[Media]';
+    }
+    await db.doc('tg_messages/' + cid + '/messages/' + msg.id).set({
+      id: msg.id, text: msg.message || '', hasMedia: !!msg.media,
+      mediaLabel: mediaLabel,
+      out: !!msg.out, date: msg.date,
+      chatId: cid, chatName: cname,
+      syncedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch(e) { console.warn('Firestore err:', e); }
+}
+
+// ─── Send message ─────────────────────────────────────────
+async function sendMessage() {
+  if (!tgClient || !activeChatPeer) return;
+  const input = document.getElementById('tg-msg-input');
+  const text = input.value.trim();
+  if (!text) return;
+  document.getElementById('btn-tg-send').disabled = true;
+  input.value = '';
+  try {
+    const result = await tgClient.sendMessage(activeChatPeer, { message: text });
+    appendMsgBubble(result);
+    if (activeChatId && isChatSynced(activeChatId)) await saveMsg(result, activeChatId, document.getElementById('tg-msg-chat-name').textContent);
+    addLog('Dihantar: "' + text.substring(0,30) + '"', 'ok');
+
+  } catch(err) {
+    addLog('Gagal hantar: ' + err.message, 'err');
+    input.value = text;
+    toast('Gagal hantar: ' + err.message);
+  }
+  document.getElementById('btn-tg-send').disabled = false;
+  input.focus();
+}
+document.getElementById('btn-tg-send').onclick = sendMessage;
+document.getElementById('tg-msg-input').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
+
+document.getElementById('btn-attach').onclick = () => { if (document.getElementById('btn-attach').disabled) return; document.getElementById('file-input').click(); };
+document.getElementById('file-input').onchange = async function() {
+  const file = this.files[0];
+  if (!file || !tgClient || !activeChatPeer) return;
+  this.value = '';
+  const btn = document.getElementById('btn-attach');
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  try {
+    const result = await tgClient.sendFile(activeChatPeer, {
+      file: file,
+      caption: '',
+      forceDocument: !file.type.startsWith('image/')
+    });
+    appendMsgBubble(result);
+    if (activeChatId && isChatSynced(activeChatId)) await saveMsg(result, activeChatId, document.getElementById('tg-msg-chat-name').textContent);
+    addLog('Fail dihantar: ' + file.name, 'ok');
+  } catch(err) {
+    addLog('Gagal hantar fail: ' + err.message, 'err');
+    toast('Gagal hantar fail: ' + err.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '📎';
+};
+
+
+// ─── Butang disconnect & clear ────────────────────────────
+document.getElementById('btn-tg-setup-send-code').onclick = connectTelegram;
+document.getElementById('btn-tg-disconnect').onclick = () => {
+  if (tgClient) { tgClient.disconnect().catch(() => {}); tgClient = null; }
+  setBadge('off');
+  document.getElementById('btn-tg-setup-send-code').style.display = '';
+  document.getElementById('btn-tg-setup-send-code').disabled = false;
+  document.getElementById('btn-tg-setup-send-code').textContent = '⚡ Sambung Telegram';
+  document.getElementById('btn-tg-disconnect').style.display = 'none';
+  document.getElementById('tg-chat-list-wrapper').style.display = 'none';
+  addLog('Putus sambungan.', 'info');
+};
+document.getElementById('btn-tg-clear-session').onclick = async () => {
+  if (!confirm('Padam session? Anda perlu masukkan OTP semula.')) return;
+  await clearSessionFS();
+  toast('Session dipadam.');
+  addLog('Session dipadam dari Firestore.', 'info');
+};
+document.getElementById('btn-tg-refresh').onclick = loadDialogs;
+
+
+    // ── Bridge: Kindle → Telegram screen ──────────────────
     document.getElementById('btn-go-telegram').onclick = function() {
       if (!currentUser) return;
-      _tgLoadSession(function(sessionStr) {
-        _tgLoadCreds(function(apiId, apiHash) {
-          var el;
-          document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; s.classList.remove('active'); });
-          if (!apiId || !apiHash || !sessionStr) {
-            el = document.getElementById('screen-tg-setup');
-            el.style.display = 'flex'; el.classList.add('active');
-            document.getElementById('tg-setup-step-cred').style.display = '';
-            document.getElementById('tg-setup-step-otp').style.display = 'none';
-            _tgSetupMsg('');
-            if (apiId) document.getElementById('tg-setup-apiid').value = apiId;
-            if (apiHash) document.getElementById('tg-setup-apihash').value = apiHash;
-          } else {
-            el = document.getElementById('screen-telegram');
-            el.style.display = 'flex'; el.classList.add('active');
-            if (!_tgClient) _tgConnect();
-            else loadTgChatList();
-          }
-        });
+      document.querySelectorAll('.screen').forEach(function(s){
+        s.style.display='none'; s.classList.remove('active');
       });
+      var el = document.getElementById('screen-telegram');
+      if (el) { el.style.display='flex'; el.classList.add('active'); }
+      if (!tgClient) connectTelegram();
+      else loadDialogs();
     };
-
-    document.getElementById('btn-tg-setup-send-code').addEventListener('click', async function() {
-      var apiId = document.getElementById('tg-setup-apiid').value.trim();
-      var apiHash = document.getElementById('tg-setup-apihash').value.trim();
-      var phone = document.getElementById('tg-setup-phone').value.trim();
-      if (!apiId || !apiHash || !phone) { _tgSetupMsg('Sila isi semua medan.'); return; }
-      var btn = this; btn.disabled = true; btn.textContent = 'Menyambung...';
-      _tgSetupMsg('Sila tunggu...', '#555');
-      _tgApiId = parseInt(apiId); _tgApiHash = apiHash;
-      _tgSaveCreds(_tgApiId, _tgApiHash);
-      try {
-        var lib = _tgGetLib();
-        if (!lib) {
-          var tgGlobals = Object.keys(window).filter(function(k){
-            return k.toLowerCase().includes('telegram') || k.toLowerCase().includes('gram') || k.toLowerCase().includes('mtproto');
-          });
-          _tgSetupMsg('Bundle error. Globals: [' + (tgGlobals.join(', ') || 'tiada') + ']');
-          btn.disabled = false; btn.textContent = 'Hantar Kod OTP'; return;
-        }
-        var session = new lib.StringSession('');
-        _tgClient = new lib.TelegramClient(session, _tgApiId, _tgApiHash, { connectionRetries: 3, useWSS: true });
-
-        // Guna start() dengan callback — sama macam telegram.html
-        _tgClient.start({
-          phoneNumber: async function() { return phone; },
-          phoneCode: async function() {
-            document.getElementById('tg-setup-step-cred').style.display = 'none';
-            document.getElementById('tg-setup-step-otp').style.display = '';
-            _tgSetupMsg('Kod OTP dihantar! Masukkan kod.', '#090');
-            btn.disabled = false; btn.textContent = 'Hantar Kod OTP';
-            return new Promise(function(resolve) { _tgResolveOtp = resolve; });
-          },
-          password: async function() {
-            _tgSetupMsg('Perlu kata laluan 2FA. Isi dan tekan Verify.', '#555');
-            return new Promise(function(resolve) { _tgResolve2fa = resolve; });
-          },
-          onError: function(e) {
-            _tgSetupMsg('Ralat: ' + (e.message || e));
-          }
-        }).then(async function() {
-          var sessionStr = _tgClient.session && _tgClient.session.save ? _tgClient.session.save() : '';
-          if (sessionStr) _tgSaveSession(sessionStr);
-          _tgSetupMsg('Berjaya!', '#090');
-          document.querySelectorAll('.screen').forEach(function(s){ s.style.display='none'; s.classList.remove('active'); });
-          var el = document.getElementById('screen-telegram');
-          el.style.display = 'flex'; el.classList.add('active');
-          loadTgChatList();
-        }).catch(function(e) {
-          _tgSetupMsg('Gagal: ' + (e.message || e));
-          btn.disabled = false; btn.textContent = 'Hantar Kod OTP';
-        });
-
-      } catch(e) {
-        _tgSetupMsg('Ralat: ' + (e.message || e));
-        btn.disabled = false; btn.textContent = 'Hantar Kod OTP';
-      }
+    document.getElementById('btn-tg-back-menu').addEventListener('click', function() {
+      document.querySelectorAll('.screen').forEach(function(s){
+        s.style.display='none'; s.classList.remove('active');
+      });
+      var el = document.getElementById('screen-menu');
+      if (el) { el.style.display='flex'; el.classList.add('active'); }
+    });
+    document.getElementById('btn-tg-refresh').onclick = function() { loadDialogs(); };
+    document.getElementById('btn-tg-send').onclick = function() { sendMessage(); };
+    document.getElementById('btn-tg-back-list').addEventListener('click', function() {
+      document.getElementById('tg-msg-view').style.display = 'none';
+      document.getElementById('tg-chat-list').style.display = '';
     });
 
-    document.getElementById('btn-tg-setup-verify').addEventListener('click', function() {
-      var otp = document.getElementById('tg-setup-otp').value.trim();
-      var password = document.getElementById('tg-setup-password').value.trim();
-      if (!otp && !password) { _tgSetupMsg('Masukkan kod OTP atau kata laluan 2FA.'); return; }
-      _tgSetupMsg('Mengesahkan...', '#555');
-      if (otp && _tgResolveOtp) {
-        var r = _tgResolveOtp;
-        _tgResolveOtp = null;
-        r(otp);
-      }
-      if (password && _tgResolve2fa) {
-        var r2 = _tgResolve2fa;
-        _tgResolve2fa = null;
-        r2(password);
-      }
-    });
-
-    document.getElementById('btn-tg-setup-back').addEventListener('click', function() {
-      showScreen('screen-menu');
-    });
 
     document.getElementById('btn-go-other-motivation').onclick = function() {
       _bukaDenganPin('PIN untuk buka Other Motivation', function() {
