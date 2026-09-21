@@ -6549,22 +6549,28 @@ GFS4: `),console.error(e)}),n[s]||(u(n,Pe[s]||[]),n.close=(function(e){function 
       // Cuba load dari MTProto dulu kalau ada client
       if (_tgClient) {
         try {
+          _tgSetStatus('Memuatkan senarai chat...');
           var dialogs = await _tgClient.getDialogs({ limit: 50 });
           list.innerHTML = '';
-          if (!dialogs || !dialogs.length) { if (empty) empty.style.display = ''; return; }
+          if (!dialogs || !dialogs.length) {
+            _tgSetStatus('Tiada chat dijumpai');
+            if (empty) empty.style.display = '';
+            return;
+          }
           if (empty) empty.style.display = 'none';
+          _tgSetStatus('TELEGRAM ✓ (' + dialogs.length + ' chat)');
           for (var i = 0; i < dialogs.length; i++) {
             var d = dialogs[i];
             var chatId = String(d.id || (d.entity && d.entity.id) || i);
             var chatName = d.title || d.name || (d.entity && (d.entity.title || d.entity.firstName || d.entity.username)) || chatId;
             _tgChatMeta[chatId] = chatName;
             _tgCache[chatId] = _tgCache[chatId] || [];
-            // Simpan ke Firestore supaya ada record
             db.collection('tg_messages').doc(chatId).set({ synced: true, name: chatName }, { merge: true });
             list.appendChild(_tgMakeChatDiv(chatId, chatName));
           }
           return;
         } catch(e) {
+          _tgSetStatus('getDialogs gagal: ' + (e.message || e));
           console.warn('getDialogs error:', e);
           // Fallback ke Firestore
         }
