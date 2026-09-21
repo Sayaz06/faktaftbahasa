@@ -549,7 +549,7 @@
 
   <!-- SCREEN: MAIN MOTIVATION -->
   <!-- SCREEN: REMINDER AKTIF -->
-  <div id="screen-reminder-aktif" class="screen"
+  <div id="screen-reminder-aktif" class="screen">
 
     <div id="ra-hari" style="font-size:0.8rem;font-weight:700;border:2px solid #000;padding:4px 14px;border-radius:4px;"></div>
     <div id="ra-nama" style="font-size:1.3rem;font-weight:700;color:#000;text-align:center;line-height:1.4;"></div>
@@ -560,6 +560,7 @@
     <button id="btn-ra-tidur" style="width:100%;padding:12px;border:2px solid #000;background:#000;color:#fff;font-size:0.9rem;font-weight:bold;cursor:pointer;border-radius:4px;">Tidur 2 Jam - Jangan Ganggu</button>
     <div id="ra-countdown" style="font-size:0.75rem;color:#000;text-align:center;"></div>
   </div>
+
 
   <!-- SCREEN: REMINDER SENARAI -->
   <div id="screen-reminder-list" class="screen">
@@ -4150,26 +4151,36 @@
         }, function(e) { console.warn('tgSub err:', e); });
     }
 
+    function _tgMakeChatDiv(chatId, chatName) {
+      var div = document.createElement('div');
+      div.style.cssText = 'border:1px solid #ccc;border-radius:6px;padding:10px;margin-bottom:8px;cursor:pointer;';
+      div.innerHTML = '<div style="font-weight:bold;font-size:0.88rem;">💬 ' + chatName + '</div>';
+      div.addEventListener('click', function() { openTgChat(chatId, chatName); });
+      return div;
+    }
+
     function loadTgChatList() {
       var list = document.getElementById('tg-chat-list');
       var empty = document.getElementById('tg-chat-empty');
+      if (!list) return;
       list.innerHTML = '';
-      db.collection('tg_messages').get().then(function(snap) {
-        if (snap.empty) { empty.style.display = ''; return; }
-        empty.style.display = 'none';
+      db.collection('tg_messages').where('synced', '==', true).get().then(function(snap) {
+        if (snap.empty) { if (empty) empty.style.display = ''; return; }
+        if (empty) empty.style.display = 'none';
         snap.forEach(function(doc) {
           var data = doc.data();
           var chatId = doc.id;
           var chatName = data.name || chatId;
           _tgSubscribeChat(chatId, chatName);
-          var div = document.createElement('div');
-          div.style.cssText = 'border:1px solid #ccc;border-radius:6px;padding:10px;margin-bottom:8px;cursor:pointer;';
-          div.innerHTML = '<div style="font-weight:bold;font-size:0.88rem;">💬 ' + chatName + '</div>';
-          div.addEventListener('click', function() { openTgChat(chatId, chatName); });
-          list.appendChild(div);
+          list.appendChild(_tgMakeChatDiv(chatId, chatName));
         });
-      }).catch(function(e) { document.getElementById('tg-screen-status').textContent = 'Ralat: ' + e.message; });
+      }).catch(function(e) {
+        var s = document.getElementById('tg-screen-status');
+        if (s) s.textContent = 'Ralat: ' + e.message;
+      });
     }
+
+
 
     function openTgChat(chatId, chatName) {
       _tgActiveChatId = chatId;
@@ -4189,12 +4200,25 @@
       _tgRenderLog();
     }
 
+    function renderTgChatListFromCache() {
+      var list = document.getElementById('tg-chat-list');
+      var empty = document.getElementById('tg-chat-empty');
+      if (!list) return;
+      var keys = Object.keys(_tgChatMeta);
+      if (!keys.length) { loadTgChatList(); return; }
+      list.innerHTML = '';
+      if (empty) empty.style.display = 'none';
+      keys.forEach(function(chatId) {
+        list.appendChild(_tgMakeChatDiv(chatId, _tgChatMeta[chatId]));
+      });
+    }
+
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
       _tgActiveChatId = null;
       document.getElementById('tg-msg-view').style.display = 'none';
       document.getElementById('tg-chat-list').style.display = '';
       document.getElementById('btn-tg-back-menu').style.display = '';
-      loadTgChatList();
+      renderTgChatListFromCache();
     });
 
 
