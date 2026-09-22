@@ -532,14 +532,7 @@
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; padding: 0 4px;
     }
-    .chat-sync-toggle {
-      display: flex; flex-direction: column; align-items: center;
-      gap: 1px; flex-shrink: 0; cursor: pointer;
-    }
-    .chat-sync-toggle input { width: 14px; height: 14px; cursor: pointer; }
-    .chat-sync-toggle span {
-      font-size: 0.55rem; color: #aaa; line-height: 1;
-    }
+
 
     /* ── Telegram Msg View ── */
     .msg-bubble {
@@ -626,7 +619,7 @@
     <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
       <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.72rem;">TELEGRAM</div>
       <button id="btn-tg-reload" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
-      <button id="btn-tg-edit-list" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">✏️ Pilih</button>
+
     </div>
     <div id="tg-chat-list" style="flex:1;overflow-y:auto;padding:8px;">
       <div id="tg-chat-empty" style="color:#555;font-size:0.85rem;text-align:center;padding:20px;">Tiada mesej Telegram.</div>
@@ -6792,19 +6785,9 @@ function renderChatList(dialogs) {
     item.innerHTML =
       '<div class="chat-avatar">' + (isGrp ? '👥' : '👤') + '</div>' +
       '<div class="chat-info"><div class="chat-name">' + escHtml(name) + '</div></div>' +
-      (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '') +
-      '<label class="chat-sync-toggle" onclick="event.stopPropagation()" title="Pilih chat">' +
-        '<input type="checkbox" data-sync-cid="' + cid + '" ' + (ticked ? 'checked' : '') + '>' +
-      '</label>';
+      (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '');
     item.onclick = () => openChat(d, cid, name);
     list.appendChild(item);
-  });
-
-  list.querySelectorAll('input[data-sync-cid]').forEach(cb => {
-    cb.addEventListener('change', function() {
-      setChatSync(this.dataset.syncCid, this.checked);
-      renderChatList(allDialogs);
-    });
   });
 
   if (!list.querySelector('.chat-item')) {
@@ -6823,8 +6806,8 @@ if(document.getElementById('tg-chat-search')) document.getElementById('tg-chat-s
   }));
 };
 document.getElementById('btn-tg-reload').onclick = loadDialogs;
-if (document.getElementById('btn-tg-edit-list')) {
-  document.getElementById('btn-tg-edit-list').onclick = function() {
+if (false) {
+  document.getElementById('btn-tg-edit-list-REMOVED').onclick = function() {
     _tgEditMode = !_tgEditMode;
     if (_tgEditMode) {
       this.textContent = '✅ Selesai';
@@ -7177,8 +7160,6 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
     document.getElementById('btn-go-telegram').onclick = async function() {
       if (!currentUser) return;
-      // Simpan timestamp bila user buka Telegram — untuk notifikasi
-      try { localStorage.setItem('tg_last_read_all', Date.now().toString()); } catch(e){}
       // Terus buka Telegram screen — baca dari Firestore (worker)
       _showScreen('screen-telegram');
       if (allDialogs.length > 0) {
