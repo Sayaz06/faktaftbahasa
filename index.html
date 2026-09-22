@@ -284,6 +284,15 @@
       max-width: 160px;
     }
     #tg-notif-badge.active { display: block; }
+    #btn-tg-refresh {
+      display: none;
+      position: fixed; top: 44px; left: 8px; z-index: 99999;
+      background: #eee; color: #333;
+      border: 1px solid #aaa; border-radius: 6px;
+      padding: 4px 10px; font-size: 0.68rem; font-weight: bold;
+      cursor: pointer; white-space: nowrap;
+    }
+    #btn-tg-refresh:active { background: #ccc; }
     #tg-notif-overlay {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
@@ -616,7 +625,7 @@
   <div id="screen-telegram" class="screen" style="display:none;flex-direction:column;height:100vh;padding:0;box-sizing:border-box;">
     <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
       <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.72rem;">TELEGRAM</div>
-      <button id="btn-tg-refresh" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
+      <button id="btn-tg-reload" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
       <button id="btn-tg-edit-list" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">✏️ Pilih</button>
     </div>
     <div id="tg-chat-list" style="flex:1;overflow-y:auto;padding:8px;">
@@ -932,6 +941,7 @@
 
   <!-- ══ TG NOTIFICATION BADGE ══ -->
   <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span></div>
+  <button id="btn-tg-refresh">🔄 <span id="tg-refresh-label">semak</span></button>
   <!-- ══ TG NOTIFICATION OVERLAY ══ -->
   <div id="tg-notif-overlay">
     <div id="tg-notif-box">
@@ -6818,7 +6828,7 @@ if(document.getElementById('tg-chat-search')) document.getElementById('tg-chat-s
     return ((e.firstName || '') + ' ' + (e.lastName || '') + ' ' + (e.title || '')).toLowerCase().includes(q);
   }));
 };
-document.getElementById('btn-tg-refresh').onclick = loadDialogs;
+document.getElementById('btn-tg-reload').onclick = loadDialogs;
 if (document.getElementById('btn-tg-edit-list')) {
   document.getElementById('btn-tg-edit-list').onclick = function() {
     _tgEditMode = !_tgEditMode;
@@ -7197,7 +7207,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     document.getElementById('btn-tg-back-menu').addEventListener('click', function() {
       _showScreen('screen-menu');
     });
-    document.getElementById('btn-tg-refresh').onclick = function() { loadDialogs(); };
+    document.getElementById('btn-tg-reload').onclick = function() { loadDialogs(); };
     document.getElementById('btn-tg-send').onclick = function() { sendMessage(); };
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
       var mv = document.getElementById('tg-msg-view');
@@ -7737,6 +7747,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function updateTgNotifBadge() {
       var badge = document.getElementById('tg-notif-badge');
       var countEl = document.getElementById('tg-notif-count');
+      var refreshBtn = document.getElementById('btn-tg-refresh');
       if (!badge) return;
       var total = _tgNotifChats.reduce(function(s, c) { return s + c.count; }, 0);
       // Sembunyikan dalam screen Telegram
@@ -7749,6 +7760,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         badge.className = '';
         if (countEl) countEl.textContent = '';
       }
+      if (refreshBtn) refreshBtn.style.display = inTg ? 'none' : 'block';
     }
 
     function openTgNotifOverlay() {
@@ -7769,15 +7781,33 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       openTgNotifOverlay();
     });
 
-    // Refresh notif setiap kali user sentuh screen
-    var _lastTgNotifCheck = 0;
-    document.addEventListener('touchstart', function() {
-      var now = Date.now();
-      if (now - _lastTgNotifCheck > 30000) { // semak sekali setiap 30 saat
-        _lastTgNotifCheck = now;
-        refreshTgNotif();
-      }
-    }, { passive: true });
+    document.getElementById('btn-tg-refresh').addEventListener('click', function() {
+      var lbl = document.getElementById('tg-refresh-label');
+      if (lbl) lbl.textContent = '...';
+      if (!currentUser) { if (lbl) lbl.textContent = 'semak'; return; }
+      var lastReadTs;
+      try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
+      db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
+        if (!snap.exists || !snap.data().list) {
+          if (lbl) lbl.textContent = '; 0';
+          return;
+        }
+        var list = snap.data().list;
+        _tgNotifChats = [];
+        list.forEach(function(dlg) {
+          if (!dlg.lastMsgAt) return;
+          var msgTs = new Date(dlg.lastMsgAt).getTime();
+          if (msgTs > lastReadTs) {
+            _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
+          }
+        });
+        var total = _tgNotifChats.reduce(function(s, c) { return s + c.count; }, 0);
+        if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
+        updateTgNotifBadge();
+      }).catch(function(e){ if (lbl) lbl.textContent = 'err'; console.warn(e); });
+    });
+
+    // (auto-refresh touchstart dibuang — guna button 🔄 untuk semak manual)
     document.getElementById('btn-tg-notif-tutup').addEventListener('click', function() {
       document.getElementById('tg-notif-overlay').className = '';
     });
