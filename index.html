@@ -273,9 +273,9 @@
 
     /* ── TG NOTIFICATION BADGE ── */
     #tg-notif-badge {
-      display: block;
+      display: none;
       position: fixed; top: 8px; left: 8px; z-index: 99999;
-      background: #e8e8e8; color: #555;
+      background: #0088cc; color: #fff;
       border: 2px solid #006699; border-radius: 10px;
       padding: 5px 12px; font-size: 0.78rem; font-weight: bold;
       cursor: pointer; z-index: 10000;
@@ -283,7 +283,7 @@
       line-height: 1.6; white-space: pre-line; text-align: left;
       max-width: 160px;
     }
-    #tg-notif-badge.active { background: #0088cc; color: #fff; }
+    #tg-notif-badge.active { display: block; }
     #tg-notif-overlay {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
@@ -931,7 +931,7 @@
   </div>
 
   <!-- ══ TG NOTIFICATION BADGE ══ -->
-  <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span> <button id="btn-tg-notif-refresh" style="background:none;border:none;font-size:0.72rem;cursor:pointer;padding:0;margin-left:4px;color:#0088cc;">🔄</button></div>
+  <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span></div>
   <!-- ══ TG NOTIFICATION OVERLAY ══ -->
   <div id="tg-notif-overlay">
     <div id="tg-notif-box">
@@ -7167,9 +7167,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       });
       var el = document.getElementById(id);
       if (el) { el.style.display='flex'; el.classList.add('active'); }
-      // Tunjuk/sembunyi badge ikut screen
-      var badge = document.getElementById('tg-notif-badge');
-      if (badge) badge.style.display = (id === 'screen-telegram') ? 'none' : 'block';
+      // Update badge bila tukar screen
+      updateTgNotifBadge();
     }
 
     document.getElementById('btn-go-telegram').onclick = async function() {
@@ -7755,19 +7754,15 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var countEl = document.getElementById('tg-notif-count');
       if (!badge) return;
       var total = _tgNotifChats.reduce(function(s, c) { return s + c.count; }, 0);
-      if (total > 0) {
+      // Sembunyikan dalam screen Telegram
+      var activeSc = document.querySelector('.screen.active');
+      var inTg = activeSc && activeSc.id === 'screen-telegram';
+      if (total > 0 && !inTg) {
         badge.className = 'active';
         if (countEl) countEl.textContent = total + ' baru';
       } else {
         badge.className = '';
         if (countEl) countEl.textContent = '';
-      }
-      // Sembunyikan badge dalam screen Telegram sahaja
-      var activeSc = document.querySelector('.screen.active');
-      if (activeSc && activeSc.id === 'screen-telegram') {
-        badge.style.display = 'none';
-      } else {
-        badge.style.display = 'block';
       }
     }
 
@@ -7784,9 +7779,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       document.getElementById('tg-notif-overlay').className = 'active';
     }
 
-    document.getElementById('tg-notif-badge').addEventListener('click', openTgNotifOverlay);
-    document.getElementById('btn-tg-notif-refresh').addEventListener('click', function(e) {
-      e.stopPropagation(); refreshTgNotif();
+    document.getElementById('tg-notif-badge').addEventListener('click', function() {
+      refreshTgNotif();
+      openTgNotifOverlay();
     });
     document.getElementById('btn-tg-notif-tutup').addEventListener('click', function() {
       document.getElementById('tg-notif-overlay').className = '';
