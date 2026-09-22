@@ -273,9 +273,9 @@
 
     /* ── TG NOTIFICATION BADGE ── */
     #tg-notif-badge {
-      display: none;
+      display: block;
       position: fixed; top: 8px; left: 8px;
-      background: #0088cc; color: #fff;
+      background: #e8e8e8; color: #555;
       border: 2px solid #006699; border-radius: 10px;
       padding: 5px 12px; font-size: 0.78rem; font-weight: bold;
       cursor: pointer; z-index: 10000;
@@ -283,7 +283,7 @@
       line-height: 1.6; white-space: pre-line; text-align: left;
       max-width: 160px;
     }
-    #tg-notif-badge.active { display: block; }
+    #tg-notif-badge.active { background: #0088cc; color: #fff; }
     #tg-notif-overlay {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
@@ -7167,6 +7167,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       });
       var el = document.getElementById(id);
       if (el) { el.style.display='flex'; el.classList.add('active'); }
+      // Tunjuk/sembunyi badge ikut screen
+      var badge = document.getElementById('tg-notif-badge');
+      if (badge) badge.style.display = (id === 'screen-telegram') ? 'none' : 'block';
     }
 
     document.getElementById('btn-go-telegram').onclick = async function() {
@@ -7758,6 +7761,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       } else {
         badge.className = '';
         if (countEl) countEl.textContent = '';
+      }
+      // Sembunyikan badge dalam screen Telegram sahaja
+      var activeSc = document.querySelector('.screen.active');
+      if (activeSc && activeSc.id === 'screen-telegram') {
+        badge.style.display = 'none';
+      } else {
+        badge.style.display = 'block';
       }
     }
 
