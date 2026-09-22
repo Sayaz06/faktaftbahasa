@@ -7783,6 +7783,16 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       refreshTgNotif();
       openTgNotifOverlay();
     });
+
+    // Refresh notif setiap kali user sentuh screen
+    var _lastTgNotifCheck = 0;
+    document.addEventListener('touchstart', function() {
+      var now = Date.now();
+      if (now - _lastTgNotifCheck > 30000) { // semak sekali setiap 30 saat
+        _lastTgNotifCheck = now;
+        refreshTgNotif();
+      }
+    }, { passive: true });
     document.getElementById('btn-tg-notif-tutup').addEventListener('click', function() {
       document.getElementById('tg-notif-overlay').className = '';
     });
