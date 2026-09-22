@@ -7703,40 +7703,25 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       // Baca timestamp terakhir user buka/baca Telegram
       var lastReadTs;
       try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
-      var lastReadDate = new Date(lastReadTs || 0);
 
-      // Baca semua dialogs dari Firestore (semua chat, bukan hanya ditick)
+      // Baca dialogs dari Firestore — compare lastMsgAt (tanpa query subcollection)
       db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
         if (!snap.exists || !snap.data().list) { updateTgNotifBadge(); return; }
         var list = snap.data().list;
         _tgNotifChats = [];
-        var fetches = list.map(function(dlg) {
-          var chatId = dlg.cid; var chatName = dlg.name || chatId;
-          // Ambil mesej masuk (bukan out) yang savedAt > lastReadDate
-          return db.collection('users/' + currentUser.uid + '/tg_messages/' + chatId + '/msgs')
-            .where('isOut', '==', false)
-            .orderBy('savedAt', 'desc')
-            .limit(20).get()
-            .then(function(msgSnap) {
-              var newMsgs = [];
-              msgSnap.forEach(function(m) {
-                var d = m.data();
-                var savedAt = d.savedAt ? d.savedAt.toDate() : null;
-                if (savedAt && savedAt > lastReadDate) {
-                  newMsgs.push({ id: m.id, data: d });
-                }
-              });
-              if (newMsgs.length > 0) {
-                var first = newMsgs[0].data;
-                _tgNotifChats.push({
-                  chatId: chatId, chatName: chatName, count: newMsgs.length,
-                  msgIds: newMsgs.map(function(m){ return m.id; }),
-                  lastMsg: first.text || (first.hasMedia ? '[media]' : '')
-                });
-              }
-            }).catch(function(){});
+        list.forEach(function(dlg) {
+          if (!dlg.lastMsgAt) return;
+          var msgTs = new Date(dlg.lastMsgAt).getTime();
+          if (msgTs > lastReadTs) {
+            _tgNotifChats.push({
+              chatId: dlg.cid,
+              chatName: dlg.name || dlg.cid,
+              count: 1,
+              lastMsg: dlg.lastMsg || ''
+            });
+          }
         });
-        Promise.all(fetches).then(function() { updateTgNotifBadge(); });
+        updateTgNotifBadge();
       }).catch(function(e){ console.warn('tgNotif refresh err:', e); });
     }
 
