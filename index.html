@@ -6657,7 +6657,7 @@ async function connectTelegram() {
       if (cid) {
         const dlg = allDialogs.find(d => d.entity && d.entity.id && d.entity.id.toString() === cid);
         const cname = dlg ? (dlg.entity.firstName || dlg.entity.title || 'Chat') : 'Chat';
-        if (isChatSynced(cid)) await saveMsg(msg, cid, cname);
+        await saveMsg(msg, cid, cname);
         const lastEl = document.querySelector('.chat-item[data-cid="' + cid + '"] .chat-last');
         if (lastEl) lastEl.textContent = (msg.message || '').substring(0, 50);
 
@@ -6775,9 +6775,7 @@ function renderChatList(dialogs) {
   }
 
   // dialogs dari Firestore: array of {cid, name, isGrp, unread}
-  const anyTicked = dialogs.some(d => isChatSynced(d.cid || ''));
-
-  if (!anyTicked) {
+  if (false) {
     list.insertAdjacentHTML('beforeend',
       '<div style="font-size:0.72rem;color:#888;padding:6px 8px;background:#f9f9f9;border-bottom:1px solid #eee;">' +
       '✏️ Tick chat yang nak dipaparkan</div>');
@@ -6788,10 +6786,6 @@ function renderChatList(dialogs) {
     const name = d.name || 'Unknown';
     const isGrp = !!d.isGrp;
     const unread = d.unread || 0;
-    const ticked = isChatSynced(cid);
-
-    if (anyTicked && !ticked) return;
-
     const item = document.createElement('div');
     item.className = 'chat-item';
     item.dataset.cid = cid;
@@ -7005,7 +6999,7 @@ function appendMsgBubble(msg) {
 
 // ─── Firestore sync ───────────────────────────────────────
 async function syncMsgs(msgs, cid, cname) {
-  const synced = isChatSynced(cid);
+  const synced = true;
   // Update chat meta (background, tak perlu await)
   db.doc('tg_messages/' + cid).set(
     { name: cname, chatId: cid, synced: synced, lastSync: firebase.firestore.FieldValue.serverTimestamp() },
@@ -7142,7 +7136,7 @@ if(document.getElementById('file-input')) document.getElementById('file-input').
       forceDocument: !file.type.startsWith('image/')
     });
     appendMsgBubble(result);
-    if (activeChatId && isChatSynced(activeChatId)) await saveMsg(result, activeChatId, document.getElementById('tg-msg-chat-name').textContent);
+    if (activeChatId) await saveMsg(result, activeChatId, document.getElementById('tg-msg-chat-name').textContent);
     addLog('Fail dihantar: ' + file.name, 'ok');
   } catch(err) {
     addLog('Gagal hantar fail: ' + err.message, 'err');
