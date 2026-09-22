@@ -618,6 +618,7 @@
   <div id="screen-telegram" class="screen" style="display:none;flex-direction:column;height:100vh;padding:0;box-sizing:border-box;">
     <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
       <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.72rem;">TELEGRAM</div>
+      <button id="btn-tg-sync-now" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync semula mesej dari Telegram">⬇️</button>
       <button id="btn-tg-reload" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
 
     </div>
@@ -7180,6 +7181,26 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       _showScreen('screen-menu');
     });
     document.getElementById('btn-tg-reload').onclick = function() { loadDialogs(); };
+    document.getElementById('btn-tg-sync-now').onclick = function() {
+      if (!currentUser) return;
+      var btn = document.getElementById('btn-tg-sync-now');
+      btn.textContent = '⏳';
+      btn.disabled = true;
+      db.doc('users/' + currentUser.uid + '/tg_worker/cmd')
+        .set({ action: 'sync', requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+        .then(function() {
+          setTimeout(function() {
+            btn.textContent = '⬇️';
+            btn.disabled = false;
+            loadDialogs();
+          }, 8000);
+        })
+        .catch(function(e) {
+          btn.textContent = '⬇️';
+          btn.disabled = false;
+          console.warn('sync cmd err:', e);
+        });
+    };
     document.getElementById('btn-tg-send').onclick = function() { sendMessage(); };
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
       var mv = document.getElementById('tg-msg-view');
