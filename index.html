@@ -7696,6 +7696,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         _tgNotifChats = [];
         list.forEach(function(dlg) {
           if (!dlg.lastMsgAt) return;
+          if (dlg.lastMsgIsOut) return; // skip mesej yg kita hantar
           var msgTs = new Date(dlg.lastMsgAt).getTime();
           if (msgTs > lastReadTs) {
             _tgNotifChats.push({
@@ -7771,6 +7772,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         _tgNotifChats = [];
         list.forEach(function(dlg) {
           if (!dlg.lastMsgAt) return;
+          if (dlg.lastMsgIsOut) return; // skip mesej yg kita hantar
           var msgTs = new Date(dlg.lastMsgAt).getTime();
           if (msgTs > lastReadTs) {
             _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
