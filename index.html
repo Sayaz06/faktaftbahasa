@@ -6839,10 +6839,7 @@ function renderChatListAll(dialogs) {
     item.innerHTML =
       '<div class="chat-avatar">' + (isGrp ? '👥' : '👤') + '</div>' +
       '<div class="chat-info"><div class="chat-name">' + escHtml(name) + '</div></div>' +
-      (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '') +
-      '<label class="chat-sync-toggle" onclick="event.stopPropagation()">' +
-        '<input type="checkbox" data-sync-cid="' + cid + '" ' + (ticked ? 'checked' : '') + '>' +
-      '</label>';
+      (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '');
     item.onclick = () => {
       const cb = item.querySelector('input[data-sync-cid]');
       if (cb) { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); }
