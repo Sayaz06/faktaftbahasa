@@ -7171,6 +7171,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
     document.getElementById('btn-go-telegram').onclick = async function() {
       if (!currentUser) return;
+      // Simpan timestamp bila user buka Telegram — untuk notifikasi
+      try { localStorage.setItem('tg_last_read_all', Date.now().toString()); } catch(e){}
       // Terus buka Telegram screen — baca dari Firestore (worker)
       _showScreen('screen-telegram');
       if (allDialogs.length > 0) {
@@ -7696,36 +7698,44 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
     function refreshTgNotif() {
       if (!currentUser) return;
-      _tgLoadSeenIds(function(seenIds) {
-        _tgSeenMsgIds = seenIds;
-        db.collection('tg_messages').where('synced', '==', true).get().then(function(snap) {
-          _tgNotifChats = [];
-          var fetches = [];
-          snap.forEach(function(doc) {
-            var data = doc.data(); var chatId = doc.id; var chatName = data.name || chatId;
-            fetches.push(
-              db.collection('tg_messages').doc(chatId).collection('messages')
-                .orderBy('date', 'desc').limit(10).get()
-                .then(function(msgSnap) {
-                  var newMsgs = [];
-                  msgSnap.forEach(function(m) {
-                    var d = m.data(); var mid = m.id;
-                    if (!d.out && d.date && !seenIds[mid]) newMsgs.push({ id: mid, data: d });
-                  });
-                  if (newMsgs.length > 0) {
-                    var first = newMsgs[0].data;
-                    _tgNotifChats.push({
-                      chatId: chatId, chatName: chatName, count: newMsgs.length,
-                      msgIds: newMsgs.map(function(m){ return m.id; }),
-                      lastMsg: first.text || (first.mediaLabel || (first.hasMedia ? '[media]' : ''))
-                    });
-                  }
-                }).catch(function(){})
-            );
-          });
-          Promise.all(fetches).then(function() { updateTgNotifBadge(); });
-        }).catch(function(e){ console.warn('tgNotif refresh err:', e); });
-      });
+      // Baca timestamp terakhir user buka/baca Telegram
+      var lastReadTs;
+      try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
+      var lastReadDate = new Date(lastReadTs || 0);
+
+      // Baca semua dialogs dari Firestore (semua chat, bukan hanya ditick)
+      db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
+        if (!snap.exists || !snap.data().list) { updateTgNotifBadge(); return; }
+        var list = snap.data().list;
+        _tgNotifChats = [];
+        var fetches = list.map(function(dlg) {
+          var chatId = dlg.cid; var chatName = dlg.name || chatId;
+          // Ambil mesej masuk (bukan out) yang savedAt > lastReadDate
+          return db.collection('users/' + currentUser.uid + '/tg_messages/' + chatId + '/msgs')
+            .where('isOut', '==', false)
+            .orderBy('savedAt', 'desc')
+            .limit(20).get()
+            .then(function(msgSnap) {
+              var newMsgs = [];
+              msgSnap.forEach(function(m) {
+                var d = m.data();
+                var savedAt = d.savedAt ? d.savedAt.toDate() : null;
+                if (savedAt && savedAt > lastReadDate) {
+                  newMsgs.push({ id: m.id, data: d });
+                }
+              });
+              if (newMsgs.length > 0) {
+                var first = newMsgs[0].data;
+                _tgNotifChats.push({
+                  chatId: chatId, chatName: chatName, count: newMsgs.length,
+                  msgIds: newMsgs.map(function(m){ return m.id; }),
+                  lastMsg: first.text || (first.hasMedia ? '[media]' : '')
+                });
+              }
+            }).catch(function(){});
+        });
+        Promise.all(fetches).then(function() { updateTgNotifBadge(); });
+      }).catch(function(e){ console.warn('tgNotif refresh err:', e); });
     }
 
     function subscribeTgNotif() { refreshTgNotif(); }
@@ -7776,12 +7786,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       document.getElementById('tg-notif-overlay').className = '';
     });
     document.getElementById('btn-tg-notif-semua-baca').addEventListener('click', function() {
-      var newSeen = Object.assign({}, _tgSeenMsgIds);
-      _tgNotifChats.forEach(function(c) {
-        if (c.msgIds) c.msgIds.forEach(function(id){ newSeen[id] = true; });
-      });
-      _tgSeenMsgIds = newSeen;
-      _tgSaveSeenIds(newSeen);
+      // Simpan timestamp sekarang — mesej sebelum ni dikira dah baca
+      try { localStorage.setItem('tg_last_read_all', Date.now().toString()); } catch(e){}
       _tgNotifChats = [];
       updateTgNotifBadge();
       document.getElementById('tg-notif-overlay').className = '';
