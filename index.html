@@ -933,6 +933,18 @@
     </div>
   </div>
 
+  <!-- ══ TG QUICK CHAT OVERLAY ══ -->
+  <div id="tg-quick-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:20000;flex-direction:column;">
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:2px solid #000;">
+      <button id="btn-tg-quick-close" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:0;">✕</button>
+      <span id="tg-quick-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    </div>
+    <div id="tg-quick-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;"></div>
+    <div style="display:flex;gap:6px;padding:6px 8px;border-top:1px solid #ccc;">
+      <textarea id="tg-quick-input" rows="2" placeholder="Taip mesej..." style="flex:1;resize:none;font-size:1rem;padding:4px 8px;border:1px solid #ccc;border-radius:6px;font-family:inherit;"></textarea>
+      <button id="btn-tg-quick-send" style="background:#000;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:1rem;cursor:pointer;">➤</button>
+    </div>
+  </div>
   <!-- ══ TG NOTIFICATION BADGE ══ -->
   <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span></div>
   <button id="btn-tg-refresh">🔄 <span id="tg-refresh-label">semak</span></button>
@@ -7763,8 +7775,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       _tgNotifChats.forEach(function(c) {
         var div = document.createElement('div');
         div.className = 'tg-notif-item';
+        div.style.cursor = 'pointer';
         div.innerHTML = '<div class="tg-notif-from">💬 ' + c.chatName + ' (' + c.count + ')</div>' +
           '<div class="tg-notif-msg">' + (c.lastMsg ? c.lastMsg.substring(0,80) : '') + '</div>';
+        div.addEventListener('click', function() {
+          document.getElementById('tg-notif-overlay').className = '';
+          openQuickChat(c.chatId, c.chatName);
+        });
         list.appendChild(div);
       });
       document.getElementById('tg-notif-overlay').className = 'active';
@@ -7810,6 +7827,84 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       refreshTgNotif();
       document.getElementById('tg-notif-overlay').className = '';
     });
+    // ── Quick Chat Overlay ──
+    var _quickChatId = null;
+    var _quickChatUnsub = null;
+
+    function openQuickChat(cid, name) {
+      _quickChatId = cid;
+      document.getElementById('tg-quick-chat-name').textContent = name;
+      document.getElementById('tg-quick-log').innerHTML = '<div style="color:#888;font-size:0.8rem;text-align:center;padding:10px;">Memuatkan...</div>';
+      document.getElementById('tg-quick-input').value = '';
+      document.getElementById('tg-quick-overlay').style.display = 'flex';
+
+      if (_quickChatUnsub) { _quickChatUnsub(); _quickChatUnsub = null; }
+
+      // Baca mesej dari Firestore
+      db.collection('users/' + currentUser.uid + '/tg_messages/' + cid + '/msgs')
+        .orderBy('date', 'asc').limitToLast(30).get().then(function(snap) {
+          var log = document.getElementById('tg-quick-log');
+          log.innerHTML = '';
+          snap.forEach(function(d) {
+            var data = d.data();
+            appendQuickBubble(log, data.text || '', !!data.isOut, data.date || '');
+          });
+          log.scrollTop = log.scrollHeight;
+        });
+
+      // Listen mesej baru
+      _quickChatUnsub = db.collection('users/' + currentUser.uid + '/tg_messages/' + cid + '/msgs')
+        .orderBy('date', 'asc').limitToLast(1).onSnapshot(function(snap) {
+          snap.docChanges().forEach(function(change) {
+            if (change.type !== 'added') return;
+            var data = change.doc.data();
+            var log = document.getElementById('tg-quick-log');
+            if (!log) return;
+            appendQuickBubble(log, data.text || '', !!data.isOut, data.date || '');
+            log.scrollTop = log.scrollHeight;
+          });
+        });
+    }
+
+    function appendQuickBubble(log, text, isOut, dateStr) {
+      if (!text) return;
+      var bubble = document.createElement('div');
+      bubble.className = 'msg-bubble ' + (isOut ? 'msg-out' : 'msg-in');
+      var time = dateStr ? new Date(dateStr).toLocaleTimeString('ms-MY', {hour:'2-digit',minute:'2-digit'}) : '';
+      bubble.innerHTML = '<div>' + escHtml(text) + '</div><div class="msg-time">' + time + '</div>';
+      log.appendChild(bubble);
+    }
+
+    document.getElementById('btn-tg-quick-close').addEventListener('click', function() {
+      document.getElementById('tg-quick-overlay').style.display = 'none';
+      if (_quickChatUnsub) { _quickChatUnsub(); _quickChatUnsub = null; }
+      _quickChatId = null;
+    });
+
+    document.getElementById('btn-tg-quick-send').addEventListener('click', function() {
+      if (!currentUser || !_quickChatId) return;
+      var input = document.getElementById('tg-quick-input');
+      var text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      // Optimistic bubble
+      var log = document.getElementById('tg-quick-log');
+      appendQuickBubble(log, text, true, new Date().toISOString());
+      log.scrollTop = log.scrollHeight;
+      // Hantar ke outbox
+      db.collection('users/' + currentUser.uid + '/tg_outbox').add({
+        chatId: _quickChatId, text: text, status: 'pending',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(function(e) { console.warn('quick send err:', e); });
+    });
+
+    document.getElementById('tg-quick-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('btn-tg-quick-send').click();
+      }
+    });
+
     document.getElementById('btn-tg-notif-semua-baca').addEventListener('click', function() {
       // Simpan timestamp sekarang — mesej sebelum ni dikira dah baca
       try { localStorage.setItem('tg_last_read_all', Date.now().toString()); } catch(e){}
