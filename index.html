@@ -616,8 +616,8 @@
 
   <!-- SCREEN: TELEGRAM CHAT -->
   <div id="screen-telegram" class="screen" style="display:none;flex-direction:column;height:100vh;padding:0;box-sizing:border-box;">
-    <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
-      <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.85rem;font-weight:bold;">TELEGRAM</div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
+      <div class="status-bar" id="tg-screen-status" style="display:none !important;">TELEGRAM</div>
       <button id="btn-tg-sync-now" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync semula mesej dari Telegram">⬇️</button>
       <button id="btn-tg-reload" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
 
@@ -937,6 +937,7 @@
   <div id="tg-quick-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:20000;flex-direction:column;">
     <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:2px solid #000;">
       <button id="btn-tg-quick-close" style="background:none;border:none;font-size:1.2rem;cursor:pointer;padding:0;">✕</button>
+      <button id="btn-tg-quick-other" style="display:none;background:#fff;color:#000;border:2px solid #000;border-radius:6px;padding:3px 8px;font-size:0.75rem;font-weight:bold;cursor:pointer;white-space:nowrap;font-family:inherit;">chat other contact</button>
       <span id="tg-quick-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
     </div>
     <div id="tg-quick-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;"></div>
@@ -6799,7 +6800,13 @@ function renderChatList(dialogs) {
       '<div class="chat-avatar">' + (isGrp ? '👥' : '👤') + '</div>' +
       '<div class="chat-info"><div class="chat-name">' + escHtml(name) + '</div></div>' +
       (unread > 0 ? '<div class="chat-unread">' + unread + '</div>' : '');
-    item.onclick = () => openChat(d, cid, name);
+    item.onclick = () => {
+      if (typeof window._openQuickChat === 'function') {
+        window._openQuickChat(cid, name);
+      } else {
+        openChat(d, cid, name);
+      }
+    };
     list.appendChild(item);
   });
 
@@ -7176,6 +7183,12 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         renderChatList(allDialogs);
       } else {
         loadDialogs();
+      }
+      // Sambung terus ke chat terakhir (jika keluar guna ✕)
+      var _last = null;
+      try { _last = JSON.parse(localStorage.getItem('tg_last_tab_chat') || 'null'); } catch(e){ _last = null; }
+      if (_last && _last.cid && typeof window._openQuickChat === 'function') {
+        window._openQuickChat(_last.cid, _last.name || 'Chat');
       }
     };
 
@@ -7830,8 +7843,26 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     // ── Quick Chat Overlay ──
     var _quickChatId = null;
     var _quickChatUnsub = null;
+    var _quickFromTab = false;
 
+    window._openQuickChat = function(cid, name) {
+      openQuickChat(cid, name);
+      _quickFromTab = true;
+      var ob = document.getElementById('btn-tg-quick-other');
+      if (ob) ob.style.display = '';
+      try { localStorage.setItem('tg_last_tab_chat', JSON.stringify({ cid: cid, name: name })); } catch(e){}
+    };
+    function _tutupQuickChat() {
+      document.getElementById('tg-quick-overlay').style.display = 'none';
+      if (_quickChatUnsub) { _quickChatUnsub(); _quickChatUnsub = null; }
+      _quickChatId = null;
+      var ob = document.getElementById('btn-tg-quick-other');
+      if (ob) ob.style.display = 'none';
+    }
     function openQuickChat(cid, name) {
+      _quickFromTab = false;
+      var obx = document.getElementById('btn-tg-quick-other');
+      if (obx) obx.style.display = 'none';
       _quickChatId = cid;
       document.getElementById('tg-quick-chat-name').textContent = name;
       document.getElementById('tg-quick-log').innerHTML = '<div style="color:#888;font-size:0.8rem;text-align:center;padding:10px;">Memuatkan...</div>';
@@ -7876,9 +7907,23 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     }
 
     document.getElementById('btn-tg-quick-close').addEventListener('click', function() {
-      document.getElementById('tg-quick-overlay').style.display = 'none';
-      if (_quickChatUnsub) { _quickChatUnsub(); _quickChatUnsub = null; }
-      _quickChatId = null;
+      var dariTab = _quickFromTab;
+      _quickFromTab = false;
+      _tutupQuickChat();
+      if (dariTab) {
+        var bm = document.getElementById('btn-tg-back-menu');
+        if (bm) bm.click();
+      }
+    });
+
+    document.getElementById('btn-tg-quick-other').addEventListener('click', function() {
+      _quickFromTab = false;
+      _tutupQuickChat();
+      try { localStorage.removeItem('tg_last_tab_chat'); } catch(e){}
+      var mv = document.getElementById('tg-msg-view');
+      var cl = document.getElementById('tg-chat-list');
+      if (mv) mv.style.display = 'none';
+      if (cl) cl.style.display = '';
     });
 
     document.getElementById('btn-tg-quick-send').addEventListener('click', function() {
