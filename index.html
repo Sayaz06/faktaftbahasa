@@ -7097,7 +7097,7 @@ function pantauLangkahTg(bubble, ref) {
     if (!snap.exists) return;
     var d = snap.data();
     var step = d.step || '';
-    var saat = Math.round((d.typingMs || 5000) / 1000);
+    var saat = Math.round((d.typingMs || 3000) / 1000);
 
     if (d.status === 'failed') {
       hentiKira();
@@ -7172,7 +7172,7 @@ async function sendMessage() {
   tempBubble.innerHTML = '<div>' + escHtml(text) + '</div>' +
     '<div class="tg-langkah">' +
       '<div class="tgl-1">… 1. Bluetick dihantar</div>' +
-      '<div class="tgl-2">○ 2. Status menaip (5 saat)</div>' +
+      '<div class="tgl-2">○ 2. Status menaip (3 saat)</div>' +
       '<div class="tgl-3">○ 3. Mesej dihantar</div>' +
     '</div>' +
     '<div class="msg-time">⏳ Menunggu worker...</div>';
