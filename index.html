@@ -3992,24 +3992,34 @@
       _kemajuanCacheKindle = null; // clear cache supaya load semula next sesi
     }
 
-    function subscribeQuranKindle(surahNum, cb) {
-      if (!currentUser) { cb && cb(); return; }
-      if (_unsubQuranKindle && _unsubQuranSurahKindle === surahNum) { cb && cb(); return; }
-      if (_unsubQuranKindle) { _unsubQuranKindle(); _unsubQuranKindle = null; }
-      _unsubQuranSurahKindle = surahNum;
-      _unsubQuranKindle = db.collection('users').doc(currentUser.uid)
-        .collection('quran_drawers')
+    // Bilangan ayat setiap surah (sama dengan app phone) — untuk kira nombor ayat yang dipanggil
+    var QURAN_SURAH_AYAT = [7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
+
+    // ── PANGGIL 10 AYAT, AMBIL 10 AYAT (bukan 1 surah penuh) ──
+    // Kira nombor ayat yang diperlukan, kemudian minta HANYA ayat-ayat tu dari Firebase
+    // (bacaan sekali, bukan listener). Susunan sama seperti logik lama:
+    // mula selepas ayat terakhir dibaca, sambung semula ke ayat 1 bila sampai hujung surah.
+    function ambilAyatSesiKindle(surahNum, ayatSemasa) {
+      var jumlah = QURAN_SURAH_AYAT[surahNum - 1] || 0;
+      if (!currentUser || !jumlah) return Promise.resolve([]);
+      var mula = (ayatSemasa > 0 && ayatSemasa < jumlah) ? ayatSemasa + 1 : 1;
+      var senarai = [];
+      for (var k = 0; k < QURAN_AYAT_PER_SESI; k++) senarai.push(((mula - 1 + k) % jumlah) + 1);
+      var unik = senarai.filter(function(n, i) { return senarai.indexOf(n) === i; });
+      return db.collection('users').doc(currentUser.uid).collection('quran_drawers')
         .where('surahNum', '==', surahNum)
-        .onSnapshot(function(snap) {
-          allQuranDrawers = [];
+        .where('ayatNum', 'in', unik)
+        .get()
+        .then(function(snap) {
+          var peta = {};
           snap.forEach(function(d) {
-            var data = d.data();
-            if (data.surahNum && data.ayatNum) allQuranDrawers.push(Object.assign({ id: d.id }, data));
+            var x = d.data();
+            if (x.ayatNum && !peta[x.ayatNum]) peta[x.ayatNum] = x;
           });
-          allQuranDrawers.sort(function(a, b) { return (a.ayatNum || 0) - (b.ayatNum || 0); });
-          cb && cb();
-          cb = null; // panggil sekali sahaja
-        }, function() { cb && cb(); cb = null; });
+          var hasil = [];
+          senarai.forEach(function(n) { if (peta[n]) hasil.push(peta[n]); });
+          return hasil;
+        });
     }
 
     function updateQuranButton() {
@@ -4028,38 +4038,34 @@
         quranSurahSemasa = surah;
         quranAyatSemasa = ayatSemasa;
 
-        subscribeQuranKindle(surah, function() {
-          var allAyat = allQuranDrawers.filter(function(d) { return d.surahNum === surah; });
-          if (!allAyat.length) {
+        ambilAyatSesiKindle(surah, ayatSemasa).then(function(senaraiAyat) {
+          // Ayat selepas kedudukan terakhir tiada dalam laci → sambung semula dari ayat 1
+          if (!senaraiAyat.length && ayatSemasa > 0) return ambilAyatSesiKindle(surah, 0);
+          return senaraiAyat;
+        }).then(function(senaraiAyat) {
+          if (!senaraiAyat.length) {
             setText('play-err', 'Tiada laci Quran untuk Surah ' + surah);
             setTimeout(function() { setText('play-err', ''); cbSelepas && cbSelepas(); }, 2000);
             return;
           }
-          // Cari kedudukan dari kemajuan
-          var mulaIdx = 0;
-          if (ayatSemasa > 0) {
-            for (var i = 0; i < allAyat.length; i++) {
-              if ((allAyat[i].ayatNum || 0) > ayatSemasa) { mulaIdx = i; break; }
-              if (i === allAyat.length - 1) mulaIdx = 0; // wrap
-            }
-          }
-          // Ambil 10 ayat
-          qjqCards = [];
-          for (var k = 0; k < QURAN_AYAT_PER_SESI; k++) {
-            var d = allAyat[(mulaIdx + k) % allAyat.length];
-            if (d) qjqCards.push({
+          // 10 ayat yang dipanggil = 10 ayat yang diambil
+          qjqCards = senaraiAyat.map(function(d) {
+            return {
               tajuk: (d.surahNum) + '. ' + (QURAN_SURAH_NAMES[d.surahNum - 1] || '') + ' Ayat ' + d.ayatNum,
               arab: (d.arab || '').trim(),
               maksud: (d.maksud || '').trim(),
               surahNum: d.surahNum,
               ayatNum: d.ayatNum
-            });
-          }
+            };
+          });
           qjqIdx = 0; qjqFlipped = false; qjqWaqaf = []; qjqWaqafIdx = 0; qjqMaksud = []; qjqMaksudIdx = 0;
 
           // Papar ayat pertama
           _renderQjqAyat(cbSelepas);
           window._qjqHandler = cbSelepas;
+        }).catch(function(e) {
+          setText('play-err', 'Gagal ambil ayat: ' + (e.message || e));
+          setTimeout(function() { setText('play-err', ''); cbSelepas && cbSelepas(); }, 3000);
         });
       }).catch(function() { cbSelepas && cbSelepas(); });
     }
