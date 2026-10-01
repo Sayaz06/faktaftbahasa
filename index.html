@@ -7240,6 +7240,7 @@ function renderTgLogin() {
     teks = '✅ Telegram dah login. Worker sedang berjalan' + (d.akaun ? ' sebagai ' + d.akaun : '') + '.';
   } else if (st) {
     teks = 'Status worker: ' + st + '\nKalau lama begini, semak worker di Railway.';
+    if (window._tgWorkerErr) teks += '\n\nRalat: ' + window._tgWorkerErr;
   } else {
     teks = 'Tiada status worker. Pastikan worker di Railway sedang jalan.';
   }
@@ -7255,7 +7256,9 @@ function bukaTgLogin() {
     _tgLoginData = s.exists ? s.data() : {}; renderTgLogin();
   }, function() {});
   if (!_tgStatusUnsub) _tgStatusUnsub = _tgStatusRef().onSnapshot(function(s) {
-    _tgWorkerState = s.exists ? (s.data().state || '') : ''; renderTgLogin();
+    _tgWorkerState = s.exists ? (s.data().state || '') : '';
+    window._tgWorkerErr = s.exists ? (s.data().error || '') : '';
+    renderTgLogin();
   }, function() {});
 }
 
