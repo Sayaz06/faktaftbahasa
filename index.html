@@ -607,6 +607,12 @@
     #tg-log > div:not(.msg-bubble):not(.log-ok):not(.log-err):not(.log-info) {
       font-size: 0.72rem; color: #666; font-family: monospace;
     }
+    /* MOD PRIVASI — teks chat kecil & kabur supaya orang di belakang susah membaca */
+    body.tg-privasi #tg-log .msg-bubble div {
+      font-size: 0.72rem; color: #666; font-family: monospace;
+    }
+    body.tg-privasi #tg-msg-input { font-size: 0.85rem; }
+    #btn-tg-privasi.on { background: #000 !important; color: #fff; border-color: #000 !important; }
   </style>
 
 </head>
@@ -669,6 +675,7 @@
     <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
       <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.72rem;">TELEGRAM</div>
       <button id="btn-tg-login" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Login Telegram">🔑</button>
+      <button id="btn-tg-privasi" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Mod privasi: teks chat kecil &amp; kabur">👁</button>
       <button id="btn-tg-sync-now" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync semula mesej dari Telegram">⬇️</button>
       <button id="btn-tg-reload" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
 
@@ -5090,6 +5097,29 @@ function gabungDenganLangkah(text, msgId) {
   }
   return false;
 }
+
+// ─── MOD PRIVASI CHAT: ON = teks kecil & kabur, OFF = teks besar & jelas ──
+// Pilihan disimpan dalam Kindle (localStorage), kekal walaupun app ditutup.
+(function() {
+  var KUNCI = 'tg_mod_privasi';
+  var btn = document.getElementById('btn-tg-privasi');
+  function terapkan(on) {
+    document.body.classList.toggle('tg-privasi', on);
+    if (btn) {
+      btn.classList.toggle('on', on);
+      btn.textContent = on ? '🙈' : '👁';
+      btn.title = on ? 'Mod privasi ON — tekan untuk teks jelas' : 'Mod privasi OFF — tekan untuk teks kabur';
+    }
+  }
+  var asal = false;
+  try { asal = localStorage.getItem(KUNCI) === '1'; } catch (e) {}
+  terapkan(asal);
+  if (btn) btn.addEventListener('click', function() {
+    var on = !document.body.classList.contains('tg-privasi');
+    terapkan(on);
+    try { localStorage.setItem(KUNCI, on ? '1' : '0'); } catch (e) {}
+  });
+})();
 
 // ─── LOGIN TELEGRAM DARI KINDLE ──
 // Worker (Railway) yang login ke Telegram. Kindle cuma tulis arahan/kod ke
