@@ -1558,17 +1558,22 @@
       });
     }
 
+    // Ambil SR yang dah sampai masa SAHAJA — Firebase tapis & susun guna indeks nextDueAt.
+    // 2 dokumen: [0] untuk dipapar, [1] untuk prefetch SR seterusnya. Tak perlu baca seluruh koleksi.
     function loadSROverdue(colName) {
-      return db.collection('users').doc(currentUser.uid).collection(colName).get()
+      var now = Date.now();
+      return db.collection('users').doc(currentUser.uid).collection(colName)
+        .where('nextDueAt', '<=', now)
+        .orderBy('nextDueAt', 'asc')
+        .limit(2)
+        .get()
         .then(function(snap) {
-          var now = Date.now();
           var overdue = [];
           snap.forEach(function(doc) {
             var d = doc.data();
             d.id = doc.id;
-            if (!d.nextDueAt || d.nextDueAt <= now) overdue.push(d);
+            overdue.push(d);
           });
-          overdue.sort(function(a, b) { return (a.nextDueAt || 0) - (b.nextDueAt || 0); });
           return overdue;
         });
     }
