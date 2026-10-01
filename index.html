@@ -603,7 +603,8 @@
     #tg-log .log-ok { color: #080; font-size: 0.72rem; font-family: monospace; }
     #tg-log .log-err { color: #c00; font-size: 0.72rem; font-family: monospace; }
     #tg-log .log-info { color: #555; font-size: 0.72rem; font-family: monospace; }
-    #tg-log div:not(.msg-bubble):not(.log-ok):not(.log-err):not(.log-info) {
+    /* Gaya log HANYA untuk baris terus dalam #tg-log — bukan isi dalam bubble mesej */
+    #tg-log > div:not(.msg-bubble):not(.log-ok):not(.log-err):not(.log-info) {
       font-size: 0.72rem; color: #666; font-family: monospace;
     }
   </style>
@@ -691,7 +692,7 @@
         </div>
       </div>
       <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
-        <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej... (tap mesej untuk balas)" style="flex:1;font-size:0.85rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
+        <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej... (tap mesej untuk balas)" style="flex:1;font-size:1rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
         <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">➤</button>
       </div>
     </div>
