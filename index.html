@@ -557,6 +557,18 @@
       margin-top: 5px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.6);
       font-size: 0.72rem; line-height: 1.55; text-align: left;
     }
+    /* Balas mesej (quote macam Telegram) */
+    .msg-quote {
+      border-left: 3px solid #fff; background: rgba(255,255,255,0.15); border-radius: 4px;
+      padding: 3px 7px; margin-bottom: 4px; font-size: 0.78rem; line-height: 1.35;
+    }
+    .msg-quote-name { font-weight: bold; font-size: 0.72rem; }
+    .msg-quote-text {
+      opacity: 0.85; overflow: hidden; word-break: break-word;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    }
+    #tg-log .msg-bubble { cursor: pointer; }
+    #tg-log .msg-bubble.dipilih-balas { outline: 3px dashed #000; outline-offset: 2px; }
     #tg-log .log-ok { color: #080; font-size: 0.72rem; font-family: monospace; }
     #tg-log .log-err { color: #c00; font-size: 0.72rem; font-family: monospace; }
     #tg-log .log-info { color: #555; font-size: 0.72rem; font-family: monospace; }
@@ -637,8 +649,16 @@
         <button id="btn-tg-chat-refresh" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
       </div>
       <div id="tg-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;background:#fafafa;"></div>
+      <!-- BAR BALAS MESEJ (muncul bila tap bubble) -->
+      <div id="tg-reply-bar" style="display:none;align-items:center;gap:8px;padding:6px 8px;border-top:1px solid #ccc;background:#f0f0f0;">
+        <button id="btn-tg-reply-batal" style="flex-shrink:0;width:30px;height:30px;border:2px solid #000;border-radius:50%;background:#fff;color:#000;font-weight:bold;cursor:pointer;padding:0;">✕</button><!-- ✕ di kiri supaya tak terlindung butang terapung -->
+        <div style="flex:1;min-width:0;border-left:3px solid #000;padding-left:8px;">
+          <div id="tg-reply-name" style="font-size:0.72rem;font-weight:bold;"></div>
+          <div id="tg-reply-text" style="font-size:0.75rem;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        </div>
+      </div>
       <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
-        <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej..." style="flex:1;font-size:0.85rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
+        <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej... (tap mesej untuk balas)" style="flex:1;font-size:0.85rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
         <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">➤</button>
       </div>
     </div>
@@ -6886,6 +6906,8 @@ async function openChat(dialog, cid, name) {
   // Unsubscribe chat sebelum
   if (_activeChatUnsub) { _activeChatUnsub(); _activeChatUnsub = null; }
   _hentiLangkahTg(); // progress balasan chat lama tak dibawa masuk
+  hentiTaipLive();   // status menaip chat lama dihentikan
+  batalBalasTg();    // mod balas chat lama dibatalkan
 
   // Baca mesej dari Firestore (worker dah sync)
   try {
@@ -6931,8 +6953,10 @@ function appendMsgBubbleFS(d) {
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble ' + (isOut ? 'msg-out' : 'msg-in');
   bubble.dataset.msgid = d.msgId || '';
+  bubble.setAttribute('data-teks', text || (d.hasMedia ? '[Media]' : ''));
   const mediaHtml = d.hasMedia ? '<div class="msg-file">📎 <span>[Media]</span></div>' : '';
-  bubble.innerHTML = (mediaHtml || '') + (text ? '<div>' + escHtml(text) + '</div>' : '') + '<div class="msg-time">' + time + '</div>';
+  const quoteHtml = d.replyTo ? htmlQuoteTg(d.replyTo.name, d.replyTo.text) : '';
+  bubble.innerHTML = quoteHtml + (mediaHtml || '') + (text ? '<div>' + escHtml(text) + '</div>' : '') + '<div class="msg-time">' + time + '</div>';
   const empty = body.querySelector('.msg-empty');
   if (empty) empty.remove();
   body.appendChild(bubble);
@@ -7153,12 +7177,114 @@ function gabungDenganLangkah(text, msgId) {
   return false;
 }
 
+// ─── BALAS MESEJ (reply/quote macam Telegram) ──
+// Tap mana-mana bubble → bar "Balas" muncul atas kotak taip. Tap ✕ / tap bubble sama = batal.
+var _tgBalas = null; // { id, text, name }
+
+function htmlQuoteTg(name, text) {
+  return '<div class="msg-quote"><div class="msg-quote-name">' + escHtml(name || '') + '</div>' +
+    '<div class="msg-quote-text">' + escHtml(text || '[Media]') + '</div></div>';
+}
+
+function _buangSorotBalasTg() {
+  document.querySelectorAll('#tg-log .dipilih-balas').forEach(function(el) { el.classList.remove('dipilih-balas'); });
+}
+
+function pilihBalasTg(b) {
+  _tgBalas = b;
+  document.getElementById('tg-reply-name').textContent = '↩ Balas ' + (b.name || '');
+  document.getElementById('tg-reply-text').textContent = b.text || '[Media]';
+  document.getElementById('tg-reply-bar').style.display = 'flex';
+  _buangSorotBalasTg();
+  var el = document.querySelector('#tg-log [data-msgid="' + b.id + '"]');
+  if (el) el.classList.add('dipilih-balas');
+  var inp = document.getElementById('tg-msg-input');
+  if (inp) inp.focus();
+}
+
+function batalBalasTg() {
+  _tgBalas = null;
+  var bar = document.getElementById('tg-reply-bar');
+  if (bar) bar.style.display = 'none';
+  _buangSorotBalasTg();
+}
+
+(function() {
+  var log = document.getElementById('tg-log');
+  if (log) log.addEventListener('click', function(e) {
+    var el = e.target;
+    while (el && el !== log && !(el.classList && el.classList.contains('msg-bubble'))) el = el.parentNode;
+    if (!el || el === log) return;
+    var id = el.dataset.msgid || '';
+    if (!id || id.indexOf('temp_') === 0) return; // mesej belum sampai Telegram
+    if (_tgBalas && _tgBalas.id === id) { batalBalasTg(); return; } // tap lagi = batal
+    var nama = el.classList.contains('msg-out') ? 'Anda'
+      : ((document.getElementById('tg-msg-chat-name') || {}).textContent || '');
+    var teks = el.getAttribute('data-teks') || el.getAttribute('data-langkah-teks') || '';
+    pilihBalasTg({ id: id, text: teks, name: nama });
+  });
+  var bb = document.getElementById('btn-tg-reply-batal');
+  if (bb) bb.addEventListener('click', batalBalasTg);
+  ['btn-tg-back-list', 'btn-tg-back-menu'].forEach(function(id) {
+    var b = document.getElementById(id);
+    if (b) b.addEventListener('click', batalBalasTg);
+  });
+})();
+
+// ─── STATUS MENAIP LIVE: buka textarea = menaip, tutup = berhenti ──
+var _taipLiveChat = null;
+var _taipLiveTimer = null;
+var _taipLiveRehat = 0; // elak status menaip hidup semula sejurus selepas hantar
+
+function _tulisTaipLive(aktif, chatId) {
+  if (!currentUser || !chatId) return;
+  db.doc('users/' + currentUser.uid + '/tg_worker/typing').set({
+    aktif: !!aktif,
+    chatId: String(chatId),
+    ts: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function(e) { console.warn('typing live err:', e); });
+}
+
+function mulaTaipLive() {
+  if (!activeChatId || !currentUser) return;
+  if (_taipLiveChat && _taipLiveChat !== activeChatId) hentiTaipLive();
+  if (_taipLiveTimer) return;
+  _taipLiveChat = activeChatId;
+  _tulisTaipLive(true, _taipLiveChat);
+  // Heartbeat setiap 5 saat — kalau Kindle tidur/tertutup, worker berhenti sendiri
+  _taipLiveTimer = setInterval(function() {
+    if (_taipLiveChat) _tulisTaipLive(true, _taipLiveChat);
+  }, 5000);
+}
+
+function hentiTaipLive() {
+  if (_taipLiveTimer) { clearInterval(_taipLiveTimer); _taipLiveTimer = null; }
+  if (_taipLiveChat) { _tulisTaipLive(false, _taipLiveChat); _taipLiveChat = null; }
+}
+
+(function() {
+  var inp = document.getElementById('tg-msg-input');
+  if (inp) {
+    inp.addEventListener('focus', function() { if (Date.now() >= _taipLiveRehat) mulaTaipLive(); });
+    inp.addEventListener('input', function() { if (inp.value.trim()) mulaTaipLive(); });
+    inp.addEventListener('blur', hentiTaipLive);
+  }
+  ['btn-tg-back-list', 'btn-tg-back-menu'].forEach(function(id) {
+    var b = document.getElementById(id);
+    if (b) b.addEventListener('click', hentiTaipLive);
+  });
+  document.addEventListener('visibilitychange', function() { if (document.hidden) hentiTaipLive(); });
+})();
+
 // ─── Send message via worker outbox ──────────────────────
 async function sendMessage() {
   if (!activeChatId || !currentUser) return;
   const input = document.getElementById('tg-msg-input');
   const text = input.value.trim();
   if (!text) return;
+  // Hentikan status menaip live — worker uruskan bluetick + menaip 3 saat sendiri
+  hentiTaipLive();
+  _taipLiveRehat = Date.now() + 1500;
   document.getElementById('btn-tg-send').disabled = true;
   input.value = '';
 
@@ -7167,9 +7293,12 @@ async function sendMessage() {
   const tempBubble = document.createElement('div');
   tempBubble.className = 'msg-bubble msg-out';
   tempBubble.dataset.msgid = tempId;
+  const balas = _tgBalas; // mesej yang sedang dibalas (kalau ada)
+  batalBalasTg();
   tempBubble.setAttribute('data-langkah', '1');
   tempBubble.setAttribute('data-langkah-teks', text);
-  tempBubble.innerHTML = '<div>' + escHtml(text) + '</div>' +
+  tempBubble.innerHTML = (balas ? htmlQuoteTg(balas.name, balas.text) : '') +
+    '<div>' + escHtml(text) + '</div>' +
     '<div class="tg-langkah">' +
       '<div class="tgl-1">… 1. Bluetick dihantar</div>' +
       '<div class="tgl-2">○ 2. Status menaip (3 saat)</div>' +
@@ -7186,6 +7315,7 @@ async function sendMessage() {
     const ref = await db.collection('users/' + currentUser.uid + '/tg_outbox').add({
       chatId: activeChatId,
       text: text,
+      replyToId: balas ? balas.id : null,
       status: 'pending',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -7197,6 +7327,7 @@ async function sendMessage() {
     tempBubble.querySelector('.msg-time').textContent = '❌ ' + err.message;
     toast('Gagal hantar: ' + err.message);
     input.value = text;
+    if (balas) pilihBalasTg(balas); // pulihkan mod balas supaya boleh cuba lagi
   }
   document.getElementById('btn-tg-send').disabled = false;
   input.focus();
