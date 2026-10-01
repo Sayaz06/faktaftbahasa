@@ -635,6 +635,7 @@
   <div id="screen-telegram" class="screen" style="display:none;flex-direction:column;height:100vh;padding:0;box-sizing:border-box;">
     <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
       <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.72rem;">TELEGRAM</div>
+      <button id="btn-tg-login" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Login Telegram">🔑</button>
       <button id="btn-tg-sync-now" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync semula mesej dari Telegram">⬇️</button>
       <button id="btn-tg-reload" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
 
@@ -663,6 +664,36 @@
       </div>
     </div>
     <button id="btn-tg-back-menu" class="btn" style="margin:8px;font-size:0.9rem;padding:10px;">← Menu</button>
+  </div>
+
+  <!-- ══ LOGIN TELEGRAM DARI KINDLE (worker Railway buat login, kod lalu Firebase) ══ -->
+  <div id="tg-login-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:20001;flex-direction:column;padding:16px;box-sizing:border-box;overflow-y:auto;">
+    <div style="max-width:380px;width:100%;margin:0 auto;">
+      <div style="font-size:1.1rem;font-weight:bold;text-align:center;margin:8px 0 4px;">🔑 Login Telegram</div>
+      <div style="font-size:0.72rem;color:#555;text-align:center;margin-bottom:12px;">Login dibuat oleh worker di Railway. Kindle hanya hantar kod.</div>
+      <div id="tgl-status" style="border:2px solid #000;border-radius:8px;padding:10px;font-size:0.88rem;line-height:1.5;white-space:pre-wrap;margin-bottom:12px;">Memuatkan status worker...</div>
+
+      <div id="tgl-sek-mula" style="display:none;">
+        <button id="btn-tgl-mula" class="btn btn-primary">Mula Login (minta kod)</button>
+      </div>
+
+      <div id="tgl-sek-kod" style="display:none;">
+        <input id="tgl-kod" class="pin-input" type="text" inputmode="numeric" maxlength="8" placeholder="Kod Telegram" autocomplete="off">
+        <button id="btn-tgl-kod" class="btn btn-primary">Hantar Kod</button>
+      </div>
+
+      <div id="tgl-sek-pass" style="display:none;">
+        <input id="tgl-pass" type="password" placeholder="Kata laluan 2FA" autocomplete="off" style="width:100%;padding:12px;font-size:1rem;border:2px solid #000;border-radius:8px;box-sizing:border-box;margin:8px 0;">
+        <button id="btn-tgl-pass" class="btn btn-primary">Hantar Kata Laluan</button>
+      </div>
+
+      <div id="tgl-sek-ok" style="display:none;">
+        <button id="btn-tgl-relogin" class="btn" style="font-size:0.85rem;">Paksa Login Semula</button>
+        <div style="font-size:0.68rem;color:#555;text-align:center;margin-top:4px;">Guna hanya kalau Telegram bermasalah / nak tukar sesi.</div>
+      </div>
+
+      <button id="btn-tgl-tutup" class="btn" style="margin-top:16px;">Tutup</button>
+    </div>
   </div>
 
   <!-- SCREEN: MAIN MOTIVATION -->
@@ -7176,6 +7207,106 @@ function gabungDenganLangkah(text, msgId) {
   }
   return false;
 }
+
+// ─── LOGIN TELEGRAM DARI KINDLE ──
+// Worker (Railway) yang login ke Telegram. Kindle cuma tulis arahan/kod ke
+// users/{uid}/tg_worker/login dan baca status dari users/{uid}/tg_worker/status.
+var _tgLoginUnsub = null, _tgStatusUnsub = null;
+var _tgLoginData = {}, _tgWorkerState = '';
+
+function _tgLoginRef() { return db.doc('users/' + currentUser.uid + '/tg_worker/login'); }
+function _tgStatusRef() { return db.doc('users/' + currentUser.uid + '/tg_worker/status'); }
+function _tgTunjuk(id, ya) { var el = document.getElementById(id); if (el) el.style.display = ya ? 'block' : 'none'; }
+
+function renderTgLogin() {
+  var d = _tgLoginData || {};
+  var tahap = d.tahap || '';
+  var st = _tgWorkerState || '';
+  var teks = '';
+  _tgTunjuk('tgl-sek-mula', false); _tgTunjuk('tgl-sek-kod', false);
+  _tgTunjuk('tgl-sek-pass', false); _tgTunjuk('tgl-sek-ok', false);
+
+  if (tahap === 'tunggu_kod') {
+    _tgTunjuk('tgl-sek-kod', true);
+    teks = '📩 Telegram dah hantar kod ke app Telegram (atau SMS) anda.\nMasukkan kod tu di bawah.';
+  } else if (tahap === 'tunggu_password') {
+    _tgTunjuk('tgl-sek-pass', true);
+    teks = '🔒 Akaun ada pengesahan 2 langkah. Masukkan kata laluan 2FA.' + (d.hint ? '\nPetunjuk: ' + d.hint : '');
+  } else if (st === 'need_login' || (tahap === 'perlu_login' && st !== 'running')) {
+    _tgTunjuk('tgl-sek-mula', true);
+    teks = d.mula ? '⏳ Meminta kod dari Telegram...' : '⚠️ Worker belum login ke Telegram.\nTekan "Mula Login" untuk minta kod.';
+  } else if (st === 'running' || st === 'connected') {
+    _tgTunjuk('tgl-sek-ok', true);
+    teks = '✅ Telegram dah login. Worker sedang berjalan' + (d.akaun ? ' sebagai ' + d.akaun : '') + '.';
+  } else if (st) {
+    teks = 'Status worker: ' + st + '\nKalau lama begini, semak worker di Railway.';
+  } else {
+    teks = 'Tiada status worker. Pastikan worker di Railway sedang jalan.';
+  }
+  if (d.mesej) teks += '\n\n⚠️ ' + d.mesej;
+  var el = document.getElementById('tgl-status');
+  if (el) el.textContent = teks;
+}
+
+function bukaTgLogin() {
+  if (!currentUser) return;
+  document.getElementById('tg-login-overlay').style.display = 'flex';
+  if (!_tgLoginUnsub) _tgLoginUnsub = _tgLoginRef().onSnapshot(function(s) {
+    _tgLoginData = s.exists ? s.data() : {}; renderTgLogin();
+  }, function() {});
+  if (!_tgStatusUnsub) _tgStatusUnsub = _tgStatusRef().onSnapshot(function(s) {
+    _tgWorkerState = s.exists ? (s.data().state || '') : ''; renderTgLogin();
+  }, function() {});
+}
+
+function tutupTgLogin() {
+  document.getElementById('tg-login-overlay').style.display = 'none';
+  if (_tgLoginUnsub) { _tgLoginUnsub(); _tgLoginUnsub = null; }
+  if (_tgStatusUnsub) { _tgStatusUnsub(); _tgStatusUnsub = null; }
+  document.getElementById('tgl-kod').value = '';
+  document.getElementById('tgl-pass').value = '';
+}
+
+(function() {
+  function tulis(data) {
+    if (!currentUser) return;
+    _tgLoginRef().set(data, { merge: true }).catch(function(e) { toast('Gagal: ' + e.message); });
+  }
+  document.getElementById('btn-tg-login').addEventListener('click', bukaTgLogin);
+  document.getElementById('btn-tgl-tutup').addEventListener('click', tutupTgLogin);
+  document.getElementById('btn-tgl-mula').addEventListener('click', function() {
+    tulis({ mula: true, mesej: '' });
+  });
+  document.getElementById('btn-tgl-kod').addEventListener('click', function() {
+    var v = document.getElementById('tgl-kod').value.replace(/\D/g, '');
+    if (v.length < 4) { toast('Kod tak lengkap'); return; }
+    document.getElementById('tgl-kod').value = '';
+    tulis({ kod: v });
+  });
+  document.getElementById('btn-tgl-pass').addEventListener('click', function() {
+    var v = document.getElementById('tgl-pass').value;
+    if (!v) { toast('Masukkan kata laluan'); return; }
+    document.getElementById('tgl-pass').value = '';
+    tulis({ password: v });
+  });
+  document.getElementById('tgl-kod').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('btn-tgl-kod').click();
+  });
+  document.getElementById('tgl-pass').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('btn-tgl-pass').click();
+  });
+  document.getElementById('btn-tgl-relogin').addEventListener('click', function() {
+    if (!confirm('Login semula akan putuskan Telegram sekarang dan minta kod baru. Teruskan?')) return;
+    tulis({ mintaRelogin: true });
+  });
+  // Bila buka skrin Telegram & worker belum login → terus buka skrin login
+  document.getElementById('btn-go-telegram').addEventListener('click', function() {
+    if (!currentUser) return;
+    _tgStatusRef().get().then(function(s) {
+      if (s.exists && s.data().state === 'need_login') bukaTgLogin();
+    }).catch(function() {});
+  });
+})();
 
 // ─── BALAS MESEJ (reply/quote macam Telegram) ──
 // Tap mana-mana bubble → bar "Balas" muncul atas kotak taip. Tap ✕ / tap bubble sama = batal.
