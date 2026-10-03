@@ -5320,7 +5320,13 @@ function hentiTaipLive() {
     var b = document.getElementById(id);
     if (b) b.addEventListener('click', hentiTaipLive);
   });
-  document.addEventListener('visibilitychange', function() { if (document.hidden) hentiTaipLive(); });
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        hentiTaipLive();
+        _hentiHeartbeat();
+      }
+    });
+
 })();
 
 // ─── Send message via worker outbox ──────────────────────
@@ -5436,16 +5442,40 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       updateTgNotifBadge();
     }
 
+    // ── Heartbeat: kindle_presence ──────────────────────────
+    var _hbTimer = null;
+    function _mulaHeartbeat() {
+      if (!currentUser) return;
+      if (_hbTimer) return; // dah berjalan
+      var _tulis = function() {
+        db.doc('users/' + currentUser.uid + '/tg_worker/kindle_presence')
+          .set({ ts: firebase.firestore.FieldValue.serverTimestamp() })
+          .catch(function(e) { console.warn('hb err:', e); });
+      };
+      _tulis(); // terus tulis sekarang
+      _hbTimer = setInterval(_tulis, 10000);
+    }
+    function _hentiHeartbeat() {
+      if (_hbTimer) { clearInterval(_hbTimer); _hbTimer = null; }
+      if (!currentUser) return;
+      // Tulis ts=null supaya worker tahu serta-merta
+      db.doc('users/' + currentUser.uid + '/tg_worker/kindle_presence')
+        .set({ ts: null })
+        .catch(function(e) { console.warn('hb stop err:', e); });
+    }
+
     document.getElementById('btn-go-telegram').onclick = async function() {
       if (!currentUser) return;
       // Terus buka Telegram screen — baca dari Firestore (worker)
       _showScreen('screen-telegram');
+      _mulaHeartbeat();
       if (allDialogs.length > 0) {
         renderChatList(allDialogs);
       } else {
         loadDialogs();
       }
     };
+
 
     // Butang "Hantar Kod OTP" — assign connectTelegram
     document.getElementById('btn-tg-setup-send-code').onclick = function() {
@@ -5458,8 +5488,10 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     };
 
     document.getElementById('btn-tg-back-menu').addEventListener('click', function() {
+      _hentiHeartbeat();
       _showScreen('screen-menu');
     });
+
     document.getElementById('btn-tg-reload').onclick = function() { loadDialogs(); };
     document.getElementById('btn-tg-sync-now').onclick = function() {
       if (!currentUser) return;
@@ -6384,6 +6416,14 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var lbl = document.getElementById('tg-refresh-label');
       if (lbl) lbl.textContent = '...';
       if (!currentUser) { if (lbl) lbl.textContent = 'semak'; return; }
+
+      // Wake worker selama 5 minit untuk sync dialogs
+      db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
+        .set({
+          expiry: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+          requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).catch(function(e) { console.warn('wake cmd err:', e); });
+
       var lastReadTs;
       try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
       db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
