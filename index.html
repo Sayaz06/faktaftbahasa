@@ -6624,9 +6624,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
             snap.docs.forEach(function(d) { batch.delete(d.ref); });
             return batch.commit();
           }).then(function() {
-            // 2) Wake worker + hantar sync_one
+            // 2) Wake worker + hantar sync_one (expiry 30s — cukup untuk sync, lepas tu offline)
             db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
-              .set({ expiry: new Date(Date.now() + 2 * 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+              .set({ expiry: new Date(Date.now() + 30 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
               .catch(function(){});
             return db.doc('users/' + currentUser.uid + '/tg_worker/cmd')
               .set({ action: 'sync_one', chatId: fokus.chatId, requestedAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -6634,6 +6634,10 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
             // 3) Tunggu worker selesai write BARU compare
             if (lbl) lbl.textContent = '⏳';
             setTimeout(function() {
+              // 4) Paksa worker offline selepas compare
+              db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
+                .set({ expiry: new Date(Date.now() - 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+                .catch(function(){});
               var lastReadTs;
               try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
               db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
