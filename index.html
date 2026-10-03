@@ -677,7 +677,9 @@
       <button id="btn-tg-login" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Login Telegram">🔑</button>
       <button id="btn-tg-privasi" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Mod privasi: teks chat kecil &amp; kabur">👁</button>
       <button id="btn-tg-sync-now" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync semula mesej dari Telegram">⬇️</button>
+      <button id="btn-tg-sync-one" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync satu chat (pilih dari notif)">Nt</button>
       <button id="btn-tg-reload" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
+
 
     </div>
     <div id="tg-chat-list" style="flex:1;overflow-y:auto;padding:8px;">
@@ -688,6 +690,8 @@
         <button id="btn-tg-back-list" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0;">←</button>
         <span id="tg-msg-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
         <button id="btn-tg-chat-refresh" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
+        <button id="btn-tg-chat-sync-one" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync mesej chat ini sahaja">Nt</button>
+
       </div>
       <div id="tg-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;background:#fafafa;"></div>
       <!-- BAR BALAS MESEJ (muncul bila tap bubble) -->
@@ -5512,6 +5516,73 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           btn.disabled = false;
           console.warn('sync cmd err:', e);
         });
+    };
+
+    // ── Sync satu chat sahaja (btn Nt dalam list & chat view) ──
+    function _jalanSyncOne(chatId, chatName, btnEl, labelAsal) {
+      if (!currentUser || !chatId) return;
+      if (btnEl) { btnEl.textContent = '⏳'; btnEl.disabled = true; }
+      db.doc('users/' + currentUser.uid + '/tg_worker/cmd')
+        .set({
+          action: 'sync_one',
+          chatId: chatId,
+          requestedAt: firebase.firestore.FieldValue.serverTimestamp()
+        })
+        .then(function() {
+          setTimeout(function() {
+            if (btnEl) { btnEl.textContent = labelAsal || 'Nt'; btnEl.disabled = false; }
+            // Reload mesej chat semasa kalau sama
+            if (activeChatId === chatId) openChat(null, chatId, chatName || chatId);
+          }, 6000);
+        })
+        .catch(function(e) {
+          if (btnEl) { btnEl.textContent = labelAsal || 'Nt'; btnEl.disabled = false; }
+          console.warn('sync_one err:', e);
+        });
+    }
+
+    // Btn Nt dalam chat list → buka popup pilih contact dari notif
+    document.getElementById('btn-tg-sync-one').onclick = function() {
+      if (!currentUser) return;
+      var btn = this;
+      // Kalau ada notif dalam senarai → tunjuk pilihan
+      if (_tgNotifChats && _tgNotifChats.length) {
+        refreshTgNotif();
+        var overlay = document.getElementById('tg-notif-overlay');
+        var list = document.getElementById('tg-notif-list');
+        list.innerHTML = '<div style="font-size:0.75rem;color:#555;padding:4px 0 8px;">Pilih chat untuk sync mesej terbaru:</div>';
+        _tgNotifChats.forEach(function(c) {
+          var div = document.createElement('div');
+          div.className = 'tg-notif-item';
+          div.style.cursor = 'pointer';
+          div.innerHTML = '<div class="tg-notif-from">💬 ' + c.chatName + '</div>' +
+            '<div class="tg-notif-msg">' + (c.lastMsg ? c.lastMsg.substring(0,60) : '') + '</div>';
+          div.addEventListener('click', function() {
+            overlay.className = '';
+            _jalanSyncOne(c.chatId, c.chatName, btn, 'Nt');
+          });
+          list.appendChild(div);
+        });
+        overlay.className = 'active';
+      } else {
+        // Tiada notif — sync chat aktif kalau ada, atau tunjuk mesej
+        if (activeChatId) {
+          var chatName = document.getElementById('tg-msg-chat-name') ?
+            document.getElementById('tg-msg-chat-name').textContent : activeChatId;
+          _jalanSyncOne(activeChatId, chatName, btn, 'Nt');
+        } else {
+          btn.textContent = '–';
+          setTimeout(function() { btn.textContent = 'Nt'; }, 1500);
+        }
+      }
+    };
+
+    // Btn Nt dalam chat view → sync chat semasa terus
+    document.getElementById('btn-tg-chat-sync-one').onclick = function() {
+      if (!activeChatId) return;
+      var chatName = document.getElementById('tg-msg-chat-name') ?
+        document.getElementById('tg-msg-chat-name').textContent : activeChatId;
+      _jalanSyncOne(activeChatId, chatName, this, 'Nt');
     };
     document.getElementById('btn-tg-send').onclick = function() { sendMessage(); };
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
