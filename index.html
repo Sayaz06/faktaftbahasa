@@ -315,15 +315,44 @@
       max-width: 160px;
     }
     #tg-notif-badge.active { display: block; }
-#btn-tg-refresh {
-  display: none;
-  position: fixed; top: 52px; left: 8px; z-index: 99999;
-  background: #eee; color: #333;
-  border: 1px solid #aaa; border-radius: 6px;
-  padding: 4px 10px; font-size: 0.68rem; font-weight: bold;
-  cursor: pointer; white-space: nowrap;
-}
+    #btn-tg-refresh {
+      display: none;
+      position: fixed; top: 44px; left: 8px; z-index: 99999;
+      background: #eee; color: #333;
+      border: 1px solid #aaa; border-radius: 6px;
+      padding: 4px 10px; font-size: 0.68rem; font-weight: bold;
+      cursor: pointer; white-space: nowrap;
+    }
     #btn-tg-refresh:active { background: #ccc; }
+    #btn-tg-pilih-nt {
+      display: none;
+      position: fixed; top: 72px; left: 8px; z-index: 99999;
+      background: #fff; color: #0088cc;
+      border: 2px solid #0088cc; border-radius: 6px;
+      padding: 4px 10px; font-size: 0.68rem; font-weight: bold;
+      cursor: pointer; white-space: nowrap;
+    }
+    #btn-tg-pilih-nt:active { background: #e0f0ff; }
+    #tg-pilih-nt-overlay {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5); z-index: 10002;
+      align-items: center; justify-content: center;
+    }
+    #tg-pilih-nt-overlay.active { display: flex; }
+    #tg-pilih-nt-box {
+      background: #fff; border: 3px solid #0088cc; border-radius: 10px;
+      padding: 16px; width: 90%; max-width: 340px;
+    }
+    #tg-pilih-nt-list { max-height: 260px; overflow-y: auto; margin: 10px 0; }
+    .tg-pilih-nt-item {
+      border: 1px solid #ddd; border-radius: 6px;
+      padding: 8px 10px; margin-bottom: 6px;
+      font-size: 0.82rem; cursor: pointer;
+    }
+    .tg-pilih-nt-item.terpilih { border-color: #0088cc; background: #e8f4ff; }
+    .tg-pilih-nt-nama { font-weight: bold; font-size: 0.8rem; color: #0088cc; }
+    .tg-pilih-nt-semasa { font-size: 0.72rem; color: #555; margin-top: 2px; }
     #tg-notif-overlay {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%;
@@ -1114,6 +1143,23 @@
   <!-- ══ TG NOTIFICATION BADGE ══ -->
   <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span></div>
   <button id="btn-tg-refresh">🔄 <span id="tg-refresh-label">semak</span></button>
+  <button id="btn-tg-pilih-nt">📌 Pilih Nt</button>
+  <!-- ══ PILIH NT OVERLAY ══ -->
+  <div id="tg-pilih-nt-overlay">
+    <div id="tg-pilih-nt-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid #ccc;padding-bottom:8px;">
+        <div style="font-size:0.85rem;font-weight:bold;color:#0088cc;">📌 Pilih Chat Nt</div>
+        <button id="btn-tg-pilih-nt-tutup" style="width:28px;height:28px;border-radius:50%;border:2px solid #000;background:#fff;font-size:1rem;font-weight:bold;cursor:pointer;">×</button>
+      </div>
+      <div style="font-size:0.75rem;color:#555;margin-bottom:6px;">Pilih satu chat — refresh 🔄 akan sync chat ini sahaja</div>
+      <div id="tg-pilih-nt-semasa" style="font-size:0.72rem;color:#0088cc;margin-bottom:6px;"></div>
+      <div id="tg-pilih-nt-list"></div>
+      <div style="display:flex;gap:6px;margin-top:8px;">
+        <button id="btn-tg-pilih-nt-clear" style="flex:1;padding:8px;background:#fff;color:#e00;border:2px solid #e00;border-radius:6px;font-size:0.82rem;cursor:pointer;">✕ Kosongkan</button>
+        <button id="btn-tg-pilih-nt-tutup2" style="flex:1;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;">✓ Simpan</button>
+      </div>
+    </div>
+  </div>
   <!-- ══ TG NOTIFICATION OVERLAY ══ -->
   <div id="tg-notif-overlay">
     <div id="tg-notif-box">
@@ -1124,7 +1170,6 @@
       <div id="tg-notif-list"></div>
       <div style="display:flex;gap:6px;margin-top:8px;">
         <button id="btn-tg-notif-semua-baca" style="flex:1;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">✓ Semua Dibaca</button>
-        <button id="btn-tg-notif-choose-nt" style="padding:8px 12px;background:#fff;color:#000;border:2px solid #000;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">Nt</button>
         <button id="btn-tg-notif-refresh2" style="padding:8px 12px;background:#fff;color:#000;border:2px solid #000;border-radius:6px;font-size:0.85rem;cursor:pointer;">🔄</button>
       </div>
     </div>
@@ -6439,10 +6484,31 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       _tgUnsubs = {}; _tgCache = {}; _tgChatMeta = {};
     }
 
+    // ── Nt Focus: simpan/baca chat fokus dari Firestore ──────────
+    var _ntFocus = null; // { chatId, chatName }
+    function _muatNtFocus(cb) {
+      if (!currentUser) return;
+      db.doc('users/' + currentUser.uid + '/tg_worker/nt_focus').get().then(function(snap) {
+        _ntFocus = (snap.exists && snap.data().chatId) ? snap.data() : null;
+        if (cb) cb(_ntFocus);
+      }).catch(function() { if (cb) cb(null); });
+    }
+    function _simpanNtFocus(chatId, chatName) {
+      if (!currentUser) return;
+      _ntFocus = chatId ? { chatId: chatId, chatName: chatName } : null;
+      var ref = db.doc('users/' + currentUser.uid + '/tg_worker/nt_focus');
+      if (chatId) {
+        ref.set({ chatId: chatId, chatName: chatName, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      } else {
+        ref.delete().catch(function(){});
+      }
+    }
+
     function updateTgNotifBadge() {
       var badge = document.getElementById('tg-notif-badge');
       var countEl = document.getElementById('tg-notif-count');
       var refreshBtn = document.getElementById('btn-tg-refresh');
+      var pilihNtBtn = document.getElementById('btn-tg-pilih-nt');
       if (!badge) return;
       var total = _tgNotifChats.reduce(function(s, c) { return s + c.count; }, 0);
       // Sembunyikan dalam screen Telegram
@@ -6456,6 +6522,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         if (countEl) countEl.textContent = '';
       }
       if (refreshBtn) refreshBtn.style.display = inTg ? 'none' : 'block';
+      // Pilih Nt: sorok bila ada badge, tunjuk bila tiada badge dan bukan dalam Telegram
+      if (pilihNtBtn) pilihNtBtn.style.display = (total > 0 || inTg) ? 'none' : 'block';
     }
 
     function openTgNotifOverlay() {
@@ -6484,39 +6552,126 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       openTgNotifOverlay();
     });
 
+    // ── Buka overlay Pilih Nt ─────────────────────────────────
+    function _bukaOverlayPilihNt() {
+      if (!currentUser) return;
+      var overlay = document.getElementById('tg-pilih-nt-overlay');
+      var list = document.getElementById('tg-pilih-nt-list');
+      var semasaEl = document.getElementById('tg-pilih-nt-semasa');
+      list.innerHTML = '<div style="font-size:0.8rem;color:#aaa;padding:8px 0;">Memuatkan...</div>';
+      overlay.className = 'active';
+      // Tunjuk chat fokus semasa
+      if (semasaEl) semasaEl.textContent = _ntFocus ? ('Fokus semasa: ' + _ntFocus.chatName) : 'Tiada fokus dipilih';
+      // Baca senarai dialog dari Firestore
+      db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
+        list.innerHTML = '';
+        if (!snap.exists || !snap.data().list || !snap.data().list.length) {
+          list.innerHTML = '<div style="font-size:0.8rem;color:#aaa;padding:8px 0;">Tiada chat. Buka Telegram dulu.</div>';
+          return;
+        }
+        snap.data().list.forEach(function(dlg) {
+          var div = document.createElement('div');
+          div.className = 'tg-pilih-nt-item' + (_ntFocus && _ntFocus.chatId === dlg.cid ? ' terpilih' : '');
+          div.innerHTML = '<div class="tg-pilih-nt-nama">' + (dlg.name || dlg.cid) + '</div>' +
+            '<div class="tg-pilih-nt-semasa">' + (dlg.lastMsg ? dlg.lastMsg.substring(0,50) : '–') + '</div>';
+          div.addEventListener('click', function() {
+            // Deselect kalau tekan yang sama
+            if (_ntFocus && _ntFocus.chatId === dlg.cid) {
+              _simpanNtFocus(null, null);
+              div.classList.remove('terpilih');
+              if (semasaEl) semasaEl.textContent = 'Tiada fokus dipilih';
+            } else {
+              _simpanNtFocus(dlg.cid, dlg.name || dlg.cid);
+              list.querySelectorAll('.tg-pilih-nt-item').forEach(function(el) { el.classList.remove('terpilih'); });
+              div.classList.add('terpilih');
+              if (semasaEl) semasaEl.textContent = 'Fokus semasa: ' + (dlg.name || dlg.cid);
+            }
+          });
+          list.appendChild(div);
+        });
+      }).catch(function(e) {
+        list.innerHTML = '<div style="color:red;font-size:0.8rem;">Gagal muat senarai.</div>';
+      });
+    }
+
+    document.getElementById('btn-tg-pilih-nt').addEventListener('click', function() {
+      _muatNtFocus(function() { _bukaOverlayPilihNt(); });
+    });
+    document.getElementById('btn-tg-pilih-nt-tutup').addEventListener('click', function() {
+      document.getElementById('tg-pilih-nt-overlay').className = '';
+    });
+    document.getElementById('btn-tg-pilih-nt-tutup2').addEventListener('click', function() {
+      document.getElementById('tg-pilih-nt-overlay').className = '';
+    });
+    document.getElementById('btn-tg-pilih-nt-clear').addEventListener('click', function() {
+      _simpanNtFocus(null, null);
+      document.getElementById('tg-pilih-nt-overlay').className = '';
+    });
+
     document.getElementById('btn-tg-refresh').addEventListener('click', function() {
       var lbl = document.getElementById('tg-refresh-label');
       if (lbl) lbl.textContent = '...';
       if (!currentUser) { if (lbl) lbl.textContent = 'semak'; return; }
 
-      // Wake worker selama 5 minit untuk sync dialogs
-      db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
-        .set({
-          expiry: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-          requestedAt: firebase.firestore.FieldValue.serverTimestamp()
-        }).catch(function(e) { console.warn('wake cmd err:', e); });
+      // Kalau ada nt_focus → padam mesej lama, sync_one dulu, BARU compare
+      _muatNtFocus(function(fokus) {
+        if (fokus && fokus.chatId) {
+          if (lbl) lbl.textContent = '⏳';
+          // 1) Padam mesej lama chat fokus dari Firestore
+          var msgsRef = db.collection('users/' + currentUser.uid + '/tg_messages/' + fokus.chatId + '/msgs');
+          msgsRef.get().then(function(snap) {
+            var batch = db.batch();
+            snap.docs.forEach(function(d) { batch.delete(d.ref); });
+            return batch.commit();
+          }).then(function() {
+            // 2) Wake worker + hantar sync_one
+            db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
+              .set({ expiry: new Date(Date.now() + 5 * 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+              .catch(function(){});
+            return db.doc('users/' + currentUser.uid + '/tg_worker/cmd')
+              .set({ action: 'sync_one', chatId: fokus.chatId, requestedAt: firebase.firestore.FieldValue.serverTimestamp() });
+          }).then(function() {
+            // 3) Tunggu worker selesai write BARU compare
+            if (lbl) lbl.textContent = '⏳';
+            setTimeout(function() {
+              var lastReadTs;
+              try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
+              db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
+                if (!snap.exists || !snap.data().list) { if (lbl) lbl.textContent = '; 0'; return; }
+                _tgNotifChats = [];
+                snap.data().list.forEach(function(dlg) {
+                  if (!dlg.lastMsgAt || dlg.lastMsgIsOut) return;
+                  if (new Date(dlg.lastMsgAt).getTime() > lastReadTs)
+                    _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
+                });
+                var total = _tgNotifChats.reduce(function(s,c){ return s+c.count; }, 0);
+                if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
+                updateTgNotifBadge();
+              }).catch(function(e){ if (lbl) lbl.textContent = 'err'; });
+            }, 8000);
+          }).catch(function(e) { if (lbl) lbl.textContent = 'err'; console.warn(e); });
 
-      var lastReadTs;
-      try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
-      db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
-        if (!snap.exists || !snap.data().list) {
-          if (lbl) lbl.textContent = '; 0';
-          return;
+        } else {
+          // Tiada fokus — buat semak biasa (tanpa sync)
+          db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
+            .set({ expiry: new Date(Date.now() + 5 * 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+            .catch(function(){});
+          var lastReadTs;
+          try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
+          db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
+            if (!snap.exists || !snap.data().list) { if (lbl) lbl.textContent = '; 0'; return; }
+            _tgNotifChats = [];
+            snap.data().list.forEach(function(dlg) {
+              if (!dlg.lastMsgAt || dlg.lastMsgIsOut) return;
+              if (new Date(dlg.lastMsgAt).getTime() > lastReadTs)
+                _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
+            });
+            var total = _tgNotifChats.reduce(function(s,c){ return s+c.count; }, 0);
+            if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
+            updateTgNotifBadge();
+          }).catch(function(e){ if (lbl) lbl.textContent = 'err'; console.warn(e); });
         }
-        var list = snap.data().list;
-        _tgNotifChats = [];
-        list.forEach(function(dlg) {
-          if (!dlg.lastMsgAt) return;
-          if (dlg.lastMsgIsOut) return; // skip mesej yg kita hantar
-          var msgTs = new Date(dlg.lastMsgAt).getTime();
-          if (msgTs > lastReadTs) {
-            _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
-          }
-        });
-        var total = _tgNotifChats.reduce(function(s, c) { return s + c.count; }, 0);
-        if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
-        updateTgNotifBadge();
-      }).catch(function(e){ if (lbl) lbl.textContent = 'err'; console.warn(e); });
+      });
     });
 
     // (auto-refresh touchstart dibuang — guna button 🔄 untuk semak manual)
