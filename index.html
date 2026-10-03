@@ -4922,8 +4922,10 @@ async function openChat(dialog, cid, name) {
             // Mesej keluar yang sepadan dengan bubble progress → jangan papar dua kali
             if (d.isOut && gabungDenganLangkah(d.text || '', d.msgId)) return;
             appendMsgBubbleFS(d);
-            // Mesej masuk semasa chat terbuka → terus bluetick
-            if (!d.isOut && activeChatId === cid) _tgHantarBaca(cid, true);
+            // Mesej masuk semasa chat terbuka & skrin chat sedang dilihat → terus bluetick
+            var _mv = document.getElementById('tg-msg-view');
+            var _chatDilihat = _mv && _mv.style.display !== 'none' && !document.hidden;
+            if (!d.isOut && activeChatId === cid && _chatDilihat) _tgHantarBaca(cid, true);
           }
         }
       });
@@ -5092,9 +5094,19 @@ function setLangkahTg(bubble, n, simbol, teks) {
 
 // ─── BLUETICK TERUS: buka chat / mesej masuk semasa chat terbuka → worker tanda baca ──
 var _tgBacaTimer = null;
+// Tutup chat sepenuhnya: berhenti dengar mesej baru → tiada lagi bluetick untuk chat ni
+function _tgTutupChat() {
+  clearTimeout(_tgBacaTimer);
+  _tgBacaTimer = null;
+  if (_activeChatUnsub) { _activeChatUnsub(); _activeChatUnsub = null; }
+  if (typeof hentiTaipLive === 'function') hentiTaipLive();
+  activeChatId = null;
+}
 function _tgHantarBaca(cid, tangguh) {
   if (!currentUser || !cid) return;
   var tulis = function() {
+    // Chat dah ditutup / bertukar sebelum sempat hantar → jangan bluetick
+    if (activeChatId !== cid) return;
     db.doc('users/' + currentUser.uid + '/tg_worker/read_cmd').set({
       chatId: String(cid),
       reqId: Date.now(),
@@ -5543,6 +5555,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     };
 
     document.getElementById('btn-tg-back-menu').addEventListener('click', function() {
+      _tgTutupChat();
+      var mv = document.getElementById('tg-msg-view');
+      var cl = document.getElementById('tg-chat-list');
+      var tb = document.getElementById('tg-topbar');
+      if (mv) mv.style.display = 'none';
+      if (cl) cl.style.display = '';
+      if (tb) tb.style.display = 'flex';
       _hentiHeartbeat();
       _showScreen('screen-menu');
     });
@@ -5607,6 +5626,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     document.getElementById('btn-tg-chat-reload').onclick = _tgReloadChat;
     document.getElementById('btn-tg-send').onclick = function() { sendMessage(); };
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
+      _tgTutupChat(); // berhenti dengar chat ni → mesej baru takkan di-bluetick
       var mv = document.getElementById('tg-msg-view');
       var cl = document.getElementById('tg-chat-list');
       var tb = document.getElementById('tg-topbar');
