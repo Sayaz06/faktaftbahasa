@@ -668,15 +668,15 @@
     <div class="sub" id="menu-user">—</div>
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
-    <button id="btn-go-gotick" class="btn">Go-Tick ✓</button>
+    <button id="btn-go-gotick" class="btn">Go-Tick</button>
     <button id="btn-go-main-motivation" class="btn">[ MAIN MOTIVATION ]</button>
     <button id="btn-go-reminder-list" class="btn">[ REMINDER ]</button>
     <button id="btn-go-other-motivation" class="btn">[ OTHER MOTIVATION ]</button>
     <button id="btn-go-perjanjian" class="btn">[ LACI PERJANJIAN ]</button>
-    <button id="btn-go-telegram" class="btn" style="margin-top:8px;background:#0088cc;color:#fff;border-color:#0088cc;">📱 Telegram</button>
+    <button id="btn-go-telegram" class="btn" style="margin-top:8px;background:#0088cc;color:#fff;border-color:#0088cc;">Telegram</button>
     <button id="btn-jq" class="btn" style="margin-top:8px;">JQ: OFF</button>
 
-    <button id="btn-quran-jq" class="btn" style="margin-top:4px;">📖 Quran: OFF</button>
+    <button id="btn-quran-jq" class="btn" style="margin-top:4px;">Quran: OFF</button>
     <button id="btn-taip" class="btn" style="margin-top:8px;">TAIP: OFF</button>
     <button id="btn-monitor" class="btn" style="margin-top:8px;">MONITOR: OFF</button>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
@@ -709,13 +709,10 @@
 
   <!-- SCREEN: TELEGRAM CHAT -->
   <div id="screen-telegram" class="screen" style="display:none;flex-direction:column;height:100vh;padding:0;box-sizing:border-box;">
-    <div style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
+    <div id="tg-topbar" style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
       <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.72rem;">TELEGRAM</div>
-      <button id="btn-tg-login" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Login Telegram">🔑</button>
-      <button id="btn-tg-privasi" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Mod privasi: teks chat kecil &amp; kabur">👁</button>
-      <button id="btn-tg-sync-now" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync semula mesej dari Telegram">⬇️</button>
-      <button id="btn-tg-sync-one" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync satu chat (pilih dari notif)">Nt</button>
-      <button id="btn-tg-reload" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
+      <button id="btn-tg-login" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Login Telegram">Login</button>
+      <button id="btn-tg-privasi" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Mod privasi: teks chat kecil &amp; kabur">Privasi</button>
 
 
     </div>
@@ -726,14 +723,13 @@
       <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #ccc;">
         <button id="btn-tg-back-list" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0;">←</button>
         <span id="tg-msg-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-        <button id="btn-tg-chat-refresh" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
-        <button id="btn-tg-chat-sync-one" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync mesej chat ini sahaja">Nt</button>
+        <button id="btn-tg-chat-reload" style="background:#fff;border:2px solid #000;border-radius:4px;padding:3px 8px;font-size:0.72rem;font-weight:bold;cursor:pointer;" title="Padam & ambil semula mesej chat ini dari Telegram">Reload chat</button>
 
       </div>
       <div id="tg-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;background:#fafafa;"></div>
       <!-- BAR BALAS MESEJ (muncul bila tap bubble) -->
       <div id="tg-reply-bar" style="display:none;align-items:center;gap:8px;padding:6px 8px;border-top:1px solid #ccc;background:#f0f0f0;">
-        <button id="btn-tg-reply-batal" style="flex-shrink:0;width:30px;height:30px;border:2px solid #000;border-radius:50%;background:#fff;color:#000;font-weight:bold;cursor:pointer;padding:0;">✕</button><!-- ✕ di kiri supaya tak terlindung butang terapung -->
+        <button id="btn-tg-reply-batal" style="flex-shrink:0;height:30px;border:2px solid #000;border-radius:6px;background:#fff;color:#000;font-weight:bold;font-size:0.72rem;cursor:pointer;padding:0 8px;">Batal</button><!-- Batal di kiri supaya tak terlindung butang terapung -->
         <div style="flex:1;min-width:0;border-left:3px solid #000;padding-left:8px;">
           <div id="tg-reply-name" style="font-size:0.72rem;font-weight:bold;"></div>
           <div id="tg-reply-text" style="font-size:0.75rem;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
@@ -741,11 +737,20 @@
       </div>
       <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
         <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej... (tap mesej untuk balas)" style="flex:1;font-size:1rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
-        <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">➤</button>
+        <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">Hantar</button>
       </div>
     </div>
     <button id="btn-tg-back-menu" class="btn" style="margin:8px;font-size:0.9rem;padding:10px;">← Menu</button>
-    <button id="btn-tg-keluar" class="btn" style="display:none;margin:8px;font-size:0.9rem;padding:10px;">✕ Keluar</button>
+    <button id="btn-tg-keluar" class="btn" style="display:none;margin:8px;font-size:0.9rem;padding:10px;">Keluar</button>
+  </div>
+
+  <!-- ══ OVERLAY RELOAD CHAT (block semua sentuhan) ══ -->
+  <div id="tg-reload-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.96);z-index:30000;flex-direction:column;align-items:center;justify-content:center;padding:24px;box-sizing:border-box;text-align:center;">
+    <div style="border:3px solid #000;border-radius:10px;padding:20px 16px;background:#fff;max-width:320px;width:100%;">
+      <div style="font-size:1rem;font-weight:bold;margin-bottom:10px;">Sila tunggu</div>
+      <div style="font-size:0.85rem;margin-bottom:10px;">Chat sedang reload dari Telegram...</div>
+      <div id="tg-reload-status" style="font-size:0.78rem;color:#333;"></div>
+    </div>
   </div>
 
   <!-- ══ LOGIN TELEGRAM DARI KINDLE (worker Railway buat login, kod lalu Firebase) ══ -->
@@ -923,7 +928,7 @@
         <div class="pj-label">Solat berkaitan ikrar ini:</div>
         <textarea id="pj-cop-solat" rows="2" class="pj-input" placeholder="Cth: Solat untuk perjanjian ini dilakukan sebelum solat Asar" style="resize:none;line-height:1.5;"></textarea>
         <div id="pj-cop-done-status" style="display:none;border:2px solid #000;border-radius:6px;padding:8px;font-size:0.85rem;text-align:center;line-height:1.5;margin-top:8px;"></div>
-        <button id="btn-pj-cop-done" class="btn btn-primary" style="font-size:0.9rem;margin-top:8px;">✓ Done — Solat Taubat Telah Dilakukan</button>
+        <button id="btn-pj-cop-done" class="btn btn-primary" style="font-size:0.9rem;margin-top:8px;">Done — Solat Taubat Telah Dilakukan</button>
       </div>
     </div>
 
@@ -1074,10 +1079,10 @@
     position:fixed;bottom:18px;right:18px;
     width:42px;height:42px;border-radius:50%;
     border:2px solid #000;background:#fff;color:#000;
-    font-size:1.1rem;cursor:pointer;z-index:9998;
+    font-size:0.62rem;font-weight:bold;cursor:pointer;z-index:9998;
     display:flex;align-items:center;justify-content:center;
     box-shadow:0 2px 8px rgba(0,0,0,0.18);
-  ">🔒</button>
+  ">Kunci</button>
 
   <!-- ══ AZAN LOCK SCREEN ══ -->
   <div id="azan-lock">
@@ -1116,7 +1121,7 @@
 
   <!-- AZAN TEST ── -->
   <div class="azan-test-wrap">
-    <button class="azan-test-btn" id="btn-azan-test">🧪 Test Azan</button>
+    <button class="azan-test-btn" id="btn-azan-test">Test Azan</button>
     <div class="azan-test-panel" id="azan-test-panel">
       <div class="azan-test-grid">
         <div class="azan-test-clock-col">
@@ -1150,9 +1155,9 @@
   </div>
 
   <!-- ══ TG NOTIFICATION BADGE ══ -->
-  <div id="tg-notif-badge">📱 <span id="tg-notif-count"></span></div>
-  <button id="btn-tg-refresh">🔄 <span id="tg-refresh-label">semak</span></button>
-  <button id="btn-tg-pilih-nt">📌 Pilih Nt</button>
+  <div id="tg-notif-badge">Telegram: <span id="tg-notif-count"></span></div>
+  <button id="btn-tg-refresh"><span id="tg-refresh-label">semak</span></button>
+  <button id="btn-tg-pilih-nt">Pilih Nt</button>
   <!-- ══ PILIH NT OVERLAY ══ -->
   <div id="tg-pilih-nt-overlay">
     <div id="tg-pilih-nt-box">
@@ -1164,8 +1169,8 @@
       <div id="tg-pilih-nt-semasa" style="font-size:0.72rem;color:#0088cc;margin-bottom:6px;"></div>
       <div id="tg-pilih-nt-list"></div>
       <div style="display:flex;gap:6px;margin-top:8px;">
-        <button id="btn-tg-pilih-nt-clear" style="flex:1;padding:8px;background:#fff;color:#e00;border:2px solid #e00;border-radius:6px;font-size:0.82rem;cursor:pointer;">✕ Kosongkan</button>
-        <button id="btn-tg-pilih-nt-tutup2" style="flex:1;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;">✓ Simpan</button>
+        <button id="btn-tg-pilih-nt-clear" style="flex:1;padding:8px;background:#fff;color:#e00;border:2px solid #e00;border-radius:6px;font-size:0.82rem;cursor:pointer;">Kosongkan</button>
+        <button id="btn-tg-pilih-nt-tutup2" style="flex:1;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.82rem;font-weight:bold;cursor:pointer;">Simpan</button>
       </div>
     </div>
   </div>
@@ -1178,8 +1183,8 @@
       </div>
       <div id="tg-notif-list"></div>
       <div style="display:flex;gap:6px;margin-top:8px;">
-        <button id="btn-tg-notif-semua-baca" style="flex:1;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">✓ Semua Dibaca</button>
-        <button id="btn-tg-notif-refresh2" style="padding:8px 12px;background:#fff;color:#000;border:2px solid #000;border-radius:6px;font-size:0.85rem;cursor:pointer;">🔄</button>
+        <button id="btn-tg-notif-semua-baca" style="flex:1;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">Semua Dibaca</button>
+        <button id="btn-tg-notif-refresh2" style="padding:8px 12px;background:#fff;color:#000;border:2px solid #000;border-radius:6px;font-size:0.85rem;cursor:pointer;">Semak</button>
       </div>
     </div>
   </div>
@@ -4097,7 +4102,7 @@
     function updateQuranButton() {
       var btn = document.getElementById('btn-quran-jq');
       if (!btn) return;
-      btn.textContent = quranAktif ? '📖 Quran: ON' : '📖 Quran: OFF';
+      btn.textContent = quranAktif ? 'Quran: ON' : 'Quran: OFF';
       btn.style.background = quranAktif ? '#000' : '';
       btn.style.color = quranAktif ? '#fff' : '';
     }
@@ -4603,7 +4608,7 @@ async function connectTelegram() {
         await clearSessionFS();
         setBadge('error');
         document.getElementById('btn-tg-setup-send-code').disabled = false;
-        document.getElementById('btn-tg-setup-send-code').textContent = '⚡ Sambung Telegram';
+        document.getElementById('btn-tg-setup-send-code').textContent = 'Sambung Telegram';
         toast('Session tamat. Sila sambung semula.', 5000);
         return;
       }
@@ -4811,7 +4816,6 @@ if(document.getElementById('tg-chat-search')) document.getElementById('tg-chat-s
     return ((e.firstName || '') + ' ' + (e.lastName || '') + ' ' + (e.title || '')).toLowerCase().includes(q);
   }));
 };
-document.getElementById('btn-tg-reload').onclick = loadDialogs;
 if (false) {
   document.getElementById('btn-tg-edit-list-REMOVED').onclick = function() {
     _tgEditMode = !_tgEditMode;
@@ -4865,6 +4869,8 @@ function renderChatListAll(dialogs) {
 // ─── Open chat ────────────────────────────────────────────
 var _activeChatUnsub = null;
 async function openChat(dialog, cid, name) {
+  var _tgTb = document.getElementById('tg-topbar');
+  if (_tgTb) _tgTb.style.display = 'none'; // top bar hanya untuk senarai contact
   document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('active'));
   const el = document.querySelector('.chat-item[data-cid="' + cid + '"]');
   if (el) el.classList.add('active');
@@ -5166,7 +5172,7 @@ function gabungDenganLangkah(text, msgId) {
     document.body.classList.toggle('tg-privasi', on);
     if (btn) {
       btn.classList.toggle('on', on);
-      btn.textContent = on ? '🙈' : '👁';
+      btn.textContent = on ? 'Privasi ON' : 'Privasi';
       btn.title = on ? 'Mod privasi ON — tekan untuk teks jelas' : 'Mod privasi OFF — tekan untuk teks kabur';
     }
   }
@@ -5479,7 +5485,7 @@ if(document.getElementById('btn-tg-disconnect')) document.getElementById('btn-tg
   setBadge('off');
   document.getElementById('btn-tg-setup-send-code').style.display = '';
   document.getElementById('btn-tg-setup-send-code').disabled = false;
-  document.getElementById('btn-tg-setup-send-code').textContent = '⚡ Sambung Telegram';
+  document.getElementById('btn-tg-setup-send-code').textContent = 'Sambung Telegram';
   if(document.getElementById('btn-tg-disconnect')) document.getElementById('btn-tg-disconnect').style.display = 'none';
   document.getElementById('tg-chat-list').style.display = 'none';
   addLog('Putus sambungan.', 'info');
@@ -5552,100 +5558,72 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       _showScreen('screen-menu');
     });
 
-    document.getElementById('btn-tg-reload').onclick = function() { loadDialogs(); };
-    document.getElementById('btn-tg-sync-now').onclick = function() {
-      if (!currentUser) return;
-      var btn = document.getElementById('btn-tg-sync-now');
-      btn.textContent = '⏳';
-      btn.disabled = true;
-      db.doc('users/' + currentUser.uid + '/tg_worker/cmd')
-        .set({ action: 'sync', requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
-        .then(function() {
-          setTimeout(function() {
-            btn.textContent = '⬇️';
-            btn.disabled = false;
-            loadDialogs();
-          }, 8000);
-        })
-        .catch(function(e) {
-          btn.textContent = '⬇️';
-          btn.disabled = false;
-          console.warn('sync cmd err:', e);
-        });
-    };
+    // ── RELOAD CHAT: popup tunggu (block sentuhan) → padam Firebase → worker tulis → papar fresh ──
+    function _tgReloadChat() {
+      if (!currentUser || !activeChatId) return;
+      var cid = activeChatId;
+      var namaEl = document.getElementById('tg-msg-chat-name');
+      var nama = (namaEl && namaEl.textContent) || cid;
+      var ov = document.getElementById('tg-reload-overlay');
+      var stEl = document.getElementById('tg-reload-status');
+      var setSt = function(t) { if (stEl) stEl.textContent = t; };
+      try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
+      if (ov) ov.style.display = 'flex';
+      setSt('1/3 Memadam mesej lama...');
+      if (_activeChatUnsub) { _activeChatUnsub(); _activeChatUnsub = null; }
+      document.getElementById('tg-log').innerHTML = '';
 
-    // ── Sync satu chat sahaja (btn Nt dalam list & chat view) ──
-    function _jalanSyncOne(chatId, chatName, btnEl, labelAsal) {
-      if (!currentUser || !chatId) return;
-      if (btnEl) { btnEl.textContent = '⏳'; btnEl.disabled = true; }
-      db.doc('users/' + currentUser.uid + '/tg_worker/cmd')
-        .set({
-          action: 'sync_one',
-          chatId: chatId,
-          requestedAt: firebase.firestore.FieldValue.serverTimestamp()
-        })
-        .then(function() {
-          setTimeout(function() {
-            if (btnEl) { btnEl.textContent = labelAsal || 'Nt'; btnEl.disabled = false; }
-            // Reload mesej chat semasa kalau sama
-            if (activeChatId === chatId) openChat(null, chatId, chatName || chatId);
-          }, 6000);
-        })
-        .catch(function(e) {
-          if (btnEl) { btnEl.textContent = labelAsal || 'Nt'; btnEl.disabled = false; }
-          console.warn('sync_one err:', e);
-        });
-    }
-
-    // Btn Nt dalam chat list → buka popup pilih contact dari notif
-    document.getElementById('btn-tg-sync-one').onclick = function() {
-      if (!currentUser) return;
-      var btn = this;
-      // Kalau ada notif dalam senarai → tunjuk pilihan
-      if (_tgNotifChats && _tgNotifChats.length) {
-        refreshTgNotif();
-        var overlay = document.getElementById('tg-notif-overlay');
-        var list = document.getElementById('tg-notif-list');
-        list.innerHTML = '<div style="font-size:0.75rem;color:#555;padding:4px 0 8px;">Pilih chat untuk sync mesej terbaru:</div>';
-        _tgNotifChats.forEach(function(c) {
-          var div = document.createElement('div');
-          div.className = 'tg-notif-item';
-          div.style.cursor = 'pointer';
-          div.innerHTML = '<div class="tg-notif-from">💬 ' + c.chatName + '</div>' +
-            '<div class="tg-notif-msg">' + (c.lastMsg ? c.lastMsg.substring(0,60) : '') + '</div>';
-          div.addEventListener('click', function() {
-            overlay.className = '';
-            _jalanSyncOne(c.chatId, c.chatName, btn, 'Nt');
-          });
-          list.appendChild(div);
-        });
-        overlay.className = 'active';
-      } else {
-        // Tiada notif — sync chat aktif kalau ada, atau tunjuk mesej
-        if (activeChatId) {
-          var chatName = document.getElementById('tg-msg-chat-name') ?
-            document.getElementById('tg-msg-chat-name').textContent : activeChatId;
-          _jalanSyncOne(activeChatId, chatName, btn, 'Nt');
-        } else {
-          btn.textContent = '–';
-          setTimeout(function() { btn.textContent = 'Nt'; }, 1500);
-        }
+      var uid = currentUser.uid;
+      var msgsRef = db.collection('users/' + uid + '/tg_messages/' + cid + '/msgs');
+      var selesai = false, unsub = null, tStabil = null, tMaks = null;
+      function tamat(pesan) {
+        if (selesai) return;
+        selesai = true;
+        if (unsub) { unsub(); unsub = null; }
+        clearTimeout(tStabil); clearTimeout(tMaks);
+        if (ov) ov.style.display = 'none';
+        openChat(null, cid, nama); // papar chat fresh
+        if (pesan) toast(pesan, 4000);
       }
-    };
 
-    // Btn Nt dalam chat view → sync chat semasa terus
-    document.getElementById('btn-tg-chat-sync-one').onclick = function() {
-      if (!activeChatId) return;
-      var chatName = document.getElementById('tg-msg-chat-name') ?
-        document.getElementById('tg-msg-chat-name').textContent : activeChatId;
-      _jalanSyncOne(activeChatId, chatName, this, 'Nt');
-    };
+      msgsRef.get().then(function(snap) {
+        var kerja = [];
+        for (var i = 0; i < snap.docs.length; i += 400) {
+          var b = db.batch();
+          snap.docs.slice(i, i + 400).forEach(function(d) { b.delete(d.ref); });
+          kerja.push(b.commit());
+        }
+        return Promise.all(kerja);
+      }).then(function() {
+        setSt('2/3 Minta worker ambil mesej dari Telegram...');
+        db.doc('users/' + uid + '/tg_worker/wake_cmd')
+          .set({ expiry: new Date(Date.now() + 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+          .catch(function() {});
+        return db.doc('users/' + uid + '/tg_worker/cmd')
+          .set({ action: 'sync_one', chatId: cid, requestedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      }).then(function() {
+        setSt('3/3 Menunggu worker tulis mesej...');
+        tMaks = setTimeout(function() { tamat('Worker lambat respon — chat dipaparkan setakat yang ada.'); }, 45000);
+        unsub = msgsRef.onSnapshot(function(s) {
+          if (s.empty) return;
+          setSt('3/3 Menerima mesej... (' + s.size + ')');
+          clearTimeout(tStabil);
+          // Bila tiada mesej baru masuk selama 3 saat → anggap worker dah siap
+          tStabil = setTimeout(function() { tamat(''); }, 3000);
+        }, function(e) { tamat('Gagal baca mesej: ' + e.message); });
+      }).catch(function(e) {
+        tamat('Reload gagal: ' + e.message);
+      });
+    }
+    document.getElementById('btn-tg-chat-reload').onclick = _tgReloadChat;
     document.getElementById('btn-tg-send').onclick = function() { sendMessage(); };
     document.getElementById('btn-tg-back-list').addEventListener('click', function() {
       var mv = document.getElementById('tg-msg-view');
       var cl = document.getElementById('tg-chat-list');
+      var tb = document.getElementById('tg-topbar');
       if (mv) mv.style.display = 'none';
       if (cl) cl.style.display = '';
+      if (tb) tb.style.display = 'flex';
     });
 
 
@@ -6593,6 +6571,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var cl = document.getElementById('tg-chat-list');
       if (mv) mv.style.display = 'none';
       if (cl) cl.style.display = '';
+      var tb = document.getElementById('tg-topbar');
+      if (tb) tb.style.display = 'flex';
       _tgModBadge(false); // tutup overlay sahaja — page bawah (Fakta/Bahasa/...) kekal seperti tadi
       updateTgNotifBadge();
     });
@@ -6661,7 +6641,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       // Kalau ada nt_focus → padam mesej lama, sync_one dulu, BARU compare
       _muatNtFocus(function(fokus) {
         if (fokus && fokus.chatId) {
-          if (lbl) lbl.textContent = '⏳';
+          if (lbl) lbl.textContent = '...';
           // 1) Padam mesej lama chat fokus dari Firestore
           var msgsRef = db.collection('users/' + currentUser.uid + '/tg_messages/' + fokus.chatId + '/msgs');
           msgsRef.get().then(function(snap) {
@@ -6677,7 +6657,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
               .set({ action: 'sync_one', chatId: fokus.chatId, requestedAt: firebase.firestore.FieldValue.serverTimestamp() });
           }).then(function() {
             // 3) Tunggu worker selesai write BARU compare
-            if (lbl) lbl.textContent = '⏳';
+            if (lbl) lbl.textContent = '...';
             setTimeout(function() {
               // 4) Paksa worker offline selepas compare
               db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
@@ -6847,7 +6827,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         fromDiv.textContent = displayFrom + ' : ' + count;
 
         var btn = document.createElement('button');
-        btn.textContent = '✓ Dibaca';
+        btn.textContent = 'Dibaca';
         btn.setAttribute('data-fromkey', key);
         btn.style.cssText = 'margin-top:6px;width:100%;padding:7px;background:#000;color:#fff;border:none;border-radius:4px;font-size:0.82rem;font-weight:bold;cursor:pointer;';
         btn.addEventListener('click', function() {
@@ -7821,7 +7801,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           lbl.style.fontWeight = 'bold';
           stop.style.display = 'block';
           if (setBtn) setBtn.style.display = 'none';
-          if (floatBtn) { floatBtn.textContent = '🧪 TEST ON'; floatBtn.className = 'azan-test-btn on'; }
+          if (floatBtn) { floatBtn.textContent = 'TEST ON'; floatBtn.className = 'azan-test-btn on'; }
           if (pill) { pill.style.display = 'block'; pill.textContent = 'TEST SEDANG AKTIF · ' + hh12 + ':' + mmStr + ampm; }
         } else {
           lbl.textContent = 'TEST OFF — guna jam sebenar';
@@ -7830,7 +7810,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           lbl.style.fontWeight = 'normal';
           stop.style.display = 'none';
           if (setBtn) setBtn.style.display = 'block';
-          if (floatBtn) { floatBtn.textContent = '🧪 Test Azan'; floatBtn.className = 'azan-test-btn'; }
+          if (floatBtn) { floatBtn.textContent = 'Test Azan'; floatBtn.className = 'azan-test-btn'; }
           if (pill) pill.style.display = 'none';
         }
       }
@@ -8215,9 +8195,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     <div class="champ-overlay-box">
       <div class="champ-overlay-title" id="champ-overlay-title">—</div>
       <div class="champ-overlay-name" id="champ-overlay-name">—</div>
-      <button class="champ-overlay-btn-yes" id="champ-overlay-yes">✓ Ya, rekod</button>
+      <button class="champ-overlay-btn-yes" id="champ-overlay-yes">Ya, rekod</button>
       <div class="champ-overlay-q" id="champ-overlay-q" style="margin:0;padding:8px 0;border-top:1px solid #eee;border-bottom:1px solid #eee;">Sudah diambil / dilaksanakan?</div>
-      <button class="champ-overlay-btn-skip" id="champ-overlay-skip">⏭ Terlalu awal — ambil pada kitaran seterusnya</button>
+      <button class="champ-overlay-btn-skip" id="champ-overlay-skip">Langkau: Terlalu awal — ambil pada kitaran seterusnya</button>
     </div>
   </div>
 </body>  
