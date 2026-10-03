@@ -723,6 +723,8 @@
         <button id="btn-tg-privasi" style="flex-shrink:0;white-space:nowrap;background:#fff;border:2px solid #000;border-radius:4px;padding:3px 8px;font-size:0.72rem;font-weight:bold;cursor:pointer;" title="Mod privasi: teks chat kecil &amp; kabur">Privasi</button>
         <button id="btn-tg-chat-reload" style="flex-shrink:0;white-space:nowrap;background:#fff;border:2px solid #000;border-radius:4px;padding:3px 8px;font-size:0.72rem;font-weight:bold;cursor:pointer;" title="Padam & ambil semula mesej chat ini dari Telegram">Reload chat</button>
       </div>
+      <!-- Status menaip yang sedang dihantar ke orang lain -->
+      <div id="tg-taip-status" style="display:none;padding:4px 8px;font-size:0.78rem;font-weight:bold;font-style:italic;background:#000;color:#fff;">Anda sedang menaip...</div>
       <div id="tg-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;background:#fafafa;"></div>
       <!-- BAR BALAS MESEJ (muncul bila tap bubble) -->
       <div id="tg-reply-bar" style="display:none;align-items:center;gap:8px;padding:6px 8px;border-top:1px solid #ccc;background:#f0f0f0;">
@@ -5357,12 +5359,32 @@ function _tulisTaipLive(aktif, chatId) {
   }).catch(function(e) { console.warn('typing live err:', e); });
 }
 
+// Nama akaun Telegram sendiri (dari worker) untuk papar "Aidil sedang menaip..."
+var _tgNamaSaya = '';
+function _tgPaparTaip(on) {
+  var el = document.getElementById('tg-taip-status');
+  if (!el) return;
+  el.textContent = (_tgNamaSaya || 'Anda') + ' sedang menaip...';
+  el.style.display = on ? 'block' : 'none';
+  if (on && !_tgNamaSaya && currentUser) {
+    db.doc('users/' + currentUser.uid + '/tg_worker/status').get().then(function(s) {
+      var d = s.exists ? s.data() : {};
+      var n = d.nama || (d.username ? String(d.username).replace(/^@/, '') : '');
+      if (n) {
+        _tgNamaSaya = n;
+        if (el.style.display !== 'none') el.textContent = n + ' sedang menaip...';
+      }
+    }).catch(function() {});
+  }
+}
+
 function mulaTaipLive() {
   if (!activeChatId || !currentUser) return;
   if (_taipLiveChat && _taipLiveChat !== activeChatId) hentiTaipLive();
   if (_taipLiveTimer) return;
   _taipLiveChat = activeChatId;
   _tulisTaipLive(true, _taipLiveChat);
+  _tgPaparTaip(true); // papar di atas: "Aidil sedang menaip..."
   // Heartbeat setiap 5 saat — kalau Kindle tidur/tertutup, worker berhenti sendiri
   _taipLiveTimer = setInterval(function() {
     if (_taipLiveChat) _tulisTaipLive(true, _taipLiveChat);
@@ -5372,6 +5394,7 @@ function mulaTaipLive() {
 function hentiTaipLive() {
   if (_taipLiveTimer) { clearInterval(_taipLiveTimer); _taipLiveTimer = null; }
   if (_taipLiveChat) { _tulisTaipLive(false, _taipLiveChat); _taipLiveChat = null; }
+  _tgPaparTaip(false);
 }
 
 (function() {
