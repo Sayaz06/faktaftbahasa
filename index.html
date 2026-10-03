@@ -725,6 +725,8 @@
       </div>
       <!-- Status menaip yang sedang dihantar ke orang lain -->
       <div id="tg-taip-status" style="display:none;padding:4px 8px;font-size:0.78rem;font-weight:bold;font-style:italic;background:#000;color:#fff;">Anda sedang menaip...</div>
+      <!-- Status menaip contact (dari worker) — naik ke atas bila kita tak menaip -->
+      <div id="tg-taip-contact" style="display:none;padding:4px 8px;font-size:0.78rem;font-weight:bold;font-style:italic;background:#fff;color:#000;border-bottom:2px solid #000;">Contact sedang menaip...</div>
       <div id="tg-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;background:#fafafa;"></div>
       <!-- BAR BALAS MESEJ (muncul bila tap bubble) -->
       <div id="tg-reply-bar" style="display:none;align-items:center;gap:8px;padding:6px 8px;border-top:1px solid #ccc;background:#f0f0f0;">
@@ -4876,6 +4878,8 @@ async function openChat(dialog, cid, name) {
   activeChatId = cid;
   activeChatPeer = cid; // simpan cid sahaja, bukan entity
   _tgHantarBaca(cid); // buka chat = terus bluetick
+  _tgMulaDengarTaipContact();
+  _tgRenderTaipContact();
   const nameEl2 = document.getElementById('tg-msg-chat-name');
   if (nameEl2) nameEl2.textContent = name;
   const msgView = document.getElementById('tg-msg-view');
@@ -5103,6 +5107,7 @@ function _tgTutupChat() {
   if (_activeChatUnsub) { _activeChatUnsub(); _activeChatUnsub = null; }
   if (typeof hentiTaipLive === 'function') hentiTaipLive();
   activeChatId = null;
+  _tgRenderTaipContact();
 }
 function _tgHantarBaca(cid, tangguh) {
   if (!currentUser || !cid) return;
@@ -5395,6 +5400,41 @@ function hentiTaipLive() {
   if (_taipLiveTimer) { clearInterval(_taipLiveTimer); _taipLiveTimer = null; }
   if (_taipLiveChat) { _tulisTaipLive(false, _taipLiveChat); _taipLiveChat = null; }
   _tgPaparTaip(false);
+}
+
+// ─── STATUS MENAIP CONTACT: worker tulis tg_worker/contact_typing ──
+// { chatId, nama, aktif } → papar "Mama sedang menaip..." untuk chat yang sedang dibuka
+var _tgTaipContact = null;      // data terakhir dari worker
+var _tgTaipContactMasa = 0;     // masa (Kindle) data diterima
+var _tgTaipContactUnsub = null;
+var _tgTaipContactTimer = null;
+var TG_TAIP_CONTACT_TAMAT = 7000; // Telegram hantar semula setiap ~5s; 7s tiada = berhenti
+
+function _tgRenderTaipContact() {
+  var el = document.getElementById('tg-taip-contact');
+  if (!el) return;
+  var d = _tgTaipContact;
+  var segar = d && d.aktif && (Date.now() - _tgTaipContactMasa < TG_TAIP_CONTACT_TAMAT);
+  var chatIni = d && activeChatId && String(d.chatId) === String(activeChatId);
+  if (segar && chatIni) {
+    el.textContent = (d.nama || 'Contact') + ' sedang menaip...';
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function _tgMulaDengarTaipContact() {
+  if (_tgTaipContactUnsub || !currentUser) return;
+  _tgTaipContactUnsub = db.doc('users/' + currentUser.uid + '/tg_worker/contact_typing')
+    .onSnapshot(function(s) {
+      if (!s.exists) return;
+      _tgTaipContact = s.data();
+      _tgTaipContactMasa = Date.now();
+      _tgRenderTaipContact();
+      clearTimeout(_tgTaipContactTimer);
+      _tgTaipContactTimer = setTimeout(_tgRenderTaipContact, TG_TAIP_CONTACT_TAMAT + 100);
+    }, function(e) { console.warn('contact_typing err:', e); });
 }
 
 (function() {
