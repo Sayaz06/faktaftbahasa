@@ -6642,9 +6642,10 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
               try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
               db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
                 if (!snap.exists || !snap.data().list) { if (lbl) lbl.textContent = '; 0'; return; }
-                _tgNotifChats = [];
+              _tgNotifChats = [];
                 snap.data().list.forEach(function(dlg) {
                   if (!dlg.lastMsgAt || dlg.lastMsgIsOut) return;
+                  if (fokus && fokus.chatId && dlg.cid !== fokus.chatId) return;
                   if (new Date(dlg.lastMsgAt).getTime() > lastReadTs)
                     _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
                 });
@@ -6664,12 +6665,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
           db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
             if (!snap.exists || !snap.data().list) { if (lbl) lbl.textContent = '; 0'; return; }
-            _tgNotifChats = [];
-            snap.data().list.forEach(function(dlg) {
-              if (!dlg.lastMsgAt || dlg.lastMsgIsOut) return;
-              if (new Date(dlg.lastMsgAt).getTime() > lastReadTs)
-                _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
-            });
+              _tgNotifChats = [];
+                snap.data().list.forEach(function(dlg) {
+                  if (!dlg.lastMsgAt || dlg.lastMsgIsOut) return;
+                  if (fokus && fokus.chatId && dlg.cid !== fokus.chatId) return;
+                  if (new Date(dlg.lastMsgAt).getTime() > lastReadTs)
+                    _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
+                });
             var total = _tgNotifChats.reduce(function(s,c){ return s+c.count; }, 0);
             if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
             updateTgNotifBadge();
