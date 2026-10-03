@@ -712,19 +712,18 @@
     <div id="tg-topbar" style="display:flex;align-items:center;gap:6px;padding:4px 8px;border-bottom:1px solid #ccc;">
       <div class="status-bar" id="tg-screen-status" style="flex:1;margin:0;border:none;background:none;text-align:left;font-size:0.72rem;">TELEGRAM</div>
       <button id="btn-tg-login" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Login Telegram">Login</button>
-      <button id="btn-tg-privasi" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Mod privasi: teks chat kecil &amp; kabur">Privasi</button>
-
-
     </div>
     <div id="tg-chat-list" style="flex:1;overflow-y:auto;padding:8px;">
       <div id="tg-chat-empty" style="color:#555;font-size:0.85rem;text-align:center;padding:20px;">Tiada mesej Telegram.</div>
     </div>
     <div id="tg-msg-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
-      <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #ccc;">
-        <button id="btn-tg-back-list" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0;">←</button>
-        <span id="tg-msg-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-        <button id="btn-tg-chat-reload" style="background:#fff;border:2px solid #000;border-radius:4px;padding:3px 8px;font-size:0.72rem;font-weight:bold;cursor:pointer;" title="Padam & ambil semula mesej chat ini dari Telegram">Reload chat</button>
-
+      <div style="display:flex;flex-direction:column;gap:6px;padding:6px 8px;border-bottom:1px solid #ccc;">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <button id="btn-tg-back-list" style="background:#fff;border:2px solid #000;border-radius:4px;padding:3px 8px;font-size:0.72rem;font-weight:bold;cursor:pointer;" title="Kembali ke senarai contact">Chat lain</button>
+          <button id="btn-tg-privasi" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Mod privasi: teks chat kecil &amp; kabur">Privasi</button>
+          <button id="btn-tg-chat-reload" style="background:#fff;border:2px solid #000;border-radius:4px;padding:3px 8px;font-size:0.72rem;font-weight:bold;cursor:pointer;" title="Padam & ambil semula mesej chat ini dari Telegram">Reload chat</button>
+        </div>
+        <span id="tg-msg-chat-name" style="display:block;font-weight:bold;font-size:0.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
       </div>
       <div id="tg-log" style="flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:4px;background:#fafafa;"></div>
       <!-- BAR BALAS MESEJ (muncul bila tap bubble) -->
