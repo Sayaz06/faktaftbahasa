@@ -4873,6 +4873,7 @@ async function openChat(dialog, cid, name) {
   if (el) el.classList.add('active');
   activeChatId = cid;
   activeChatPeer = cid; // simpan cid sahaja, bukan entity
+  _tgHantarBaca(cid); // buka chat = terus bluetick
   const nameEl2 = document.getElementById('tg-msg-chat-name');
   if (nameEl2) nameEl2.textContent = name;
   const msgView = document.getElementById('tg-msg-view');
@@ -4921,6 +4922,8 @@ async function openChat(dialog, cid, name) {
             // Mesej keluar yang sepadan dengan bubble progress → jangan papar dua kali
             if (d.isOut && gabungDenganLangkah(d.text || '', d.msgId)) return;
             appendMsgBubbleFS(d);
+            // Mesej masuk semasa chat terbuka → terus bluetick
+            if (!d.isOut && activeChatId === cid) _tgHantarBaca(cid, true);
           }
         }
       });
@@ -5087,13 +5090,27 @@ function setLangkahTg(bubble, n, simbol, teks) {
   if (el) el.textContent = simbol + ' ' + teks;
 }
 
+// ─── BLUETICK TERUS: buka chat / mesej masuk semasa chat terbuka → worker tanda baca ──
+var _tgBacaTimer = null;
+function _tgHantarBaca(cid, tangguh) {
+  if (!currentUser || !cid) return;
+  var tulis = function() {
+    db.doc('users/' + currentUser.uid + '/tg_worker/read_cmd').set({
+      chatId: String(cid),
+      reqId: Date.now(),
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    }).catch(function(e) { console.warn('read_cmd err:', e); });
+  };
+  clearTimeout(_tgBacaTimer);
+  if (tangguh) _tgBacaTimer = setTimeout(tulis, 1200); // gabung beberapa mesej masuk serentak
+  else tulis();
+}
+
+// Status hantar ringkas: Menghantar... → Mesej dihantar (bluetick & menaip dah berlaku secara live)
 function pantauLangkahTg(bubble, ref) {
-  var kiraTimer = null;
   var masaEl = bubble.querySelector('.msg-time');
   var unsub = null;
-  function hentiKira() { if (kiraTimer) { clearInterval(kiraTimer); kiraTimer = null; } }
   function selesai() {
-    hentiKira();
     if (unsub) {
       unsub();
       var i = _tgLangkahUnsubs.indexOf(unsub);
@@ -5103,46 +5120,20 @@ function pantauLangkahTg(bubble, ref) {
   unsub = ref.onSnapshot(function(snap) {
     if (!snap.exists) return;
     var d = snap.data();
-    var step = d.step || '';
-    var saat = Math.round((d.typingMs || 3000) / 1000);
-
     if (d.status === 'failed') {
-      hentiKira();
-      setLangkahTg(bubble, 3, '✗', '3. Gagal: ' + (d.error || 'ralat tidak diketahui'));
-      masaEl.textContent = '❌ Gagal dihantar';
+      setLangkahTg(bubble, 1, 'X', 'Gagal: ' + (d.error || 'ralat tidak diketahui'));
+      masaEl.textContent = 'Gagal dihantar';
       selesai();
       return;
     }
-    if (step || d.status === 'sent') {
-      if (d.bluetickOk === false) setLangkahTg(bubble, 1, '✗', '1. Bluetick gagal');
-      else setLangkahTg(bubble, 1, '✓', '1. Bluetick dihantar');
-    }
-    if (step === 'typing' && d.status !== 'sent' && !kiraTimer) {
-      var baki = saat;
-      masaEl.textContent = '⌨ Sedang menaip...';
-      setLangkahTg(bubble, 2, '…', '2. Sedang menaip... ' + baki + 's');
-      kiraTimer = setInterval(function() {
-        baki--;
-        if (baki > 0) { setLangkahTg(bubble, 2, '…', '2. Sedang menaip... ' + baki + 's'); return; }
-        hentiKira();
-        setLangkahTg(bubble, 2, '✓', '2. Status menaip (' + saat + ' saat)');
-        setLangkahTg(bubble, 3, '…', '3. Menghantar mesej...');
-      }, 1000);
-    }
-    if (step === 'sending' && d.status !== 'sent') {
-      hentiKira();
-      setLangkahTg(bubble, 2, '✓', '2. Status menaip (' + saat + ' saat)');
-      setLangkahTg(bubble, 3, '…', '3. Menghantar mesej...');
-      masaEl.textContent = '⏳ Menghantar...';
-    }
     if (d.status === 'sent') {
-      hentiKira();
-      setLangkahTg(bubble, 2, '✓', '2. Status menaip (' + saat + ' saat)');
-      setLangkahTg(bubble, 3, '✓', '3. Mesej dihantar');
+      setLangkahTg(bubble, 1, '✓', 'Mesej dihantar');
       var t = (d.sentAt && d.sentAt.toDate) ? d.sentAt.toDate() : new Date();
-      masaEl.textContent = t.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }) + ' ✓✓';
+      masaEl.textContent = t.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
       selesai();
+      return;
     }
+    setLangkahTg(bubble, 1, '…', 'Menghantar mesej...');
   }, function() {});
   _tgLangkahUnsubs.push(unsub);
 }
@@ -5397,13 +5388,13 @@ async function sendMessage() {
   const input = document.getElementById('tg-msg-input');
   const text = input.value.trim();
   if (!text) return;
-  // Hentikan status menaip live — worker uruskan bluetick + menaip 3 saat sendiri
+  // Tekan hantar → status menaip terus berhenti
   hentiTaipLive();
   _taipLiveRehat = Date.now() + 1500;
   document.getElementById('btn-tg-send').disabled = true;
   input.value = '';
 
-  // Bubble progress: 1.Bluetick → 2.Menaip → 3.Hantar (hanya dalam sesi chat ini)
+  // Bubble status hantar (hanya dalam sesi chat ini)
   const tempId = 'temp_' + Date.now();
   const tempBubble = document.createElement('div');
   tempBubble.className = 'msg-bubble msg-out';
@@ -5415,11 +5406,9 @@ async function sendMessage() {
   tempBubble.innerHTML = (balas ? htmlQuoteTg(balas.name, balas.text) : '') +
     '<div>' + escHtml(text) + '</div>' +
     '<div class="tg-langkah">' +
-      '<div class="tgl-1">… 1. Bluetick dihantar</div>' +
-      '<div class="tgl-2">○ 2. Status menaip (3 saat)</div>' +
-      '<div class="tgl-3">○ 3. Mesej dihantar</div>' +
+      '<div class="tgl-1">… Menghantar mesej...</div>' +
     '</div>' +
-    '<div class="msg-time">⏳ Menunggu worker...</div>';
+    '<div class="msg-time">Menunggu worker...</div>';
   const body = document.getElementById('tg-log');
   const empty = body.querySelector('.msg-empty');
   if (empty) empty.remove();
@@ -5432,14 +5421,17 @@ async function sendMessage() {
       text: text,
       replyToId: balas ? balas.id : null,
       status: 'pending',
+      terusHantar: true,   // worker: JANGAN buat bluetick / menaip lagi — terus hantar
+      skipBluetick: true,
+      skipTyping: true,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     if (tempBubble.parentNode) pantauLangkahTg(tempBubble, ref);
     addLog('Dihantar ke outbox: "' + text.substring(0,30) + '"', 'ok');
   } catch(err) {
     addLog('Gagal hantar: ' + err.message, 'err');
-    setLangkahTg(tempBubble, 1, '✗', '1. Gagal masuk outbox');
-    tempBubble.querySelector('.msg-time').textContent = '❌ ' + err.message;
+    setLangkahTg(tempBubble, 1, 'X', 'Gagal masuk outbox');
+    tempBubble.querySelector('.msg-time').textContent = 'Gagal: ' + err.message;
     toast('Gagal hantar: ' + err.message);
     input.value = text;
     if (balas) pilihBalasTg(balas); // pulihkan mod balas supaya boleh cuba lagi
