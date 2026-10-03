@@ -6626,7 +6626,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           }).then(function() {
             // 2) Wake worker + hantar sync_one
             db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
-              .set({ expiry: new Date(Date.now() + 5 * 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+              .set({ expiry: new Date(Date.now() + 2 * 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
               .catch(function(){});
             return db.doc('users/' + currentUser.uid + '/tg_worker/cmd')
               .set({ action: 'sync_one', chatId: fokus.chatId, requestedAt: firebase.firestore.FieldValue.serverTimestamp() });
@@ -6654,7 +6654,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         } else {
           // Tiada fokus — buat semak biasa (tanpa sync)
           db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
-            .set({ expiry: new Date(Date.now() + 5 * 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+            .set({ expiry: new Date(Date.now() + 2 * 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
             .catch(function(){});
           var lastReadTs;
           try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
