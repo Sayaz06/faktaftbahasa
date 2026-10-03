@@ -315,14 +315,14 @@
       max-width: 160px;
     }
     #tg-notif-badge.active { display: block; }
-    #btn-tg-refresh {
-      display: none;
-      position: fixed; top: 44px; left: 8px; z-index: 99999;
-      background: #eee; color: #333;
-      border: 1px solid #aaa; border-radius: 6px;
-      padding: 4px 10px; font-size: 0.68rem; font-weight: bold;
-      cursor: pointer; white-space: nowrap;
-    }
+#btn-tg-refresh {
+  display: none;
+  position: fixed; top: 52px; left: 8px; z-index: 99999;
+  background: #eee; color: #333;
+  border: 1px solid #aaa; border-radius: 6px;
+  padding: 4px 10px; font-size: 0.68rem; font-weight: bold;
+  cursor: pointer; white-space: nowrap;
+}
     #btn-tg-refresh:active { background: #ccc; }
     #tg-notif-overlay {
       display: none; position: fixed; top: 0; left: 0;
@@ -1124,6 +1124,7 @@
       <div id="tg-notif-list"></div>
       <div style="display:flex;gap:6px;margin-top:8px;">
         <button id="btn-tg-notif-semua-baca" style="flex:1;padding:8px;background:#0088cc;color:#fff;border:none;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">✓ Semua Dibaca</button>
+        <button id="btn-tg-notif-choose-nt" style="padding:8px 12px;background:#fff;color:#000;border:2px solid #000;border-radius:6px;font-size:0.85rem;font-weight:bold;cursor:pointer;">Nt</button>
         <button id="btn-tg-notif-refresh2" style="padding:8px 12px;background:#fff;color:#000;border:2px solid #000;border-radius:6px;font-size:0.85rem;cursor:pointer;">🔄</button>
       </div>
     </div>
