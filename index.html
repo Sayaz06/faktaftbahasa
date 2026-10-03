@@ -21,6 +21,14 @@
     .screen { display: none; }
     .screen.active { display: flex; flex-direction: column; padding: 12px; box-sizing: border-box; min-height: 100vh; }
     #screen-telegram.active { padding: 0; }
+    /* Chat dari badge → overlay atas page semasa (page bawah tak ditutup) */
+    #screen-telegram.tg-overlay {
+      display: flex !important; flex-direction: column;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      max-width: 420px; margin: 0 auto; height: 100vh;
+      padding: 0; box-sizing: border-box;
+      background: #fff; z-index: 10003;
+    }
     #screen-tg-setup.active { padding: 12px; }
     #screen-om-edit.active { display: flex; }
 
@@ -717,7 +725,6 @@
     <div id="tg-msg-view" style="display:none;flex-direction:column;flex:1;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid #ccc;">
         <button id="btn-tg-back-list" style="background:none;border:none;font-size:1.1rem;cursor:pointer;padding:0;">←</button>
-        <button id="btn-tg-chat-lain" style="display:none;background:#fff;border:2px solid #000;border-radius:4px;padding:3px 8px;font-size:0.72rem;font-weight:bold;cursor:pointer;" title="Pilih chat lain dari notifikasi">💬 Chat lain</button>
         <span id="tg-msg-chat-name" style="font-weight:bold;font-size:0.9rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
         <button id="btn-tg-chat-refresh" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;">🔄</button>
         <button id="btn-tg-chat-sync-one" style="background:none;border:1px solid #ccc;border-radius:4px;padding:3px 8px;font-size:0.72rem;cursor:pointer;" title="Sync mesej chat ini sahaja">Nt</button>
@@ -6514,9 +6521,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var pilihNtBtn = document.getElementById('btn-tg-pilih-nt');
       if (!badge) return;
       var total = _tgNotifChats.reduce(function(s, c) { return s + c.count; }, 0);
-      // Sembunyikan dalam screen Telegram
+      // Sembunyikan dalam screen Telegram (atau bila chat overlay badge terbuka)
       var activeSc = document.querySelector('.screen.active');
-      var inTg = activeSc && activeSc.id === 'screen-telegram';
+      var inTg = (activeSc && activeSc.id === 'screen-telegram') || !!_tgDariBadge;
       if (total > 0 && !inTg) {
         badge.className = 'active';
         if (countEl) countEl.textContent = total + ' baru';
@@ -6538,15 +6545,19 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         div.style.cursor = 'pointer';
         div.innerHTML = '<div class="tg-notif-from">💬 ' + c.chatName + ' (' + c.count + ')</div>' +
           '<div class="tg-notif-msg">' + (c.lastMsg ? c.lastMsg.substring(0,80) : '') + '</div>';
-        // Tap notifikasi → terus buka chat tu dalam skrin Telegram (mod badge)
+        // Tap notifikasi → buka chat sebagai overlay atas page semasa (page bawah kekal)
         div.addEventListener('click', function() {
           document.getElementById('tg-notif-overlay').className = '';
           var sc = document.querySelector('.screen.active');
-          if (sc && sc.id !== 'screen-telegram') _tgSkrinAsal = sc.id;
-          var btnTg = document.getElementById('btn-go-telegram');
-          if (btnTg) btnTg.click();
+          if (sc && sc.id === 'screen-telegram') {
+            // Dah dalam Telegram → buka chat macam biasa
+            openChat(null, c.chatId, c.chatName);
+            return;
+          }
           _tgModBadge(true);
-          setTimeout(function() { openChat(null, c.chatId, c.chatName); }, 150);
+          _mulaHeartbeat();
+          openChat(null, c.chatId, c.chatName);
+          updateTgNotifBadge();
         });
         list.appendChild(div);
       });
@@ -6558,22 +6569,20 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       openTgNotifOverlay();
     });
 
-    // ── Mod badge: chat dibuka dari notifikasi → tiada ← / Menu, ada 💬 Chat lain & ✕ Keluar ──
-    var _tgSkrinAsal = '';
+    // ── Mod badge: chat dibuka dari notifikasi → overlay atas page semasa, hanya ada ✕ Keluar ──
     var _tgDariBadge = false;
     function _tgModBadge(on) {
       _tgDariBadge = !!on;
       var papar = function(id, ya) { var b = document.getElementById(id); if (b) b.style.display = ya ? '' : 'none'; };
       papar('btn-tg-back-list', !on);
       papar('btn-tg-back-menu', !on);
-      papar('btn-tg-chat-lain', on);
       papar('btn-tg-keluar', on);
-      if (!on) _tgSkrinAsal = '';
+      var st = document.getElementById('screen-telegram');
+      if (st) {
+        if (on) st.classList.add('tg-overlay');
+        else st.classList.remove('tg-overlay');
+      }
     }
-    document.getElementById('btn-tg-chat-lain').addEventListener('click', function() {
-      refreshTgNotif();
-      openTgNotifOverlay();
-    });
     document.getElementById('btn-tg-keluar').addEventListener('click', function() {
       if (typeof batalBalasTg === 'function') batalBalasTg();
       if (typeof hentiTaipLive === 'function') hentiTaipLive();
@@ -6584,9 +6593,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var cl = document.getElementById('tg-chat-list');
       if (mv) mv.style.display = 'none';
       if (cl) cl.style.display = '';
-      var asal = _tgSkrinAsal || 'screen-menu';
-      _tgModBadge(false);
-      showScreen(asal);
+      _tgModBadge(false); // tutup overlay sahaja — page bawah (Fakta/Bahasa/...) kekal seperti tadi
       updateTgNotifBadge();
     });
 
