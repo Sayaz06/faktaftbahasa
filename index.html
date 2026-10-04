@@ -5306,6 +5306,8 @@ function renderTgLogin() {
 function bukaTgLogin() {
   if (!currentUser) return;
   document.getElementById('tg-login-overlay').style.display = 'flex';
+  // Reset mula:false supaya tak tersangkut pada status lama
+  _tgLoginRef().set({ mula: false }, { merge: true }).catch(function() {});
   if (!_tgLoginUnsub) _tgLoginUnsub = _tgLoginRef().onSnapshot(function(s) {
     _tgLoginData = s.exists ? s.data() : {}; renderTgLogin();
   }, function() {});
