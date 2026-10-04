@@ -3747,9 +3747,11 @@
         // Ke ayat seterusnya
         qjqIdx++;
         if (qjqIdx >= qjqCards.length) {
-          // Habis 10 ayat — balik ke bahasa/fakta
+        // Habis 10 ayat — balik ke bahasa/fakta
           var cbDone = window._qjqHandler;
           window._qjqHandler = null;
+          var btnUndoQ = document.getElementById('btn-quran-undo');
+          if (btnUndoQ) btnUndoQ.style.display = 'none';
           var mainElQ3 = document.getElementById('main-text');
           if (mainElQ3) { mainElQ3.className = 'big-text'; mainElQ3.style.fontFamily = ''; mainElQ3.style.fontSize = ''; mainElQ3.style.direction = ''; mainElQ3.style.textAlign = ''; }
           cbDone && cbDone();
