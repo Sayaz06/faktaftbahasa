@@ -5213,6 +5213,20 @@ function renderTgLogin() {
   _tgTunjuk('tgl-sek-mula', false); _tgTunjuk('tgl-sek-kod', false);
   _tgTunjuk('tgl-sek-pass', false); _tgTunjuk('tgl-sek-ok', false);
 
+  // Tunjuk/sorok amaran TERLOGOUT pada butang Telegram di menu utama
+  var btnGoTg = document.getElementById('btn-go-telegram');
+  if (btnGoTg) {
+    if (st === 'need_login') {
+      btnGoTg.textContent = '⚠️ Telegram (TERLOGOUT)';
+      btnGoTg.style.background = '#dc2626';
+      btnGoTg.style.borderColor = '#dc2626';
+    } else {
+      btnGoTg.textContent = 'Telegram';
+      btnGoTg.style.background = '#0088cc';
+      btnGoTg.style.borderColor = '#0088cc';
+    }
+  }
+
   if (tahap === 'tunggu_kod') {
     _tgTunjuk('tgl-sek-kod', true);
     teks = '📩 Telegram dah hantar kod ke app Telegram (atau SMS) anda.\nMasukkan kod tu di bawah.';
@@ -5227,7 +5241,10 @@ function renderTgLogin() {
     teks = '✅ Telegram dah login. Worker sedang berjalan' + (d.akaun ? ' sebagai ' + d.akaun : '') + '.';
   } else if (st === 'need_login') {
     _tgTunjuk('tgl-sek-mula', true);
-    teks = '🔴 TERLOGOUT — Worker terputus dari Telegram.\nTekan "Mula Login" untuk sambung semula.';
+    var sebab = d.sebab || '';
+    teks = '🔴 TERLOGOUT — Worker terputus dari Telegram.\n' +
+      (sebab ? 'Sebab: ' + sebab + '\n' : '') +
+      'Tekan "Mula Login" untuk sambung semula.';
   } else if (st) {
     teks = 'Status worker: ' + st + '\nKalau lama begini, semak worker di Railway.';
     if (window._tgWorkerErr) teks += '\n\nRalat: ' + window._tgWorkerErr;
