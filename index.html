@@ -5245,28 +5245,41 @@ function renderTgLogin() {
     }
   }
 
+  // Sebab logout datang dari dokumen STATUS (worker tulis di situ), bukan dokumen login
+  var sebabSt = window._tgWorkerSebab || '';
+  var petaSebab = {
+    'session_tamat': 'sesi Telegram telah tamat tempoh',
+    'tiada_session': 'tiada sesi yang disimpan',
+    'AUTH_KEY_DUPLICATED': 'worker baru menggantikan worker lama',
+    'AUTH_KEY_UNREGISTERED': 'kunci sesi tidak dikenali',
+    'SESSION_REVOKED': 'sesi dibatalkan oleh Telegram',
+    'SESSION_EXPIRED': 'sesi telah luput',
+    'USER_DEACTIVATED': 'akaun Telegram dinyahaktifkan'
+  };
+  var perihal = '';
+  for (var kS in petaSebab) { if (sebabSt.indexOf(kS) > -1) { perihal = petaSebab[kS]; break; } }
+  if (!perihal && sebabSt) perihal = sebabSt;
+  var tungguWorkerLama = /menunggu worker lama/i.test(sebabSt);
+
   if (tahap === 'tunggu_kod') {
     _tgTunjuk('tgl-sek-kod', true);
-    teks = '📩 Telegram dah hantar kod ke app Telegram (atau SMS) anda.\nMasukkan kod tu di bawah.';
+    teks = '📩 Telegram dah hantar kod ke app Telegram (atau SMS) awak.\nMasukkan kod tu di bawah.';
   } else if (tahap === 'tunggu_password') {
     _tgTunjuk('tgl-sek-pass', true);
     teks = '🔒 Akaun ada pengesahan 2 langkah. Masukkan kata laluan 2FA.' + (d.hint ? '\nPetunjuk: ' + d.hint : '');
-  } else if (st === 'need_login' || (tahap === 'perlu_login' && st !== 'running')) {
+  } else if (tahap === 'meminta_kod' && st === 'need_login') {
+    teks = '📨 Worker dah terima arahan awak.\nSedang minta kod dari Telegram... Kod akan sampai dalam beberapa saat.';
+  } else if (st === 'connecting' || st === 'starting') {
+    teks = '⏳ Worker sedang menyambung ke Telegram... Sila tunggu sebentar.';
+  } else if (st === 'need_login' || (tahap === 'perlu_login' && st !== 'running' && st !== 'connected')) {
     _tgTunjuk('tgl-sek-mula', true);
-    if (d.mula) {
-      teks = '⏳ Menunggu worker bersedia untuk minta kod dari Telegram...\n\nJika ini mengambil masa lebih dari seminit, kemungkinan worker masih dalam proses dimulakan semula. Sila tunggu sebentar.';
+    if (tungguWorkerLama) {
+      teks = d.mula
+        ? '⏳ Arahan login awak dah diterima.\nWorker akan terus minta kod sebaik sahaja worker lama berhenti (lebih kurang 45 saat).'
+        : '⏳ Worker baru sedang tunggu worker lama berhenti (lebih kurang 45 saat).\n\nAwak boleh tekan "Mula Login" sekarang — worker akan terus minta kod sebaik sahaja bersedia.';
+    } else if (d.mula) {
+      teks = '⏳ Menghantar arahan ke worker...\n\nKalau lebih dari seminit tiada perubahan, kemungkinan worker sedang dimulakan semula. Sila tunggu sebentar.';
     } else {
-      var sebabLogout = d.sebab || '';
-      var petaSebab = {
-        'session_tamat': 'sesi Telegram telah tamat tempoh',
-        'tiada_session': 'tiada sesi yang disimpan',
-        'AUTH_KEY_DUPLICATED': 'worker baru menggantikan worker lama',
-        'AUTH_KEY_UNREGISTERED': 'kunci sesi tidak dikenali',
-        'SESSION_REVOKED': 'sesi dibatalkan oleh Telegram',
-        'SESSION_EXPIRED': 'sesi telah luput',
-        'USER_DEACTIVATED': 'akaun Telegram dinyahaktifkan'
-      };
-      var perihal = petaSebab[sebabLogout] || (sebabLogout ? sebabLogout : '');
       teks = '🔴 Awak telah terlog keluar dari Telegram.\n\n' +
         'Ini mungkin berlaku kerana worker telah dikemaskini atau dimulakan semula' +
         (perihal ? ', dan semasa itu didapati ' + perihal : '') + '.\n\n' +
@@ -5275,23 +5288,6 @@ function renderTgLogin() {
   } else if (st === 'running' || st === 'connected') {
     _tgTunjuk('tgl-sek-ok', true);
     teks = '✅ Telegram dah login. Worker sedang berjalan' + (d.akaun ? ' sebagai ' + d.akaun : '') + '.';
-  } else if (st === 'need_login') {
-    _tgTunjuk('tgl-sek-mula', true);
-    var sebab = d.sebab || '';
-    var petaSebab = {
-      'session_tamat': 'sesi Telegram telah tamat tempoh',
-      'tiada_session': 'tiada sesi yang disimpan',
-      'AUTH_KEY_UNREGISTERED': 'kunci sesi tidak dikenali oleh Telegram',
-      'AUTH_KEY_DUPLICATED': 'sesi digunakan di tempat lain',
-      'SESSION_REVOKED': 'sesi telah dibatalkan oleh Telegram',
-      'SESSION_EXPIRED': 'sesi telah luput',
-      'USER_DEACTIVATED': 'akaun Telegram telah dinyahaktifkan'
-    };
-    var perihalSebab = petaSebab[sebab] || (sebab ? sebab : '');
-    teks = '🔴 Awak telah terlog keluar dari Telegram.\n\n' +
-      'Ini mungkin berlaku kerana worker telah dikemaskini atau dimulakan semula' +
-      (perihalSebab ? ', dan semasa itu didapati ' + perihalSebab : '') + '.\n\n' +
-      'Tekan "Mula Login" untuk log masuk semula.';
   } else if (st) {
     teks = 'Status worker: ' + st + '\nKalau lama begini, semak worker di Railway.';
     if (window._tgWorkerErr) teks += '\n\nRalat: ' + window._tgWorkerErr;
@@ -5314,6 +5310,7 @@ function bukaTgLogin() {
   if (!_tgStatusUnsub) _tgStatusUnsub = _tgStatusRef().onSnapshot(function(s) {
     _tgWorkerState = s.exists ? (s.data().state || '') : '';
     window._tgWorkerErr = s.exists ? (s.data().error || '') : '';
+    window._tgWorkerSebab = s.exists ? (s.data().sebab || '') : '';
     renderTgLogin();
   }, function() {});
 }
