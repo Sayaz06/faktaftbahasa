@@ -5142,8 +5142,26 @@ function pantauLangkahTg(bubble, ref) {
     if (!snap.exists) return;
     var d = snap.data();
     if (d.status === 'failed') {
-      setLangkahTg(bubble, 1, 'X', 'Gagal: ' + (d.error || 'ralat tidak diketahui'));
-      masaEl.textContent = 'Gagal dihantar';
+      var err = d.error || 'ralat tidak diketahui';
+      var isAuthErr = /AUTH_KEY|SESSION|USER_DEACTIVATED|UNAUTHORIZED|not authorized|401|need_login/i.test(err);
+      if (isAuthErr) {
+        setLangkahTg(bubble, 1, 'X', 'Terlog keluar dari Telegram');
+        masaEl.textContent = 'Perlu log masuk semula';
+        selesai();
+        // Kemas kini status Firestore supaya Kindle tahu
+        if (currentUser) {
+          db.doc('users/' + currentUser.uid + '/tg_worker/status')
+            .set({ state: 'need_login', sebab: err }, { merge: true }).catch(function(){});
+        }
+        // Tunjuk overlay login selepas 800ms
+        setTimeout(function() {
+          toast('⚠️ Telegram terlog keluar. Sila log masuk semula.');
+          bukaTgLogin();
+        }, 800);
+      } else {
+        setLangkahTg(bubble, 1, 'X', 'Gagal: ' + err);
+        masaEl.textContent = 'Gagal dihantar';
+      }
       selesai();
       return;
     }
