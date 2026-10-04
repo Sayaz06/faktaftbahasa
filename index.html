@@ -5225,6 +5225,9 @@ function renderTgLogin() {
   } else if (st === 'running' || st === 'connected') {
     _tgTunjuk('tgl-sek-ok', true);
     teks = '✅ Telegram dah login. Worker sedang berjalan' + (d.akaun ? ' sebagai ' + d.akaun : '') + '.';
+  } else if (st === 'need_login') {
+    _tgTunjuk('tgl-sek-mula', true);
+    teks = '🔴 TERLOGOUT — Worker terputus dari Telegram.\nTekan "Mula Login" untuk sambung semula.';
   } else if (st) {
     teks = 'Status worker: ' + st + '\nKalau lama begini, semak worker di Railway.';
     if (window._tgWorkerErr) teks += '\n\nRalat: ' + window._tgWorkerErr;
@@ -5286,14 +5289,17 @@ function tutupTgLogin() {
     if (e.key === 'Enter') document.getElementById('btn-tgl-pass').click();
   });
   document.getElementById('btn-tgl-relogin').addEventListener('click', function() {
-    if (!confirm('Login semula akan putuskan Telegram sekarang dan minta kod baru. Teruskan?')) return;
-    tulis({ mintaRelogin: true });
+    tulis({ mintaRelogin: true, tahap: 'perlu_login', mula: false });
+    var el = document.getElementById('tgl-status');
+    if (el) el.textContent = '⏳ Menghantar arahan login semula ke worker... Sila tunggu.';
+    _tgTunjuk('tgl-sek-ok', false);
+    _tgTunjuk('tgl-sek-mula', true);
   });
   // Bila buka skrin Telegram & worker belum login → terus buka skrin login
-  document.getElementById('btn-go-telegram').addEventListener('click', function() {
+    document.getElementById('btn-go-telegram').addEventListener('click', function() {
     if (!currentUser) return;
     _tgStatusRef().get().then(function(s) {
-      if (s.exists && s.data().state === 'need_login') bukaTgLogin();
+      if (s.exists && (s.data().state === 'need_login' || s.data().state === 'starting' || s.data().state === 'connect_error')) bukaTgLogin();
     }).catch(function() {});
   });
 })();
