@@ -4698,6 +4698,7 @@ async function openChat(dialog, cid, name) {
   _tgHantarBaca(cid); // buka chat = terus bluetick
   _tgMulaDengarTaipContact();
   _tgRenderTaipContact();
+  _tgMulaDengarDibaca(); // status "Dibaca oleh ..." pada mesej kita yang terakhir
   const nameEl2 = document.getElementById('tg-msg-chat-name');
   if (nameEl2) nameEl2.textContent = name;
   const msgView = document.getElementById('tg-msg-view');
@@ -4726,6 +4727,7 @@ async function openChat(dialog, cid, name) {
       body.innerHTML = '<div class="msg-empty">Tiada mesej. Worker sedang sync...</div>';
     } else {
       snap.forEach(doc => { appendMsgBubbleFS(doc.data()); });
+      _tgRenderDibaca();
       body.scrollTop = body.scrollHeight;
     }
     addLog('Chat "' + name + '" dibuka dari Firestore.', 'ok');
@@ -4744,8 +4746,9 @@ async function openChat(dialog, cid, name) {
           // Elak duplicate
           if (!document.querySelector('[data-msgid="' + d.msgId + '"]')) {
             // Mesej keluar yang sepadan dengan bubble progress → jangan papar dua kali
-            if (d.isOut && gabungDenganLangkah(d.text || '', d.msgId)) return;
+            if (d.isOut && gabungDenganLangkah(d.text || '', d.msgId)) { _tgRenderDibaca(); return; }
             appendMsgBubbleFS(d);
+            _tgRenderDibaca();
             // Mesej masuk semasa chat terbuka & skrin chat sedang dilihat → terus bluetick
             var _mv = document.getElementById('tg-msg-view');
             var _chatDilihat = _mv && _mv.style.display !== 'none' && !document.hidden;
@@ -5296,6 +5299,41 @@ function hentiTaipLive() {
 }
 
 // ─── STATUS MENAIP CONTACT: worker tulis tg_worker/contact_typing ──
+// ─── STATUS DIBACA: worker tulis tg_worker/dibaca { chatId: ID mesej terakhir yang dibaca } ──
+// Kindle papar kotak pada mesej KITA yang terakhir: "✓✓ Dibaca oleh Nama" atau "✓ Dihantar — belum dibaca"
+var _tgDibaca = {};
+var _tgDibacaUnsub = null;
+function _tgMulaDengarDibaca() {
+  if (_tgDibacaUnsub || !currentUser) return;
+  _tgDibacaUnsub = db.doc('users/' + currentUser.uid + '/tg_worker/dibaca')
+    .onSnapshot(function(s) {
+      _tgDibaca = s.exists ? (s.data() || {}) : {};
+      _tgRenderDibaca();
+    }, function(e) { console.warn('dibaca err:', e); });
+}
+function _tgRenderDibaca() {
+  var log = document.getElementById('tg-log');
+  if (!log || !activeChatId) return;
+  var lama = log.querySelectorAll('.tg-dibaca');
+  for (var i = 0; i < lama.length; i++) lama[i].parentNode.removeChild(lama[i]);
+  // Mesej kita (keluar) yang terakhir & dah sampai Telegram (ada ID sebenar, bukan temp_)
+  var keluar = log.querySelectorAll('.msg-out[data-msgid]');
+  var akhir = null;
+  for (var j = keluar.length - 1; j >= 0; j--) {
+    if (/^\d+$/.test(keluar[j].getAttribute('data-msgid') || '')) { akhir = keluar[j]; break; }
+  }
+  if (!akhir) return;
+  var maxId = Number(_tgDibaca[String(activeChatId)] || 0);
+  var dahBaca = maxId > 0 && Number(akhir.getAttribute('data-msgid')) <= maxId;
+  var namaEl = document.getElementById('tg-msg-chat-name');
+  var nama = (namaEl && namaEl.textContent) || 'contact';
+  var kotak = document.createElement('div');
+  kotak.className = 'tg-langkah tg-dibaca';
+  kotak.textContent = dahBaca ? '✓✓ Dibaca oleh ' + nama : '✓ Dihantar — belum dibaca';
+  var masa = akhir.querySelector('.msg-time');
+  if (masa) akhir.insertBefore(kotak, masa); else akhir.appendChild(kotak);
+}
+
 // { chatId, nama, aktif } → papar "Mama sedang menaip..." untuk chat yang sedang dibuka
 var _tgTaipContact = null;      // data terakhir dari worker
 var _tgTaipContactMasa = 0;     // masa (Kindle) data diterima
@@ -5320,8 +5358,12 @@ function _tgRenderTaipContact() {
 
 function _tgMulaDengarTaipContact() {
   if (_tgTaipContactUnsub || !currentUser) return;
+  var _tgTaipContactPertama = true;
   _tgTaipContactUnsub = db.doc('users/' + currentUser.uid + '/tg_worker/contact_typing')
     .onSnapshot(function(s) {
+      // Snapshot pertama = data lama yang tersimpan (mungkin berjam-jam dulu) — abaikan.
+      // Kalau contact betul-betul sedang menaip, worker akan hantar kemas kini baru dalam beberapa saat.
+      if (_tgTaipContactPertama) { _tgTaipContactPertama = false; return; }
       if (!s.exists) return;
       _tgTaipContact = s.data();
       _tgTaipContactMasa = Date.now();
