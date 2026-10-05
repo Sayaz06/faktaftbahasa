@@ -8457,14 +8457,14 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (k === 'ENTER') { kilat(btn); tekanEnter(el); return; }
       if (k === 'PADAMSEMUA') {
         // Tekan 2 kali dalam 2 saat baru padam semua — elak terpadam tak sengaja
-        if (_padamSedia && Date.now() - _padamSedia < 2000) {
+        if (_padamSedia && Date.now() - _padamSedia < 1500) {
           batalPadamSemua();
           if (el.value) { el.value = ''; picu(el, 'input'); picuKekunci(el, 'keyup', 'Backspace'); }
         } else {
           _padamSedia = Date.now();
           if (btn) { btn.textContent = 'Tekan\nlagi'; btn.className += ' kb-gelap'; }
           clearTimeout(_tPadam);
-          _tPadam = setTimeout(batalPadamSemua, 2000); // tiada tekan kedua dalam 2 saat → batal
+          _tPadam = setTimeout(batalPadamSemua, 1500); // tiada tekan kedua dalam 1.5 saat → batal
         }
         return;
       }
