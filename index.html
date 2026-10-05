@@ -77,13 +77,15 @@
     }
     .btn-row .btn-sm.on { background: #000; color: #fff; }
     .btn-row .btn-sm:active { background: #000; color: #fff; }
-    /* Butang togol di menu (JQ / Quran / Taip / Monitor) — semua sama saiz & gaya */
-    #btn-jq, #btn-quran-jq, #btn-taip, #btn-monitor {
+    /* Butang togol di menu (JQ / Quran / Taip / Monitor / Keyboard Lebar) — semua sama saiz & gaya */
+    #btn-jq, #btn-quran-jq, #btn-taip, #btn-monitor, #btn-kb-lebar {
       display: block; width: 100%; padding: 9px 8px; margin: 4px 0 0;
       font-size: 0.95rem; font-weight: bold; text-align: center;
       border: 2px solid #000; border-radius: 6px; background: #fff; color: #000; cursor: pointer;
     }
-    #btn-jq.on, #btn-quran-jq.on, #btn-taip.on, #btn-monitor.on { background: #000; color: #fff; }
+    #btn-jq.on, #btn-quran-jq.on, #btn-taip.on, #btn-monitor.on, #btn-kb-lebar.on { background: #000; color: #fff; }
+    /* Keyboard Lebar ON → papan kekunci ikut lebar penuh skrin Kindle */
+    body.kb-lebar-penuh #kb-sendiri { max-width: none; }
     .btn-row .btn-menu {
       background: #ddd;
       color: #000;
@@ -728,6 +730,29 @@
     <button id="btn-quran-jq" class="btn" style="margin-top:4px;">Quran: OFF</button>
     <button id="btn-taip" class="btn" style="margin-top:8px;">TAIP: OFF</button>
     <button id="btn-monitor" class="btn" style="margin-top:8px;">MONITOR: OFF</button>
+    <button id="btn-kb-lebar" class="btn" style="margin-top:8px;">KEYBOARD LEBAR: OFF</button>
+    <script>
+    (function() {
+      // KEYBOARD LEBAR — ON: papan kekunci selebar skrin Kindle | OFF: selebar app (sama macam chat Telegram)
+      // Tetapan disimpan dalam Kindle ini sahaja.
+      var btn = document.getElementById('btn-kb-lebar');
+      if (!btn) return;
+      var on = false;
+      try { on = localStorage.getItem('kb_lebar_penuh') === '1'; } catch (e) {}
+      function terap() {
+        if (on) document.body.classList.add('kb-lebar-penuh');
+        else document.body.classList.remove('kb-lebar-penuh');
+        btn.textContent = on ? 'KEYBOARD LEBAR: ON' : 'KEYBOARD LEBAR: OFF';
+        btn.className = on ? 'btn-sm on' : 'btn-sm';
+      }
+      terap();
+      btn.addEventListener('click', function() {
+        on = !on;
+        terap();
+        try { localStorage.setItem('kb_lebar_penuh', on ? '1' : '0'); } catch (e) {}
+      });
+    })();
+    </script>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
     <div id="azan-log-wrap" style="display:none;margin-top:8px;border:1px solid #334155;border-radius:8px;padding:8px;">
