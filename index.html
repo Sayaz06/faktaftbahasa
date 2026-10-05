@@ -669,7 +669,7 @@
     #kb-sendiri .kb-k.kb-gelap, #kb-sendiri .kb-k.kb-tekan { background: #000; color: #fff; }
     #kb-sendiri.kb-nombor .kb-k { height: 52px; font-size: 1.4rem; }
     #kb-sendiri.kb-nombor .kb-k.kb-lebar { font-size: 0.9rem; }
-    #kb-sendiri .kb-k.kb-lebar[data-k="DEL"] { font-size: 1.4rem; }
+    #kb-sendiri .kb-k.kb-lebar[data-k="DEL"] { font-size: 0.85rem; }
     body.kb-buka { padding-bottom: var(--kb-h, 0px); }
     /* Skrin Telegram guna tinggi penuh skrin — pendekkan supaya kotak taip tak terlindung */
     body.kb-buka #screen-telegram { height: calc(100vh - var(--kb-h, 0px)) !important; min-height: 0 !important; }
@@ -8171,7 +8171,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         ['L:huruf','ENTER','TUTUP']
       ]
     };
-    var LABEL = { SHIFT: 'Aa', DEL: '←', SPACE: 'ruang', ENTER: 'Enter', TUTUP: 'Tutup', ASAL: 'Kindle',
+    var LABEL = { SHIFT: 'Aa', DEL: 'Padam', SPACE: 'ruang', ENTER: 'Enter', TUTUP: 'Tutup', ASAL: 'Kindle',
                   'L:simbol': '?123', 'L:huruf': 'ABC', 'L:nombor': '123' };
     var elAktif = null, lapisan = 'huruf', shift = false, caps = false, shiftMasa = 0;
     var tUlang = null, iUlang = null, masaSentuh = 0, _naik = null;
