@@ -781,7 +781,11 @@
       </div>
     </div>
     <button id="btn-tg-back-menu" class="btn" style="margin:8px;font-size:0.9rem;padding:10px;">← Menu</button>
-    <button id="btn-tg-keluar" class="btn" style="display:none;margin:8px;font-size:0.9rem;padding:10px;">Keluar</button>
+    <!-- Popup dari notifikasi: [ Keluar ][Kunci] bercantum -->
+    <div id="tg-keluar-baris" style="display:none;margin:8px;align-items:stretch;">
+      <button id="btn-tg-keluar" class="btn" style="flex:1;min-width:0;width:auto;margin:0;height:48px;font-size:0.9rem;padding:0 10px;border-radius:6px 0 0 6px;">Keluar</button>
+      <button id="btn-tg-kunci" style="flex:0 0 48px;width:48px;height:48px;margin:0;padding:0;border:2px solid #000;border-left:none;border-radius:0 6px 6px 0;background:#000;color:#fff;font-size:0.75rem;font-weight:bold;font-family:inherit;cursor:pointer;">Kunci</button>
+    </div>
   </div>
 
   <!-- ══ OVERLAY RELOAD CHAT (block semua sentuhan) ══ -->
@@ -1114,12 +1118,12 @@
     </div>
   </div>
 
-  <!-- BUTANG LOCK TERAPUNG — z-index di atas popup chat Telegram dari notifikasi (10003) -->
+  <!-- BUTANG LOCK TERAPUNG (popup chat Telegram dari notifikasi akan menutupnya — guna butang Kunci petak di sebelah Keluar) -->
   <button id="btn-lock-float" style="
     position:fixed;bottom:18px;right:18px;
     width:42px;height:42px;border-radius:50%;
     border:2px solid #000;background:#fff;color:#000;
-    font-size:0.62rem;font-weight:bold;cursor:pointer;z-index:10004;
+    font-size:0.62rem;font-weight:bold;cursor:pointer;z-index:9998;
     display:flex;align-items:center;justify-content:center;
     box-shadow:0 2px 8px rgba(0,0,0,0.18);
   ">Kunci</button>
@@ -6545,12 +6549,20 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       papar('btn-tg-back-list', !on);
       papar('btn-tg-back-menu', !on);
       papar('btn-tg-keluar', on);
+      // Baris [Keluar][Kunci] hanya dalam popup dari notifikasi
+      var baris = document.getElementById('tg-keluar-baris');
+      if (baris) baris.style.display = on ? 'flex' : 'none';
       var st = document.getElementById('screen-telegram');
       if (st) {
         if (on) st.classList.add('tg-overlay');
         else st.classList.remove('tg-overlay');
       }
     }
+    // Butang Kunci petak = sama macam butang Kunci terapung
+    document.getElementById('btn-tg-kunci').addEventListener('click', function() {
+      var f = document.getElementById('btn-lock-float');
+      if (f) f.click();
+    });
     document.getElementById('btn-tg-keluar').addEventListener('click', function() {
       if (typeof batalBalasTg === 'function') batalBalasTg();
       if (typeof hentiTaipLive === 'function') hentiTaipLive();
