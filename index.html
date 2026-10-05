@@ -664,6 +664,7 @@
     /* ── PAPAN KEKUNCI SENDIRI (ganti keyboard Kindle yang berat) ── */
     #kb-sendiri {
       display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 2147483000;
+      max-width: 420px; margin: 0 auto; /* lebar sama macam kandungan app (chat Telegram) */
       background: #fff; border-top: 3px solid #000; padding: 2px 3px 6px;
       -webkit-user-select: none; user-select: none; touch-action: manipulation;
     }
@@ -675,7 +676,10 @@
       -webkit-tap-highlight-color: transparent;
     }
     #kb-sendiri .kb-k.kb-lebar { flex-grow: 1.5; font-size: 0.8rem; }
-    #kb-sendiri .kb-k.kb-ruang { flex-grow: 4; font-size: 0.8rem; }
+    #kb-sendiri .kb-k.kb-ruang { flex-grow: 3; font-size: 0.8rem; }
+    /* Susun atur macam keyboard phone: baris "a" mula separuh butang ke dalam, anak panah saiz biasa */
+    #kb-sendiri .kb-sela { flex: 0.5 1 0; min-width: 0; }
+    #kb-sendiri .kb-k.kb-lebar[data-k="KIRI"], #kb-sendiri .kb-k.kb-lebar[data-k="KANAN"] { flex-grow: 1; }
     #kb-sendiri .kb-k.kb-gelap, #kb-sendiri .kb-k.kb-tekan { background: #000; color: #fff; }
     #kb-sendiri.kb-nombor .kb-k { height: 52px; font-size: 1.4rem; }
     #kb-sendiri.kb-nombor .kb-k.kb-lebar { font-size: 0.9rem; }
@@ -8237,17 +8241,19 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     if (!kb) return;
     var JENIS_TEKS = { text: 1, password: 1, number: 1, tel: 1, search: 1, email: 1, url: 1 };
     var SUSUNAN = {
+      // Susun atur macam keyboard phone (SELA = ruang kosong separuh butang). Tiada butang Tutup —
+      // tap mana-mana di luar papan kekunci untuk tutup.
       huruf: [
         ['q','w','e','r','t','y','u','i','o','p'],
-        ['a','s','d','f','g','h','j','k','l'],
+        ['SELA','a','s','d','f','g','h','j','k','l','SELA'],
         ['SHIFT','z','x','c','v','b','n','m','DEL'],
-        ['L:simbol','KIRI',',','SPACE','.','KANAN','PADAMSEMUA','TUTUP']
+        ['L:simbol',',','KIRI','SPACE','KANAN','.','PADAMSEMUA']
       ],
       simbol: [
         ['1','2','3','4','5','6','7','8','9','0'],
-        ['@','#','&','-','+','(',')','/','*'],
-        ['=','"',"'",':',';','!','?','_','DEL'],
-        ['L:huruf','KIRI',',','SPACE','.','KANAN','PADAMSEMUA','TUTUP']
+        ['SELA','@','#','&','-','+','(',')','/','*','SELA'],
+        ['SELA','=','"',"'",':',';','!','?','_','DEL'],
+        ['L:huruf',',','KIRI','SPACE','KANAN','.','PADAMSEMUA']
       ],
       nombor: [
         ['1','2','3'],
@@ -8308,6 +8314,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       for (var i = 0; i < rows.length; i++) {
         html += '<div class="kb-baris">';
         for (var j = 0; j < rows[i].length; j++) {
+          if (rows[i][j] === 'SELA') { html += '<span class="kb-sela"></span>'; continue; } // ruang separuh butang
           var k = rows[i][j], cls = 'kb-k', lbl;
           if (k.length === 1) {
             lbl = k; // label kekal huruf kecil — elak lukis semula bila tekan Aa
