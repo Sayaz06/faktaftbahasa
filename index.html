@@ -8225,6 +8225,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         ['7','8','9'],
         ['+','0','DEL'],
         ['L:huruf','ENTER','TUTUP']
+      ],
+      // PIN / kod: susunan ringkas macam pad PIN telefon — 1-9, Padam, 0, OK
+      pin: [
+        ['1','2','3'],
+        ['4','5','6'],
+        ['7','8','9'],
+        ['DEL','0','ENTER']
       ]
     };
     var LABEL = { SHIFT: 'Aa', DEL: 'Padam', SPACE: 'ruang', ENTER: 'Enter', TUTUP: 'Tutup', ASAL: 'Kindle',
@@ -8267,7 +8274,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
     function lukis() {
       var rows = SUSUNAN[lapisan], html = '';
-      kb.className = lapisan === 'nombor' ? 'kb-nombor' : '';
+      kb.className = (lapisan === 'nombor' || lapisan === 'pin') ? 'kb-nombor' : '';
       for (var i = 0; i < rows.length; i++) {
         html += '<div class="kb-baris">';
         for (var j = 0; j < rows[i].length; j++) {
@@ -8275,8 +8282,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           if (k.length === 1) {
             lbl = k; // label kekal huruf kecil — elak lukis semula bila tekan Aa
           } else {
-            lbl = LABEL[k] || k;
-            cls += k === 'SPACE' ? ' kb-ruang' : ' kb-lebar';
+            lbl = (lapisan === 'pin' && k === 'ENTER') ? 'OK' : (LABEL[k] || k);
+            // Pad PIN: semua butang sama lebar
+            cls += k === 'SPACE' ? ' kb-ruang' : (lapisan === 'pin' ? '' : ' kb-lebar');
             if (k === 'SHIFT' && (shift || caps)) cls += ' kb-gelap';
             if (k === 'SHIFT' && caps) lbl = 'AA';
           }
@@ -8381,9 +8389,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       }
     }
 
+    // Kotak PIN / kod (inputmode numeric) → pad PIN ringkas
+    function modPin(el) {
+      return (el.getAttribute('data-kb-inputmode') || '').toLowerCase() === 'numeric';
+    }
     function buka(el) {
       elAktif = el;
-      lapisan = modNombor(el) ? 'nombor' : 'huruf';
+      lapisan = modPin(el) ? 'pin' : (modNombor(el) ? 'nombor' : 'huruf');
       shift = false; caps = false;
       lukis();
       kb.style.display = 'block';
