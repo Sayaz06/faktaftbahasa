@@ -21,14 +21,17 @@
     .screen { display: none; }
     .screen.active { display: flex; flex-direction: column; padding: 12px; box-sizing: border-box; min-height: 100vh; }
     #screen-telegram.active { padding: 0; }
-    /* Chat dari badge → overlay atas page semasa (page bawah tak ditutup) */
+    /* Chat dari badge → overlay atas page semasa (page bawah tak ditutup) — lebar penuh skrin */
     #screen-telegram.tg-overlay {
       display: flex !important; flex-direction: column;
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      max-width: 420px; margin: 0 auto; height: 100vh;
+      max-width: none; margin: 0; height: 100vh;
       padding: 0; box-sizing: border-box;
       background: #fff; z-index: 10003;
     }
+    /* Semasa popup chat dari notifikasi terbuka → sorok butang terapung (Test Azan & Kunci bulat) */
+    body.tg-overlay-buka .azan-test-wrap,
+    body.tg-overlay-buka #btn-lock-float { display: none !important; }
     #screen-tg-setup.active { padding: 12px; }
     #screen-om-edit.active { display: flex; }
 
@@ -6557,6 +6560,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         if (on) st.classList.add('tg-overlay');
         else st.classList.remove('tg-overlay');
       }
+      // Sorok / papar semula butang terapung (Test Azan & Kunci bulat)
+      if (on) document.body.classList.add('tg-overlay-buka');
+      else document.body.classList.remove('tg-overlay-buka');
     }
     // Butang Kunci petak = sama macam butang Kunci terapung
     document.getElementById('btn-tg-kunci').addEventListener('click', function() {
