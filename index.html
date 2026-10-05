@@ -738,6 +738,8 @@
       </div>
       <!-- Status menaip contact (salinan kedua) — betul-betul di atas kotak taip -->
       <div id="tg-taip-contact-bawah" style="display:none;padding:4px 8px;font-size:0.78rem;font-weight:bold;font-style:italic;background:#000;color:#fff;">Contact sedang menaip...</div>
+      <!-- Status menaip kita sendiri (salinan kedua) — betul-betul di atas kotak taip -->
+      <div id="tg-taip-status-bawah" style="display:none;padding:4px 8px;font-size:0.78rem;font-weight:bold;font-style:italic;background:#fff;color:#000;border-top:2px solid #000;">Anda sedang menaip...</div>
       <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
         <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej... (tap mesej untuk balas)" style="flex:1;font-size:1rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
         <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">Hantar</button>
@@ -5230,16 +5232,22 @@ function _tulisTaipLive(aktif, chatId) {
 var _tgNamaSaya = '';
 function _tgPaparTaip(on) {
   var el = document.getElementById('tg-taip-status');
-  if (!el) return;
-  el.textContent = (_tgNamaSaya || 'Anda') + ' sedang menaip...';
-  el.style.display = on ? 'block' : 'none';
+  var elBawah = document.getElementById('tg-taip-status-bawah'); // salinan di atas kotak taip
+  if (!el && !elBawah) return;
+  var semua = [el, elBawah].filter(function(x) { return !!x; });
+  semua.forEach(function(x) {
+    x.textContent = (_tgNamaSaya || 'Anda') + ' sedang menaip...';
+    x.style.display = on ? 'block' : 'none';
+  });
   if (on && !_tgNamaSaya && currentUser) {
     db.doc('users/' + currentUser.uid + '/tg_worker/status').get().then(function(s) {
       var d = s.exists ? s.data() : {};
       var n = d.nama || (d.username ? String(d.username).replace(/^@/, '') : '');
       if (n) {
         _tgNamaSaya = n;
-        if (el.style.display !== 'none') el.textContent = n + ' sedang menaip...';
+        semua.forEach(function(x) {
+          if (x.style.display !== 'none') x.textContent = n + ' sedang menaip...';
+        });
       }
     }).catch(function() {});
   }
