@@ -8180,7 +8180,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
     }
     function bolehGuna(el) {
-      if (!el || !el.tagName || el.disabled || el.readOnly) return false;
+      if (!el || !el.tagName || el.disabled) return false;
+      // readonly yang kita sendiri letak (data-kb-ro) masih boleh guna; readonly asal app → abaikan
+      if (el.readOnly && !el.getAttribute('data-kb-ro')) return false;
       if (el.tagName === 'TEXTAREA') return true;
       if (el.tagName !== 'INPUT') return false;
       var t = (el.getAttribute('type') || 'text').toLowerCase();
@@ -8191,6 +8193,14 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       el.setAttribute('data-kb-sedia', '1');
       el.setAttribute('data-kb-inputmode', el.getAttribute('inputmode') || '');
       el.setAttribute('inputmode', 'none');
+      // readonly = keyboard Kindle TAK AKAN keluar langsung (inputmode none sahaja tak cukup di sesetengah skrin)
+      el.setAttribute('readonly', 'readonly');
+      el.setAttribute('data-kb-ro', '1');
+      // Matikan semak ejaan / auto-betul — berat bila teks berubah setiap tekanan
+      el.setAttribute('spellcheck', 'false');
+      el.setAttribute('autocomplete', 'off');
+      el.setAttribute('autocorrect', 'off');
+      el.setAttribute('autocapitalize', 'off');
     }
     function modNombor(el) {
       var t = (el.getAttribute('type') || '').toLowerCase();
@@ -8206,7 +8216,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         for (var j = 0; j < rows[i].length; j++) {
           var k = rows[i][j], cls = 'kb-k', lbl;
           if (k.length === 1) {
-            lbl = (lapisan === 'huruf' && (shift || caps)) ? k.toUpperCase() : k;
+            lbl = k; // label kekal huruf kecil — elak lukis semula bila tekan Aa
           } else {
             lbl = LABEL[k] || k;
             cls += k === 'SPACE' ? ' kb-ruang' : ' kb-lebar';
@@ -8233,34 +8243,28 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       try { Object.defineProperty(ev, 'keyCode', { get: function() { return key === 'Enter' ? 13 : 0; } }); } catch (x) {}
       return el.dispatchEvent(ev); // false kalau handler panggil preventDefault()
     }
-    function kedudukan(el) {
-      var s = null, e = null;
-      try { s = el.selectionStart; e = el.selectionEnd; } catch (x) {}
-      if (s === null || s === undefined) { s = e = el.value.length; }
-      return [s, e];
+    // Kotak readonly tiada kursor → sentiasa taip/padam di HUJUNG teks (lebih laju, tiada kira kedudukan kursor)
+    function tatalBawah(el) {
+      if (el.tagName === 'TEXTAREA' && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
     }
     function sisip(el, teks) {
-      var v = el.value, p = kedudukan(el);
-      var baru = v.slice(0, p[0]) + teks + v.slice(p[1]);
+      var baru = el.value + teks;
       if (el.maxLength > 0 && baru.length > el.maxLength) return;
       el.value = baru;
-      try { el.setSelectionRange(p[0] + teks.length, p[0] + teks.length); } catch (x) {}
+      tatalBawah(el);
       picu(el, 'input');
     }
     function padam(el) {
-      var v = el.value, p = kedudukan(el), s = p[0], e = p[1];
-      if (s === e) {
-        if (s === 0) return;
-        s = s - 1;
-        var c = v.charCodeAt(s); // elak potong separuh emoji
-        if (s > 0 && c >= 0xDC00 && c <= 0xDFFF) s = s - 1;
-      }
-      el.value = v.slice(0, s) + v.slice(e);
-      try { el.setSelectionRange(s, s); } catch (x) {}
+      var v = el.value, n = v.length;
+      if (!n) return;
+      var c = v.charCodeAt(n - 1);
+      var buang = (n > 1 && c >= 0xDC00 && c <= 0xDFFF) ? 2 : 1; // elak potong separuh emoji
+      el.value = v.slice(0, n - buang);
+      tatalBawah(el);
       picu(el, 'input');
     }
+    // Huruf biasa: input + keyup sahaja (keydown hanya perlu untuk Enter) — kurang kerja setiap tekanan
     function taipAksara(el, c) {
-      picuKekunci(el, 'keydown', c);
       sisip(el, c);
       picuKekunci(el, 'keyup', c);
     }
@@ -8278,10 +8282,14 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         iUlang = setInterval(function() { if (elAktif) padam(elAktif); else hentiUlang(); }, 120);
       }, 450);
     }
-    function kilat(btn) {
-      if (!btn) return;
-      btn.className += ' kb-tekan';
-      setTimeout(function() { btn.className = btn.className.replace(' kb-tekan', ''); }, 110);
+    // Tiada kesan hitam bila tekan — setiap lukis semula e-ink buat taip laju tersangkut
+    function kilat(btn) {}
+    // Kemas kini butang Aa SAHAJA (bukan lukis semula seluruh papan kekunci)
+    function kemaskiniShift() {
+      var b = kb.querySelector('[data-k="SHIFT"]');
+      if (!b) return;
+      b.className = 'kb-k kb-lebar' + ((shift || caps) ? ' kb-gelap' : '');
+      b.textContent = caps ? 'AA' : 'Aa';
     }
 
     function kemaskiniTinggi() {
@@ -8345,7 +8353,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         else if (caps) { caps = false; shift = false; }
         else { shift = !shift; }
         shiftMasa = kini;
-        lukis();
+        kemaskiniShift();
         return;
       }
       if (k.indexOf('L:') === 0) {
@@ -8369,9 +8377,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         return;
       }
       var c = (lapisan === 'huruf' && (shift || caps)) ? k.toUpperCase() : k;
-      kilat(btn);
       taipAksara(el, c);
-      if (shift && !caps) { shift = false; lukis(); }
+      if (shift && !caps) { shift = false; kemaskiniShift(); }
     }
 
     function onTekan(e) {
