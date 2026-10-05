@@ -685,6 +685,12 @@
     body.kb-buka { padding-bottom: var(--kb-h, 0px); }
     /* Skrin Telegram guna tinggi penuh skrin — pendekkan supaya kotak taip tak terlindung */
     body.kb-buka #screen-telegram { height: calc(100vh - var(--kb-h, 0px)) !important; min-height: 0 !important; }
+    /* SEMUA skrin lain (Fakta/Bahasa, Reminder, Main/Other Motivation, Perjanjian, edit...) —
+       pendekkan skrin ke atas papan kekunci & boleh skrol di dalamnya, sama macam Telegram */
+    body.kb-buka .screen.active {
+      height: calc(100vh - var(--kb-h, 0px)) !important; min-height: 0 !important;
+      overflow-y: auto !important; -webkit-overflow-scrolling: touch;
+    }
     /* Butang Hantar semasa mesej sedang dihantar */
     #btn-tg-send:disabled { background: #999 !important; border-color: #999 !important; color: #fff; }
   </style>
