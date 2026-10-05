@@ -5857,9 +5857,12 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
     document.getElementById('btn-go-perjanjian').onclick = function() {
       if (!currentUser) return;
-      showScreen('screen-perjanjian');
-      loadPerjanjianK();
-      loadPjCop();
+      // Perlu PIN dulu — sama macam Other Motivation
+      _bukaDenganPin('PIN untuk buka Laci Perjanjian', function() {
+        showScreen('screen-perjanjian');
+        loadPerjanjianK();
+        loadPjCop();
+      });
     };
 
     document.getElementById('btn-pj-back').onclick = function() {
