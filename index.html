@@ -74,6 +74,13 @@
     }
     .btn-row .btn-sm.on { background: #000; color: #fff; }
     .btn-row .btn-sm:active { background: #000; color: #fff; }
+    /* Butang togol di menu (JQ / Quran / Taip / Monitor) — semua sama saiz & gaya */
+    #btn-jq, #btn-quran-jq, #btn-taip, #btn-monitor {
+      display: block; width: 100%; padding: 9px 8px; margin: 4px 0 0;
+      font-size: 0.95rem; font-weight: bold; text-align: center;
+      border: 2px solid #000; border-radius: 6px; background: #fff; color: #000; cursor: pointer;
+    }
+    #btn-jq.on, #btn-quran-jq.on, #btn-taip.on, #btn-monitor.on { background: #000; color: #fff; }
     .btn-row .btn-menu {
       background: #ddd;
       color: #000;
@@ -673,6 +680,8 @@
     body.kb-buka { padding-bottom: var(--kb-h, 0px); }
     /* Skrin Telegram guna tinggi penuh skrin — pendekkan supaya kotak taip tak terlindung */
     body.kb-buka #screen-telegram { height: calc(100vh - var(--kb-h, 0px)) !important; min-height: 0 !important; }
+    /* Butang Hantar semasa mesej sedang dihantar */
+    #btn-tg-send:disabled { background: #999 !important; border-color: #999 !important; color: #fff; }
   </style>
 
 </head>
@@ -763,9 +772,10 @@
       <div id="tg-taip-contact-bawah" style="display:none;padding:4px 8px;font-size:0.78rem;font-weight:bold;font-style:italic;background:#000;color:#fff;">Contact sedang menaip...</div>
       <!-- Status menaip kita sendiri (salinan kedua) — betul-betul di atas kotak taip -->
       <div id="tg-taip-status-bawah" style="display:none;padding:4px 8px;font-size:0.78rem;font-weight:bold;font-style:italic;background:#fff;color:#000;border-top:2px solid #000;">Anda sedang menaip...</div>
-      <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
-        <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej... (tap mesej untuk balas)" style="flex:1;font-size:1rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
-        <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">Hantar</button>
+      <!-- Baris taip: kotak & butang Hantar sama tinggi, gaya hitam-putih (jelas di e-ink) -->
+      <div style="padding:6px 8px;border-top:2px solid #000;display:flex;gap:6px;align-items:stretch;background:#fff;">
+        <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej..." style="flex:1;min-width:0;font-size:1rem;line-height:1.3;padding:6px 8px;border:2px solid #000;border-radius:6px;resize:none;font-family:inherit;background:#fff;color:#000;"></textarea>
+        <button id="btn-tg-send" style="flex-shrink:0;background:#000;color:#fff;border:2px solid #000;border-radius:6px;padding:0 14px;cursor:pointer;font-size:1rem;font-weight:bold;font-family:inherit;">Hantar</button>
       </div>
     </div>
     <button id="btn-tg-back-menu" class="btn" style="margin:8px;font-size:0.9rem;padding:10px;">← Menu</button>
@@ -3918,8 +3928,10 @@
       var btn = document.getElementById('btn-quran-jq');
       if (!btn) return;
       btn.textContent = quranAktif ? 'Quran: ON' : 'Quran: OFF';
-      btn.style.background = quranAktif ? '#000' : '';
-      btn.style.color = quranAktif ? '#fff' : '';
+      // Gaya sama macam JQ / Taip / Monitor (ON = hitam, OFF = putih)
+      btn.className = quranAktif ? 'btn-sm on' : 'btn-sm';
+      btn.style.background = '';
+      btn.style.color = '';
     }
 
     // Papar 10 ayat Quran, panggil cbSelepas bila habis
