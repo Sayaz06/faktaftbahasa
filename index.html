@@ -736,6 +736,8 @@
           <div id="tg-reply-text" style="font-size:0.75rem;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
         </div>
       </div>
+      <!-- Status menaip contact (salinan kedua) — betul-betul di atas kotak taip -->
+      <div id="tg-taip-contact-bawah" style="display:none;padding:4px 8px;font-size:0.78rem;font-weight:bold;font-style:italic;background:#000;color:#fff;">Contact sedang menaip...</div>
       <div style="padding:8px;border-top:1px solid #ccc;display:flex;gap:6px;">
         <textarea id="tg-msg-input" rows="2" placeholder="Taip mesej... (tap mesej untuk balas)" style="flex:1;font-size:1rem;padding:6px;border:1px solid #ccc;border-radius:6px;resize:none;font-family:inherit;"></textarea>
         <button id="btn-tg-send" style="background:#0088cc;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-size:1rem;align-self:flex-end;">Hantar</button>
@@ -5272,16 +5274,17 @@ var TG_TAIP_CONTACT_TAMAT = 7000; // Telegram hantar semula setiap ~5s; 7s tiada
 
 function _tgRenderTaipContact() {
   var el = document.getElementById('tg-taip-contact');
-  if (!el) return;
+  var elBawah = document.getElementById('tg-taip-contact-bawah'); // salinan di atas kotak taip
+  if (!el && !elBawah) return;
   var d = _tgTaipContact;
   var segar = d && d.aktif && (Date.now() - _tgTaipContactMasa < TG_TAIP_CONTACT_TAMAT);
   var chatIni = d && activeChatId && String(d.chatId) === String(activeChatId);
-  if (segar && chatIni) {
-    el.textContent = (d.nama || 'Contact') + ' sedang menaip...';
-    el.style.display = 'block';
-  } else {
-    el.style.display = 'none';
-  }
+  var teks = segar && chatIni ? (d.nama || 'Contact') + ' sedang menaip...' : '';
+  [el, elBawah].forEach(function(x) {
+    if (!x) return;
+    if (teks) { x.textContent = teks; x.style.display = 'block'; }
+    else { x.style.display = 'none'; }
+  });
 }
 
 function _tgMulaDengarTaipContact() {
