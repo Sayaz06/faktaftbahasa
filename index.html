@@ -666,7 +666,7 @@
     }
     #kb-sendiri .kb-baris { display: flex; gap: 4px; margin: 4px 0; }
     #kb-sendiri .kb-k {
-      flex: 1 1 0; min-width: 0; height: 58px; padding: 0; margin: 0;
+      flex: 1 1 0; min-width: 0; height: 46px; padding: 0; margin: 0;
       border: 2px solid #000; border-radius: 6px; background: #fff; color: #000;
       font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; font-weight: bold;
       -webkit-tap-highlight-color: transparent;
@@ -674,7 +674,7 @@
     #kb-sendiri .kb-k.kb-lebar { flex-grow: 1.5; font-size: 0.8rem; }
     #kb-sendiri .kb-k.kb-ruang { flex-grow: 4; font-size: 0.8rem; }
     #kb-sendiri .kb-k.kb-gelap, #kb-sendiri .kb-k.kb-tekan { background: #000; color: #fff; }
-    #kb-sendiri.kb-nombor .kb-k { height: 62px; font-size: 1.4rem; }
+    #kb-sendiri.kb-nombor .kb-k { height: 52px; font-size: 1.4rem; }
     #kb-sendiri.kb-nombor .kb-k.kb-lebar { font-size: 0.9rem; }
     #kb-sendiri .kb-k.kb-lebar[data-k="DEL"] { font-size: 0.85rem; }
     /* Delete All — tulisan kecil 2 baris, saiz butang kekal */
@@ -8416,8 +8416,17 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       angkatOverlay(el, h);
       setTimeout(function() { if (elAktif === el) pastikanNampak(el, h); }, 30);
     }
+    // Delete All perlu tekan 2 kali — simpan masa tekan pertama
+    var _padamSedia = 0, _tPadam = null;
+    function batalPadamSemua() {
+      _padamSedia = 0;
+      clearTimeout(_tPadam); _tPadam = null;
+      var b = kb.querySelector('[data-k="PADAMSEMUA"]');
+      if (b) { b.textContent = LABEL.PADAMSEMUA; b.className = b.className.replace(' kb-gelap', ''); }
+    }
     function tutup() {
       hentiUlang();
+      batalPadamSemua();
       kb.style.display = 'none';
       document.body.classList.remove('kb-buka');
       turunOverlay();
@@ -8447,8 +8456,16 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (k === 'SPACE') { kilat(btn); taipAksara(el, ' '); return; }
       if (k === 'ENTER') { kilat(btn); tekanEnter(el); return; }
       if (k === 'PADAMSEMUA') {
-        // Kosongkan seluruh kotak taip sekali tekan
-        if (el.value) { el.value = ''; picu(el, 'input'); picuKekunci(el, 'keyup', 'Backspace'); }
+        // Tekan 2 kali dalam 2 saat baru padam semua — elak terpadam tak sengaja
+        if (_padamSedia && Date.now() - _padamSedia < 2000) {
+          batalPadamSemua();
+          if (el.value) { el.value = ''; picu(el, 'input'); picuKekunci(el, 'keyup', 'Backspace'); }
+        } else {
+          _padamSedia = Date.now();
+          if (btn) { btn.textContent = 'Tekan\nlagi'; btn.className += ' kb-gelap'; }
+          clearTimeout(_tPadam);
+          _tPadam = setTimeout(batalPadamSemua, 2000); // tiada tekan kedua dalam 2 saat → batal
+        }
         return;
       }
       if (k === 'TUTUP') { tutup(); el.blur(); return; }
