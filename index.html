@@ -650,6 +650,29 @@
     }
     body.tg-privasi #tg-msg-input { font-size: 0.85rem; }
     #btn-tg-privasi.on { background: #000 !important; color: #fff; border-color: #000 !important; }
+
+    /* ── PAPAN KEKUNCI SENDIRI (ganti keyboard Kindle yang berat) ── */
+    #kb-sendiri {
+      display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 2147483000;
+      background: #fff; border-top: 3px solid #000; padding: 2px 3px 6px;
+      -webkit-user-select: none; user-select: none; touch-action: manipulation;
+    }
+    #kb-sendiri .kb-baris { display: flex; gap: 4px; margin: 4px 0; }
+    #kb-sendiri .kb-k {
+      flex: 1 1 0; min-width: 0; height: 46px; padding: 0; margin: 0;
+      border: 2px solid #000; border-radius: 6px; background: #fff; color: #000;
+      font-family: Georgia, "Times New Roman", serif; font-size: 1.2rem; font-weight: bold;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #kb-sendiri .kb-k.kb-lebar { flex-grow: 1.5; font-size: 0.8rem; }
+    #kb-sendiri .kb-k.kb-ruang { flex-grow: 4; font-size: 0.8rem; }
+    #kb-sendiri .kb-k.kb-gelap, #kb-sendiri .kb-k.kb-tekan { background: #000; color: #fff; }
+    #kb-sendiri.kb-nombor .kb-k { height: 52px; font-size: 1.4rem; }
+    #kb-sendiri.kb-nombor .kb-k.kb-lebar { font-size: 0.9rem; }
+    #kb-sendiri .kb-k.kb-lebar[data-k="DEL"] { font-size: 1.4rem; }
+    body.kb-buka { padding-bottom: var(--kb-h, 0px); }
+    /* Skrin Telegram guna tinggi penuh skrin — pendekkan supaya kotak taip tak terlindung */
+    body.kb-buka #screen-telegram { height: calc(100vh - var(--kb-h, 0px)) !important; min-height: 0 !important; }
   </style>
 
 </head>
@@ -8117,5 +8140,285 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       <button class="champ-overlay-btn-skip" id="champ-overlay-skip">Langkau: Terlalu awal — ambil pada kitaran seterusnya</button>
     </div>
   </div>
+
+  <!-- PAPAN KEKUNCI SENDIRI — ganti keyboard Kindle untuk SEMUA kotak taip -->
+  <div id="kb-sendiri"></div>
+  <script>
+  (function() {
+    // inputmode="none" → keyboard Kindle tak keluar, tapi kursor & fokus kekal.
+    // Setiap tekanan hantar keydown → input → keyup supaya semua handler lama (Enter, taip live, semak ayat) masih jalan.
+    var kb = document.getElementById('kb-sendiri');
+    if (!kb) return;
+    var JENIS_TEKS = { text: 1, password: 1, number: 1, tel: 1, search: 1, email: 1, url: 1 };
+    var SUSUNAN = {
+      huruf: [
+        ['q','w','e','r','t','y','u','i','o','p'],
+        ['a','s','d','f','g','h','j','k','l'],
+        ['SHIFT','z','x','c','v','b','n','m','DEL'],
+        ['L:simbol','ASAL',',','SPACE','.','ENTER','TUTUP']
+      ],
+      simbol: [
+        ['1','2','3','4','5','6','7','8','9','0'],
+        ['@','#','&','-','+','(',')','/','*'],
+        ['=','"',"'",':',';','!','?','_','DEL'],
+        ['L:huruf','ASAL',',','SPACE','.','ENTER','TUTUP']
+      ],
+      nombor: [
+        ['1','2','3'],
+        ['4','5','6'],
+        ['7','8','9'],
+        ['+','0','DEL'],
+        ['L:huruf','ENTER','TUTUP']
+      ]
+    };
+    var LABEL = { SHIFT: 'Aa', DEL: '←', SPACE: 'ruang', ENTER: 'Enter', TUTUP: 'Tutup', ASAL: 'Kindle',
+                  'L:simbol': '?123', 'L:huruf': 'ABC', 'L:nombor': '123' };
+    var elAktif = null, lapisan = 'huruf', shift = false, caps = false, shiftMasa = 0;
+    var tUlang = null, iUlang = null, masaSentuh = 0, _naik = null;
+
+    function esc(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+    }
+    function bolehGuna(el) {
+      if (!el || !el.tagName || el.disabled || el.readOnly) return false;
+      if (el.tagName === 'TEXTAREA') return true;
+      if (el.tagName !== 'INPUT') return false;
+      var t = (el.getAttribute('type') || 'text').toLowerCase();
+      return !!JENIS_TEKS[t] && el.style.display !== 'none';
+    }
+    function sediakan(el) {
+      if (!bolehGuna(el) || el.getAttribute('data-kb-sedia')) return;
+      el.setAttribute('data-kb-sedia', '1');
+      el.setAttribute('data-kb-inputmode', el.getAttribute('inputmode') || '');
+      el.setAttribute('inputmode', 'none');
+    }
+    function modNombor(el) {
+      var t = (el.getAttribute('type') || '').toLowerCase();
+      var im = (el.getAttribute('data-kb-inputmode') || '').toLowerCase();
+      return t === 'number' || t === 'tel' || im === 'numeric' || im === 'decimal' || im === 'tel';
+    }
+
+    function lukis() {
+      var rows = SUSUNAN[lapisan], html = '';
+      kb.className = lapisan === 'nombor' ? 'kb-nombor' : '';
+      for (var i = 0; i < rows.length; i++) {
+        html += '<div class="kb-baris">';
+        for (var j = 0; j < rows[i].length; j++) {
+          var k = rows[i][j], cls = 'kb-k', lbl;
+          if (k.length === 1) {
+            lbl = (lapisan === 'huruf' && (shift || caps)) ? k.toUpperCase() : k;
+          } else {
+            lbl = LABEL[k] || k;
+            cls += k === 'SPACE' ? ' kb-ruang' : ' kb-lebar';
+            if (k === 'SHIFT' && (shift || caps)) cls += ' kb-gelap';
+            if (k === 'SHIFT' && caps) lbl = 'AA';
+          }
+          html += '<button type="button" tabindex="-1" class="' + cls + '" data-k="' + esc(k) + '">' + esc(lbl) + '</button>';
+        }
+        html += '</div>';
+      }
+      kb.innerHTML = html;
+    }
+
+    function picu(el, jenis) {
+      var ev;
+      try { ev = new Event(jenis, { bubbles: true }); }
+      catch (x) { ev = document.createEvent('Event'); ev.initEvent(jenis, true, true); }
+      el.dispatchEvent(ev);
+    }
+    function picuKekunci(el, jenis, key) {
+      var ev;
+      try { ev = new KeyboardEvent(jenis, { key: key, bubbles: true, cancelable: true }); }
+      catch (x) { ev = document.createEvent('Event'); ev.initEvent(jenis, true, true); try { ev.key = key; } catch (y) {} }
+      try { Object.defineProperty(ev, 'keyCode', { get: function() { return key === 'Enter' ? 13 : 0; } }); } catch (x) {}
+      return el.dispatchEvent(ev); // false kalau handler panggil preventDefault()
+    }
+    function kedudukan(el) {
+      var s = null, e = null;
+      try { s = el.selectionStart; e = el.selectionEnd; } catch (x) {}
+      if (s === null || s === undefined) { s = e = el.value.length; }
+      return [s, e];
+    }
+    function sisip(el, teks) {
+      var v = el.value, p = kedudukan(el);
+      var baru = v.slice(0, p[0]) + teks + v.slice(p[1]);
+      if (el.maxLength > 0 && baru.length > el.maxLength) return;
+      el.value = baru;
+      try { el.setSelectionRange(p[0] + teks.length, p[0] + teks.length); } catch (x) {}
+      picu(el, 'input');
+    }
+    function padam(el) {
+      var v = el.value, p = kedudukan(el), s = p[0], e = p[1];
+      if (s === e) {
+        if (s === 0) return;
+        s = s - 1;
+        var c = v.charCodeAt(s); // elak potong separuh emoji
+        if (s > 0 && c >= 0xDC00 && c <= 0xDFFF) s = s - 1;
+      }
+      el.value = v.slice(0, s) + v.slice(e);
+      try { el.setSelectionRange(s, s); } catch (x) {}
+      picu(el, 'input');
+    }
+    function taipAksara(el, c) {
+      picuKekunci(el, 'keydown', c);
+      sisip(el, c);
+      picuKekunci(el, 'keyup', c);
+    }
+    function tekanEnter(el) {
+      var teruskan = picuKekunci(el, 'keydown', 'Enter');
+      if (teruskan && el.tagName === 'TEXTAREA' && elAktif === el) sisip(el, '\n');
+      picuKekunci(el, 'keyup', 'Enter');
+    }
+    function hentiUlang() {
+      clearTimeout(tUlang); clearInterval(iUlang); tUlang = iUlang = null;
+    }
+    function mulaUlang() {
+      hentiUlang();
+      tUlang = setTimeout(function() {
+        iUlang = setInterval(function() { if (elAktif) padam(elAktif); else hentiUlang(); }, 120);
+      }, 450);
+    }
+    function kilat(btn) {
+      if (!btn) return;
+      btn.className += ' kb-tekan';
+      setTimeout(function() { btn.className = btn.className.replace(' kb-tekan', ''); }, 110);
+    }
+
+    function kemaskiniTinggi() {
+      var h = kb.offsetHeight;
+      document.documentElement.style.setProperty('--kb-h', h + 'px');
+      return h;
+    }
+    function turunOverlay() {
+      if (_naik) { _naik.el.style.transform = _naik.transform; _naik = null; }
+    }
+    // Kotak taip dalam overlay tetap (PIN, edit, dll) → naikkan overlay supaya tak terlindung
+    function angkatOverlay(el, h) {
+      turunOverlay();
+      var p = el, tetap = null;
+      while (p && p !== document.body) {
+        if (p.id === 'screen-telegram') return; // diurus oleh CSS
+        if (window.getComputedStyle(p).position === 'fixed') { tetap = p; break; }
+        p = p.parentElement;
+      }
+      if (!tetap) return;
+      var r = el.getBoundingClientRect();
+      var had = window.innerHeight - h - 10;
+      if (r.bottom <= had) return;
+      var naik = Math.min(r.bottom - had, Math.max(0, r.top - 10));
+      _naik = { el: tetap, transform: tetap.style.transform };
+      tetap.style.transform = 'translateY(-' + naik + 'px)';
+    }
+    function pastikanNampak(el, h) {
+      var r = el.getBoundingClientRect();
+      if (r.bottom > window.innerHeight - h - 8 || r.top < 0) {
+        try { el.scrollIntoView({ block: 'center' }); } catch (x) { el.scrollIntoView(false); }
+      }
+    }
+
+    function buka(el) {
+      elAktif = el;
+      lapisan = modNombor(el) ? 'nombor' : 'huruf';
+      shift = false; caps = false;
+      lukis();
+      kb.style.display = 'block';
+      var h = kemaskiniTinggi();
+      document.body.classList.add('kb-buka');
+      angkatOverlay(el, h);
+      setTimeout(function() { if (elAktif === el) pastikanNampak(el, h); }, 30);
+    }
+    function tutup() {
+      hentiUlang();
+      kb.style.display = 'none';
+      document.body.classList.remove('kb-buka');
+      turunOverlay();
+      elAktif = null;
+    }
+
+    function tekan(k, btn) {
+      var el = elAktif;
+      if (!el) return;
+      if (k === 'DEL') { padam(el); mulaUlang(); return; }
+      if (k === 'SHIFT') {
+        var kini = Date.now();
+        if (shift && kini - shiftMasa < 450) { caps = true; shift = false; }  // tekan 2 kali cepat = huruf besar kekal
+        else if (caps) { caps = false; shift = false; }
+        else { shift = !shift; }
+        shiftMasa = kini;
+        lukis();
+        return;
+      }
+      if (k.indexOf('L:') === 0) {
+        lapisan = k.slice(2); shift = false; caps = false;
+        lukis();
+        var h = kemaskiniTinggi();
+        angkatOverlay(el, h);
+        return;
+      }
+      if (k === 'SPACE') { kilat(btn); taipAksara(el, ' '); return; }
+      if (k === 'ENTER') { kilat(btn); tekanEnter(el); return; }
+      if (k === 'TUTUP') { tutup(); el.blur(); return; }
+      if (k === 'ASAL') {
+        // Guna keyboard Kindle untuk kotak ni sekali sahaja (sampai keluar dari kotak)
+        tutup();
+        el.blur();
+        el.setAttribute('data-kb-asal', '1');
+        var asal = el.getAttribute('data-kb-inputmode');
+        if (asal) el.setAttribute('inputmode', asal); else el.removeAttribute('inputmode');
+        setTimeout(function() { el.focus(); }, 60);
+        return;
+      }
+      var c = (lapisan === 'huruf' && (shift || caps)) ? k.toUpperCase() : k;
+      kilat(btn);
+      taipAksara(el, c);
+      if (shift && !caps) { shift = false; lukis(); }
+    }
+
+    function onTekan(e) {
+      var jenisSentuh = e.type === 'touchstart';
+      if (jenisSentuh) masaSentuh = Date.now();
+      else if (Date.now() - masaSentuh < 700) { e.preventDefault(); return; } // elak tekanan berganda (sentuh + tetikus)
+      e.preventDefault(); // jangan ambil fokus dari kotak taip
+      var t = e.target, b = null;
+      while (t && t !== kb) { if (t.className && String(t.className).indexOf('kb-k') > -1) { b = t; break; } t = t.parentNode; }
+      if (b) tekan(b.getAttribute('data-k'), b);
+    }
+    kb.addEventListener('touchstart', onTekan, { passive: false });
+    kb.addEventListener('mousedown', onTekan);
+    ['touchend', 'touchcancel', 'mouseup'].forEach(function(n) { document.addEventListener(n, hentiUlang, true); });
+
+    // Sediakan kotak taip SEBELUM fokus (supaya keyboard Kindle tak sempat keluar)
+    function sediakanSasaran(e) {
+      var t = e.target;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) sediakan(t);
+    }
+    document.addEventListener('touchstart', sediakanSasaran, true);
+    document.addEventListener('mousedown', sediakanSasaran, true);
+    var semua = document.querySelectorAll('input, textarea');
+    for (var i = 0; i < semua.length; i++) sediakan(semua[i]);
+
+    document.addEventListener('focusin', function(e) {
+      var el = e.target;
+      if (!bolehGuna(el) || el.getAttribute('data-kb-asal') === '1') return;
+      sediakan(el);
+      buka(el);
+    });
+    document.addEventListener('focusout', function(e) {
+      var el = e.target;
+      if (el && el.getAttribute && el.getAttribute('data-kb-asal') === '1') {
+        // Habis guna keyboard Kindle → kembali ke papan kekunci sendiri
+        el.removeAttribute('data-kb-asal');
+        el.setAttribute('inputmode', 'none');
+        return;
+      }
+      if (el !== elAktif) return;
+      setTimeout(function() {
+        var a = document.activeElement;
+        if (a === el || (a && bolehGuna(a) && a === elAktif)) return; // masih dalam kotak taip
+        if (elAktif === el) tutup();
+      }, 0);
+    });
+  })();
+  </script>
 </body>  
 </html>
