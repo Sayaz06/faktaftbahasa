@@ -682,6 +682,8 @@
     #kb-sendiri .kb-k.kb-lebar[data-k="DEL"] { font-size: 0.85rem; }
     /* Delete All — tulisan kecil 2 baris, saiz butang kekal */
     #kb-sendiri .kb-k.kb-lebar[data-k="PADAMSEMUA"] { font-size: 0.6rem; line-height: 1.15; white-space: pre-line; }
+    /* Butang anak panah alih kursor */
+    #kb-sendiri .kb-k.kb-lebar[data-k="KIRI"], #kb-sendiri .kb-k.kb-lebar[data-k="KANAN"] { font-size: 1.3rem; }
     body.kb-buka { padding-bottom: var(--kb-h, 0px); }
     /* Skrin Telegram guna tinggi penuh skrin — pendekkan supaya kotak taip tak terlindung */
     body.kb-buka #screen-telegram { height: calc(100vh - var(--kb-h, 0px)) !important; min-height: 0 !important; }
@@ -8239,13 +8241,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         ['q','w','e','r','t','y','u','i','o','p'],
         ['a','s','d','f','g','h','j','k','l'],
         ['SHIFT','z','x','c','v','b','n','m','DEL'],
-        ['L:simbol',',','SPACE','.','PADAMSEMUA','TUTUP']
+        ['L:simbol','KIRI',',','SPACE','.','KANAN','PADAMSEMUA','TUTUP']
       ],
       simbol: [
         ['1','2','3','4','5','6','7','8','9','0'],
         ['@','#','&','-','+','(',')','/','*'],
         ['=','"',"'",':',';','!','?','_','DEL'],
-        ['L:huruf',',','SPACE','.','PADAMSEMUA','TUTUP']
+        ['L:huruf','KIRI',',','SPACE','.','KANAN','PADAMSEMUA','TUTUP']
       ],
       nombor: [
         ['1','2','3'],
@@ -8263,7 +8265,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       ]
     };
     var LABEL = { SHIFT: 'Aa', DEL: 'Padam', SPACE: 'ruang', ENTER: 'Enter', TUTUP: 'Tutup', ASAL: 'Kindle',
-                  PADAMSEMUA: 'Delete\nAll',
+                  PADAMSEMUA: 'Delete\nAll', KIRI: '\u2190', KANAN: '\u2192',
                   'L:simbol': '?123', 'L:huruf': 'ABC', 'L:nombor': '123' };
     var elAktif = null, lapisan = 'huruf', shift = false, caps = false, shiftMasa = 0;
     var tUlang = null, iUlang = null, masaSentuh = 0, _naik = null;
@@ -8340,21 +8342,87 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function tatalBawah(el) {
       if (el.tagName === 'TEXTAREA' && el.scrollHeight > el.clientHeight) el.scrollTop = el.scrollHeight;
     }
+
+    // ── KURSOR MAYA (tak berkelip) ──
+    // Kotak readonly tiada kursor asli → kita lukis garis hitam sendiri di kedudukan kursor.
+    // Tap di mana-mana dalam teks untuk letak kursor; taip & padam berlaku di situ.
+    var kursor = document.createElement('div');
+    kursor.id = 'kb-kursor';
+    kursor.style.cssText = 'display:none;position:fixed;width:2px;background:#000;z-index:2147483001;pointer-events:none;';
+    document.body.appendChild(kursor);
+    var _cermin = null; // salinan tersembunyi kotak taip — untuk kira kedudukan piksel kursor
+    var SALIN_GAYA = ['boxSizing','width','height','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth',
+      'paddingTop','paddingRight','paddingBottom','paddingLeft','fontStyle','fontVariant','fontWeight','fontSize',
+      'lineHeight','fontFamily','textAlign','textTransform','textIndent','letterSpacing','wordSpacing','tabSize'];
+    function kedudukan(el) {
+      var s = null, e = null;
+      try { s = el.selectionStart; e = el.selectionEnd; } catch (x) {}
+      if (s === null || s === undefined) { s = e = el.value.length; }
+      return [s, e];
+    }
+    function letakKursor(el, pos) {
+      try { el.setSelectionRange(pos, pos); } catch (x) {}
+    }
+    function lukisKursor() {
+      var el = elAktif;
+      if (!el || kb.style.display === 'none') { kursor.style.display = 'none'; return; }
+      var pos = kedudukan(el)[1];
+      var cs = window.getComputedStyle(el);
+      if (!_cermin) {
+        _cermin = document.createElement('div');
+        _cermin.style.cssText = 'position:absolute;visibility:hidden;top:0;left:-9999px;overflow:hidden;';
+        document.body.appendChild(_cermin);
+      }
+      var st = _cermin.style;
+      for (var i = 0; i < SALIN_GAYA.length; i++) st[SALIN_GAYA[i]] = cs[SALIN_GAYA[i]];
+      var besar = el.tagName === 'TEXTAREA';
+      st.whiteSpace = besar ? 'pre-wrap' : 'pre';
+      st.wordWrap = besar ? 'break-word' : 'normal';
+      var v = el.value;
+      if ((el.getAttribute('type') || '').toLowerCase() === 'password') v = v.replace(/[\s\S]/g, '\u2022');
+      _cermin.textContent = v.substring(0, pos);
+      var tanda = document.createElement('span');
+      tanda.textContent = v.substring(pos) || '.';
+      _cermin.appendChild(tanda);
+      var fs = parseFloat(cs.fontSize) || 16;
+      var baris = parseFloat(cs.lineHeight) || fs * 1.25;
+      var tinggi = Math.min(baris, fs * 1.3);
+      var r = el.getBoundingClientRect();
+      var bl = parseFloat(cs.borderLeftWidth) || 0, bt = parseFloat(cs.borderTopWidth) || 0;
+      var x = r.left + bl + tanda.offsetLeft - el.scrollLeft;
+      var y = besar ? (r.top + bt + tanda.offsetTop - el.scrollTop + (baris - tinggi) / 2)
+                    : (r.top + (r.height - tinggi) / 2);
+      if (y < r.top - 1 || y + tinggi > r.bottom + 1 || x < r.left || x > r.right) { kursor.style.display = 'none'; return; }
+      kursor.style.left = Math.round(x) + 'px';
+      kursor.style.top = Math.round(y) + 'px';
+      kursor.style.height = Math.round(tinggi) + 'px';
+      kursor.style.display = 'block';
+    }
+    function selepasUbah(el, pos) {
+      letakKursor(el, pos);
+      if (pos >= el.value.length) tatalBawah(el); // kursor di hujung → tatal ke bawah
+      picu(el, 'input');
+      lukisKursor();
+    }
+    // Taip di kedudukan kursor
     function sisip(el, teks) {
-      var baru = el.value + teks;
+      var v = el.value, p = kedudukan(el);
+      var baru = v.slice(0, p[0]) + teks + v.slice(p[1]);
       if (el.maxLength > 0 && baru.length > el.maxLength) return;
       el.value = baru;
-      tatalBawah(el);
-      picu(el, 'input');
+      selepasUbah(el, p[0] + teks.length);
     }
+    // Padam satu aksara SEBELUM kursor
     function padam(el) {
-      var v = el.value, n = v.length;
-      if (!n) return;
-      var c = v.charCodeAt(n - 1);
-      var buang = (n > 1 && c >= 0xDC00 && c <= 0xDFFF) ? 2 : 1; // elak potong separuh emoji
-      el.value = v.slice(0, n - buang);
-      tatalBawah(el);
-      picu(el, 'input');
+      var v = el.value, p = kedudukan(el), s = p[0], e = p[1];
+      if (s === e) {
+        if (s === 0) return;
+        s = s - 1;
+        var c = v.charCodeAt(s); // elak potong separuh emoji
+        if (s > 0 && c >= 0xDC00 && c <= 0xDFFF) s = s - 1;
+      }
+      el.value = v.slice(0, s) + v.slice(e);
+      selepasUbah(el, s);
     }
     // Huruf biasa: input + keyup sahaja (keydown hanya perlu untuk Enter) — kurang kerja setiap tekanan
     function taipAksara(el, c) {
@@ -8421,16 +8489,81 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function modPin(el) {
       return (el.getAttribute('data-kb-inputmode') || '').toLowerCase() === 'numeric';
     }
+    // Kesan tap terakhir — untuk tahu kotak difokus dengan tap (kursor ikut tempat tap) atau oleh kod
+    var _sentuhKotak = { el: null, masa: 0 };
+    function catatSentuh(e) { _sentuhKotak = { el: e.target, masa: Date.now() }; }
+    document.addEventListener('touchstart', catatSentuh, true);
+    document.addEventListener('mousedown', catatSentuh, true);
+    // Tap pada perkataan → kursor terus ke HUJUNG perkataan itu (kita kira sendiri — tak harap pelayar Kindle)
+    function indeksDariTap(el, cx, cy) {
+      var v = el.value;
+      if (!v) return 0;
+      var cs = window.getComputedStyle(el);
+      if (!_cermin) {
+        _cermin = document.createElement('div');
+        _cermin.style.cssText = 'position:absolute;visibility:hidden;top:0;left:-9999px;overflow:hidden;';
+        document.body.appendChild(_cermin);
+      }
+      var st = _cermin.style;
+      for (var i = 0; i < SALIN_GAYA.length; i++) st[SALIN_GAYA[i]] = cs[SALIN_GAYA[i]];
+      var besar = el.tagName === 'TEXTAREA';
+      st.whiteSpace = besar ? 'pre-wrap' : 'pre';
+      st.wordWrap = besar ? 'break-word' : 'normal';
+      // Salin teks ke cermin — setiap perkataan dalam <span> sendiri
+      _cermin.textContent = '';
+      var re = /\S+/g, m, akhir = 0, kata = [];
+      while ((m = re.exec(v))) {
+        if (m.index > akhir) _cermin.appendChild(document.createTextNode(v.slice(akhir, m.index)));
+        var sp = document.createElement('span');
+        sp.textContent = m[0];
+        sp._hujung = m.index + m[0].length;
+        _cermin.appendChild(sp);
+        kata.push(sp);
+        akhir = m.index + m[0].length;
+      }
+      if (akhir < v.length) _cermin.appendChild(document.createTextNode(v.slice(akhir)));
+      if (!kata.length) return v.length;
+      var r = el.getBoundingClientRect();
+      var px = cx - r.left - (parseFloat(cs.borderLeftWidth) || 0) + el.scrollLeft;
+      var py = cy - r.top - (parseFloat(cs.borderTopWidth) || 0) + el.scrollTop;
+      // Cari perkataan paling dekat dengan titik tap (baris sama diutamakan)
+      var pilih = null, jarak = Infinity;
+      for (var j = 0; j < kata.length; j++) {
+        var k = kata[j], atas = k.offsetTop, bawah = atas + k.offsetHeight, kiri = k.offsetLeft, kanan = kiri + k.offsetWidth;
+        var dy = !besar ? 0 : (py < atas ? atas - py : (py > bawah ? py - bawah : 0));
+        var dx = px < kiri ? kiri - px : (px > kanan ? px - kanan : 0);
+        var d = dy * 1000 + dx;
+        if (d < jarak) { jarak = d; pilih = k; }
+      }
+      return pilih ? pilih._hujung : v.length;
+    }
+    function selepasTap(e) {
+      if (!elAktif || e.target !== elAktif) return;
+      var t = (e.changedTouches && e.changedTouches[0]) || e;
+      var cx = t.clientX, cy = t.clientY, el = elAktif;
+      setTimeout(function() {
+        if (elAktif !== el) return;
+        if ((el.getAttribute('type') || '').toLowerCase() !== 'password') letakKursor(el, indeksDariTap(el, cx, cy));
+        lukisKursor();
+      }, 0);
+    }
+    document.addEventListener('touchend', selepasTap, true);
+    document.addEventListener('click', selepasTap, true);
+    // Teks berubah (cth. Delete All, hantar mesej) atau skrol → kemas kini kursor
+    document.addEventListener('input', function(e) { if (e.target === elAktif) setTimeout(lukisKursor, 0); }, true);
+    document.addEventListener('scroll', function() { if (elAktif) lukisKursor(); }, true);
     function buka(el) {
       elAktif = el;
       lapisan = modPin(el) ? 'pin' : (modNombor(el) ? 'nombor' : 'huruf');
       shift = false; caps = false;
+      // Fokus bukan dari tap (cth. butang balas mesej) → kursor terus ke hujung teks
+      if (!(_sentuhKotak.el === el && Date.now() - _sentuhKotak.masa < 800)) letakKursor(el, el.value.length);
       lukis();
       kb.style.display = 'block';
       var h = kemaskiniTinggi();
       document.body.classList.add('kb-buka');
       angkatOverlay(el, h);
-      setTimeout(function() { if (elAktif === el) pastikanNampak(el, h); }, 30);
+      setTimeout(function() { if (elAktif === el) { pastikanNampak(el, h); lukisKursor(); } }, 30);
     }
     // Delete All perlu tekan 2 kali — simpan masa tekan pertama
     var _padamSedia = 0, _tPadam = null;
@@ -8443,15 +8576,32 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function tutup() {
       hentiUlang();
       batalPadamSemua();
+      kursor.style.display = 'none';
       kb.style.display = 'none';
       document.body.classList.remove('kb-buka');
       turunOverlay();
       elAktif = null;
     }
 
+    // Butang ← → : alih kursor satu aksara (tekan & tahan = berterusan)
+    function gerakKursor(el, arah) {
+      if (!el) return;
+      var p = kedudukan(el)[1] + arah;
+      if (p < 0) p = 0;
+      if (p > el.value.length) p = el.value.length;
+      letakKursor(el, p);
+      lukisKursor();
+    }
+    function ulangGerak(arah) {
+      hentiUlang();
+      tUlang = setTimeout(function() {
+        iUlang = setInterval(function() { if (elAktif) gerakKursor(elAktif, arah); else hentiUlang(); }, 150);
+      }, 450);
+    }
     function tekan(k, btn) {
       var el = elAktif;
       if (!el) return;
+      if (k === 'KIRI' || k === 'KANAN') { var arah = k === 'KIRI' ? -1 : 1; gerakKursor(el, arah); ulangGerak(arah); return; }
       if (k === 'DEL') { padam(el); mulaUlang(); return; }
       if (k === 'SHIFT') {
         var kini = Date.now();
