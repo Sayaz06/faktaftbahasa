@@ -682,6 +682,10 @@
     /* Susun atur macam keyboard phone: baris "a" mula separuh butang ke dalam, anak panah saiz biasa */
     #kb-sendiri .kb-sela { flex: 0.5 1 0; min-width: 0; }
     #kb-sendiri .kb-k.kb-lebar[data-k="KIRI"], #kb-sendiri .kb-k.kb-lebar[data-k="KANAN"] { flex-grow: 1; }
+    /* Baris bawah (?123 , ← ruang → . Delete All) lebih tinggi sikit — 50px (pad PIN/nombor tak terjejas) */
+    #kb-sendiri:not(.kb-nombor) .kb-baris:last-child .kb-k { height: 50px; }
+    /* Baris ketiga (Aa z x c v b n m Padam) lebih rendah — 42px */
+    #kb-sendiri:not(.kb-nombor) .kb-baris:nth-child(3) .kb-k { height: 42px; }
     #kb-sendiri .kb-k.kb-gelap, #kb-sendiri .kb-k.kb-tekan { background: #000; color: #fff; }
     #kb-sendiri.kb-nombor .kb-k { height: 52px; font-size: 1.4rem; }
     #kb-sendiri.kb-nombor .kb-k.kb-lebar { font-size: 0.9rem; }
