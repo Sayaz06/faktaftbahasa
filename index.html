@@ -677,6 +677,8 @@
     #kb-sendiri.kb-nombor .kb-k { height: 52px; font-size: 1.4rem; }
     #kb-sendiri.kb-nombor .kb-k.kb-lebar { font-size: 0.9rem; }
     #kb-sendiri .kb-k.kb-lebar[data-k="DEL"] { font-size: 0.85rem; }
+    /* Delete All — tulisan kecil 2 baris, saiz butang kekal */
+    #kb-sendiri .kb-k.kb-lebar[data-k="PADAMSEMUA"] { font-size: 0.6rem; line-height: 1.15; white-space: pre-line; }
     body.kb-buka { padding-bottom: var(--kb-h, 0px); }
     /* Skrin Telegram guna tinggi penuh skrin — pendekkan supaya kotak taip tak terlindung */
     body.kb-buka #screen-telegram { height: calc(100vh - var(--kb-h, 0px)) !important; min-height: 0 !important; }
@@ -8209,13 +8211,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         ['q','w','e','r','t','y','u','i','o','p'],
         ['a','s','d','f','g','h','j','k','l'],
         ['SHIFT','z','x','c','v','b','n','m','DEL'],
-        ['L:simbol',',','SPACE','.','ENTER','TUTUP']
+        ['L:simbol',',','SPACE','.','PADAMSEMUA','TUTUP']
       ],
       simbol: [
         ['1','2','3','4','5','6','7','8','9','0'],
         ['@','#','&','-','+','(',')','/','*'],
         ['=','"',"'",':',';','!','?','_','DEL'],
-        ['L:huruf',',','SPACE','.','ENTER','TUTUP']
+        ['L:huruf',',','SPACE','.','PADAMSEMUA','TUTUP']
       ],
       nombor: [
         ['1','2','3'],
@@ -8226,6 +8228,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       ]
     };
     var LABEL = { SHIFT: 'Aa', DEL: 'Padam', SPACE: 'ruang', ENTER: 'Enter', TUTUP: 'Tutup', ASAL: 'Kindle',
+                  PADAMSEMUA: 'Delete\nAll',
                   'L:simbol': '?123', 'L:huruf': 'ABC', 'L:nombor': '123' };
     var elAktif = null, lapisan = 'huruf', shift = false, caps = false, shiftMasa = 0;
     var tUlang = null, iUlang = null, masaSentuh = 0, _naik = null;
@@ -8419,6 +8422,11 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       }
       if (k === 'SPACE') { kilat(btn); taipAksara(el, ' '); return; }
       if (k === 'ENTER') { kilat(btn); tekanEnter(el); return; }
+      if (k === 'PADAMSEMUA') {
+        // Kosongkan seluruh kotak taip sekali tekan
+        if (el.value) { el.value = ''; picu(el, 'input'); picuKekunci(el, 'keyup', 'Backspace'); }
+        return;
+      }
       if (k === 'TUTUP') { tutup(); el.blur(); return; }
       if (k === 'ASAL') {
         // Guna keyboard Kindle untuk kotak ni sekali sahaja (sampai keluar dari kotak)
