@@ -1600,31 +1600,44 @@
         var allSubjects = [];
     var allJenisKata = [];
 
-    function loadCollections(cb) {
+    // ── RINGAN: baca perkataan & topik yang AKTIF sahaja (1 dokumen setiap satu) ──
+    // Dulu baca seluruh collection bahasa_perkataan + topics + jenis_kata → berat untuk Kindle.
+    // Kerja susun & tick perkataan seterusnya kini dibuat oleh worker (Railway).
+    function muatAktifRingan() {
       var uid = currentUser.uid;
-      function colGet(col) {
-        var r = db.collection('users').doc(uid).collection(col);
-        return r.get({ source: 'server' }).catch(function() { return r.get(); });
+      function aktifGet(col) {
+        var q = db.collection('users').doc(uid).collection(col).where('isActive', '==', true).limit(1);
+        return q.get({ source: 'server' }).catch(function() { return q.get(); });
       }
-      Promise.all([
-        colGet('bahasa_perkataan'),
-        colGet('topics'),
-        colGet('jenis_kata')
+      return Promise.all([
+        aktifGet('bahasa_perkataan'),
+        aktifGet('topics')
       ]).then(function(res) {
         allBahasaPerkataan = [];
         res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
         allTopics = [];
         res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
-        allJenisKata = [];
-        res[2].forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
-        activePerkataan = null;
-        for (var pi = 0; pi < allBahasaPerkataan.length; pi++) {
-          if (allBahasaPerkataan[pi].isActive) { activePerkataan = allBahasaPerkataan[pi]; break; }
-        }
-        activeTopic = null;
-        for (var ti = 0; ti < allTopics.length; ti++) {
-          if (allTopics[ti].isActive) { activeTopic = allTopics[ti]; break; }
-        }
+        activePerkataan = allBahasaPerkataan[0] || null;
+        activeTopic = allTopics[0] || null;
+        return _muatJenisAktif();
+      });
+    }
+
+    // Baca SATU dokumen jenis kata (untuk nama kategori) — simpan dalam allJenisKata sebagai cache
+    function _muatJenisAktif() {
+      if (!currentUser || !activePerkataan || !activePerkataan.jenisId) return Promise.resolve();
+      var jid = activePerkataan.jenisId;
+      for (var i = 0; i < allJenisKata.length; i++) {
+        if (allJenisKata[i].id === jid) return Promise.resolve();
+      }
+      return db.collection('users').doc(currentUser.uid).collection('jenis_kata').doc(jid)
+        .get().then(function(snap) {
+          if (snap.exists) { var x = snap.data(); x.id = snap.id; allJenisKata.push(x); }
+        }).catch(function() {});
+    }
+
+    function loadCollections(cb) {
+      muatAktifRingan().then(function() {
         cb && cb();
       }).catch(function(e) {
         setText('play-err', 'Gagal load: ' + e.message);
@@ -3105,36 +3118,72 @@
       return i;
     }
 
-    // Helper: check Firestore dulu sebelum tulis isActive — hormati tick phone
-    function checkPhoneDahTukar(uid, dariPerkId) {
-      var ref = db.collection('users').doc(uid).collection('bahasa_perkataan');
-      return ref.get({ source: 'server' }).catch(function() { return ref.get(); })
-        .then(function(snap) {
-          allBahasaPerkataan = [];
-          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
-          var aktifDlmFirestore = null;
-          for (var i = 0; i < allBahasaPerkataan.length; i++) {
-            if (allBahasaPerkataan[i].isActive) { aktifDlmFirestore = allBahasaPerkataan[i]; break; }
-          }
-          if (aktifDlmFirestore && dariPerkId && aktifDlmFirestore.id !== dariPerkId) {
-            return { phoneDahTukar: true, aktif: aktifDlmFirestore };
-          }
-          return { phoneDahTukar: false, aktif: aktifDlmFirestore };
+    // ── ARAHAN BELAJAR KE WORKER (Railway) ──
+    // Kindle tulis kindle_belajar/cmd → worker baca semua perkataan, susun ikut nama & tick
+    // → worker tulis kindle_belajar/status. Kindle hanya tunggu SATU dokumen status.
+    // Hasil: { tahap: 'siap' | 'habis' | 'phone_tukar' | 'gagal', aktif, jenisBerikut, mesej }
+    function hantarArahanBelajar(action, data) {
+      return new Promise(function(resolve) {
+        if (!currentUser) { resolve({ tahap: 'gagal', mesej: 'Belum login.' }); return; }
+        var uid = currentUser.uid;
+        var reqId = String(Date.now()) + '_' + Math.floor(Math.random() * 100000);
+        var statusRef = db.collection('users').doc(uid).collection('kindle_belajar').doc('status');
+        var cmdRef = db.collection('users').doc(uid).collection('kindle_belajar').doc('cmd');
+        var selesai = false, unsub = null;
+        function habis(hasil) {
+          if (selesai) return;
+          selesai = true;
+          clearTimeout(tMaks);
+          if (unsub) { unsub(); unsub = null; }
+          resolve(hasil);
+        }
+        var tMaks = setTimeout(function() {
+          habis({ tahap: 'gagal', mesej: 'Worker tidak respon. Pastikan worker di Railway sedang berjalan, kemudian tekan SETERUSNYA untuk cuba lagi.' });
+        }, 25000);
+        unsub = statusRef.onSnapshot(function(snap) {
+          if (!snap.exists) return;
+          var s = snap.data();
+          if (s.reqId !== reqId) return; // status arahan lama — abaikan
+          habis(s);
+        }, function(e) {
+          habis({ tahap: 'gagal', mesej: 'Gagal baca status worker: ' + e.message });
         });
+        var cmd = { action: action, reqId: reqId, ts: firebase.firestore.FieldValue.serverTimestamp() };
+        if (data) { for (var k in data) cmd[k] = data[k]; }
+        cmdRef.set(cmd).catch(function(e) {
+          habis({ tahap: 'gagal', mesej: 'Gagal hantar arahan ke worker: ' + e.message });
+        });
+      });
+    }
+
+    // Simpan perkataan aktif dari worker dalam memori (satu dokumen sahaja)
+    function _terimaPerkataanDariWorker(p) {
+      allBahasaPerkataan = p ? [p] : [];
+      activePerkataan = p || null;
+      _muatJenisAktif();
+    }
+
+    function _tunjukRalatBelajar(mesej) {
+      isBusy = false;
+      setText('main-text', mesej || 'Ralat tidak diketahui.');
+      var mainElR = document.getElementById('main-text');
+      if (mainElR) mainElR.className = 'big-text tips-mode';
+      setText('play-err', '');
+      setCardImage('');
     }
 
     function resetBahasaKePerkataanPertama() {
       if (!currentUser) return;
-      var uid = currentUser.uid;
       var jenisId = activePerkataan ? activePerkataan.jenisId : null;
       var dariPerkId = activePerkataan ? activePerkataan.id : null;
-      // Reload dari Firestore dulu dan check kalau phone dah tukar
-      checkPhoneDahTukar(uid, dariPerkId)
-        .catch(function() { return { phoneDahTukar: false }; })
+      setText('play-err', '');
+      setText('main-text', 'Memuat perkataan pertama...');
+      // Worker semak tick phone, susun ikut nama & tick perkataan pertama dalam jenis kata ini
+      hantarArahanBelajar('perkataan_pertama', { dariId: dariPerkId, jenisId: jenisId })
         .then(function(hasil) {
       // Kalau phone dah tick perkataan lain — guna pilihan phone
-      if (hasil && hasil.phoneDahTukar && hasil.aktif) {
-        activePerkataan = hasil.aktif;
+      if (hasil.tahap === 'phone_tukar' && hasil.aktif) {
+        _terimaPerkataanDariWorker(hasil.aktif);
         rebuildBahasaCards(function(ok) {
           isBusy = false;
           if (!ok) return;
@@ -3143,26 +3192,12 @@
         });
         return;
       }
-      var sorted = allBahasaPerkataan
-        .filter(function(p) { return !jenisId || p.jenisId === jenisId; })
-        .sort(function(a, b) {
-          return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
-        });
-      var pertama = sorted[0];
-      if (!pertama) { isBusy = false; startBahasa(); return; }
-      var batch2 = db.batch();
-      for (var k = 0; k < allBahasaPerkataan.length; k++) {
-        if (allBahasaPerkataan[k].isActive) {
-          batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
-          allBahasaPerkataan[k].isActive = false;
-        }
+      if (hasil.tahap !== 'siap' || !hasil.aktif) {
+        _tunjukRalatBelajar(hasil.mesej || 'Gagal reset ke perkataan pertama.');
+        return;
       }
-      batch2.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
-      pertama.isActive = true;
-      pertama.lastIndex = 0;
-      pertama.lastDrawerId = null;
-      batch2.commit().then(function() {
-        activePerkataan = pertama;
+      var pertama = hasil.aktif;
+      _terimaPerkataanDariWorker(pertama);
         rebuildBahasaCards(function(ok) {
           isBusy = false;
           if (!ok) return;
@@ -3181,46 +3216,27 @@
           }
           renderCard();
         });
-      }).catch(function() { isBusy = false; startBahasa(); });
-        }); // tutup .then() reload Firestore resetBahasaKePerkataanPertama
+        }); // tutup .then() arahan worker resetBahasaKePerkataanPertama
     }
 
     function lompatPerkataanSeterusnya() {
       if (!activePerkataan) return Promise.resolve(false);
-      var uid = currentUser.uid;
       var activePerkId = activePerkataan.id;
+      setText('play-err', '');
+      setText('main-text', 'Memuat perkataan seterusnya...');
 
-      // Reload jenis_kata dan bahasa_perkataan dari Firestore supaya data terkini
-      return db.collection('users').doc(uid).collection('jenis_kata').get()
-        .then(function(snap) {
-          allJenisKata = [];
-          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allJenisKata.push(x); });
-          var refPerk = db.collection('users').doc(uid).collection('bahasa_perkataan');
-          return refPerk.get({ source: 'server' }).catch(function() { return refPerk.get(); });
-        })
-        .then(function(snap) {
-          allBahasaPerkataan = [];
-          snap.forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
-          var semasa = allBahasaPerkataan.filter(function(p) { return p.id === activePerkId; })[0];
-          if (semasa) activePerkataan = semasa;
-
-          var sorted = allBahasaPerkataan
-            .filter(function(p) { return p.jenisId === activePerkataan.jenisId; })
-            .sort(function(a, b) {
-              return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
-            });
-          var idx = -1;
-          for (var i = 0; i < sorted.length; i++) {
-            if (sorted[i].id === activePerkataan.id) { idx = i; break; }
+      // Worker baca semua perkataan, semak tick phone, susun ikut nama & tick perkataan seterusnya
+      return hantarArahanBelajar('perkataan_seterusnya', { dariId: activePerkId })
+        .then(function(hasil) {
+          if (hasil.tahap === 'gagal') {
+            _tunjukRalatBelajar(hasil.mesej);
+            return true; // ralat dah dipapar — tekan SETERUSNYA untuk cuba lagi
           }
 
           // Check kalau phone dah tukar tick semasa Kindle sibuk
-          var phoneAktifLompat = null;
-          for (var pa = 0; pa < allBahasaPerkataan.length; pa++) {
-            if (allBahasaPerkataan[pa].isActive) { phoneAktifLompat = allBahasaPerkataan[pa]; break; }
-          }
-          if (phoneAktifLompat && phoneAktifLompat.id !== activePerkId) {
-            activePerkataan = phoneAktifLompat;
+          if (hasil.tahap === 'phone_tukar' && hasil.aktif) {
+            var phoneAktifLompat = hasil.aktif;
+            _terimaPerkataanDariWorker(phoneAktifLompat);
             rebuildBahasaCards(function(ok) {
               setText('play-status', 'BAHASA · ' + (phoneAktifLompat.name || ''));
               renderCard();
@@ -3228,23 +3244,10 @@
             return true;
           }
 
-          // Ada perkataan seterusnya — lompat ke sana
-          if (idx >= 0 && idx < sorted.length - 1) {
-            var next = sorted[idx + 1];
-            var batch = db.batch();
-            for (var j = 0; j < allBahasaPerkataan.length; j++) {
-              if (allBahasaPerkataan[j].isActive) {
-                batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[j].id), { isActive: false });
-                allBahasaPerkataan[j].isActive = false;
-              }
-            }
-            batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(next.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
-            next.isActive = true;
-            next.lastIndex = 0;
-            next.lastDrawerId = null;
-
-            return batch.commit().then(function() {
-              activePerkataan = next;
+          // Ada perkataan seterusnya — worker dah tick, terus lompat ke sana
+          if (hasil.tahap === 'siap' && hasil.aktif) {
+            var next = hasil.aktif;
+            _terimaPerkataanDariWorker(next);
               rebuildBahasaCards(function(ok) {
                 setText('play-status', 'BAHASA · ' + (next.name || ''));
                 function _renderLompat() { renderCard(); }
@@ -3260,22 +3263,12 @@
                 }
               });
               return true;
-            }).catch(function() { return false; });
           }
 
           // Habis semua perkataan — tunjuk JQ dulu, kemudian kad "selesai"
+          if (hasil.aktif) _terimaPerkataanDariWorker(hasil.aktif);
+          var jenisBerikut = hasil.jenisBerikut || null;
           function _tunjukKadSelesai() {
-            var jenisSemasaId = activePerkataan ? activePerkataan.jenisId : null;
-            var allJenisSorted = allJenisKata.slice().sort(function(a, b) {
-              return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true });
-            });
-            var idxJenis = -1;
-            for (var ji = 0; ji < allJenisSorted.length; ji++) {
-              if (allJenisSorted[ji].id === jenisSemasaId) { idxJenis = ji; break; }
-            }
-            var jenisBerikut = (idxJenis >= 0 && idxJenis < allJenisSorted.length - 1)
-              ? allJenisSorted[idxJenis + 1] : null;
-
             var btnFloat = document.getElementById('btn-jenis-seterusnya-float');
             if (btnFloat) {
               btnFloat.className = jenisBerikut ? 'active' : 'active tiada';
@@ -3407,23 +3400,8 @@
           srModeAktif = false;
           srLaciSemasa = null;
 
-          // Reload dari Firestore supaya dapat isActive terkini selepas SR
-          var uid2 = currentUser.uid;
-          var _fetchArr = [
-            db.collection('users').doc(uid2).collection('bahasa_perkataan').get(),
-            db.collection('users').doc(uid2).collection('topics').get()
-          ];
-          Promise.all(_fetchArr).then(function(res2) {
-            allBahasaPerkataan = [];
-            res2[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
-            allTopics = [];
-            res2[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
-            if (mode === 'bahasa') {
-              activePerkataan = allBahasaPerkataan.filter(function(p) { return p.isActive; })[0] || activePerkataan;
-            } else if (mode === 'fakta') {
-              activeTopic = allTopics.filter(function(t) { return t.isActive; })[0] || activeTopic;
-            }
-          }).catch(function() {
+          // Reload perkataan/topik AKTIF sahaja (1 dokumen setiap satu) supaya dapat isActive terkini selepas SR
+          muatAktifRingan().catch(function() {
             // Gagal fetch — guna memori sedia ada sebagai fallback
             if (mode === 'bahasa' && !activePerkataan) {
               for (var ai = 0; ai < allBahasaPerkataan.length; ai++) {
@@ -5700,7 +5678,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       _showScreen('screen-menu');
     });
 
-    // ── RELOAD CHAT: popup tunggu (block sentuhan) → padam Firebase → worker tulis → papar fresh ──
+    // ── RELOAD CHAT: popup tunggu (block sentuhan) → WORKER padam Firebase → WORKER muat mesej → papar fresh ──
+    // Kindle hanya hantar arahan & baca status. Worker buat ikut turutan:
+    //   padam (semua mesej lama dipadam dulu) → muat (ambil dari Telegram) → siap / gagal
     function _tgReloadChat() {
       if (!currentUser || !activeChatId) return;
       var cid = activeChatId;
@@ -5711,51 +5691,41 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var setSt = function(t) { if (stEl) stEl.textContent = t; };
       try { if (document.activeElement) document.activeElement.blur(); } catch (e) {}
       if (ov) ov.style.display = 'flex';
-      setSt('1/3 Memadam mesej lama...');
+      setSt('Menghantar arahan ke worker...');
       if (_activeChatUnsub) { _activeChatUnsub(); _activeChatUnsub = null; }
       document.getElementById('tg-log').innerHTML = '';
 
       var uid = currentUser.uid;
-      var msgsRef = db.collection('users/' + uid + '/tg_messages/' + cid + '/msgs');
-      var selesai = false, unsub = null, tStabil = null, tMaks = null;
+      var reqId = String(Date.now()) + '_' + Math.floor(Math.random() * 100000);
+      var stRef = db.doc('users/' + uid + '/tg_worker/reload_status');
+      var selesai = false, unsub = null, tMaks = null;
       function tamat(pesan) {
         if (selesai) return;
         selesai = true;
         if (unsub) { unsub(); unsub = null; }
-        clearTimeout(tStabil); clearTimeout(tMaks);
+        clearTimeout(tMaks);
         if (ov) ov.style.display = 'none';
         openChat(null, cid, nama); // papar chat fresh
         if (pesan) toast(pesan, 4000);
       }
 
-      msgsRef.get().then(function(snap) {
-        var kerja = [];
-        for (var i = 0; i < snap.docs.length; i += 400) {
-          var b = db.batch();
-          snap.docs.slice(i, i + 400).forEach(function(d) { b.delete(d.ref); });
-          kerja.push(b.commit());
-        }
-        return Promise.all(kerja);
-      }).then(function() {
-        setSt('2/3 Minta worker ambil mesej dari Telegram...');
-        db.doc('users/' + uid + '/tg_worker/wake_cmd')
-          .set({ expiry: new Date(Date.now() + 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
-          .catch(function() {});
-        return db.doc('users/' + uid + '/tg_worker/cmd')
-          .set({ action: 'sync_one', chatId: cid, requestedAt: firebase.firestore.FieldValue.serverTimestamp() });
-      }).then(function() {
-        setSt('3/3 Menunggu worker tulis mesej...');
-        tMaks = setTimeout(function() { tamat('Worker lambat respon — chat dipaparkan setakat yang ada.'); }, 45000);
-        unsub = msgsRef.onSnapshot(function(s) {
-          if (s.empty) return;
-          setSt('3/3 Menerima mesej... (' + s.size + ')');
-          clearTimeout(tStabil);
-          // Bila tiada mesej baru masuk selama 3 saat → anggap worker dah siap
-          tStabil = setTimeout(function() { tamat(''); }, 3000);
-        }, function(e) { tamat('Gagal baca mesej: ' + e.message); });
-      }).catch(function(e) {
-        tamat('Reload gagal: ' + e.message);
-      });
+      tMaks = setTimeout(function() { tamat('Worker lambat respon — chat dipaparkan setakat yang ada.'); }, 60000);
+      unsub = stRef.onSnapshot(function(s) {
+        if (!s.exists) return;
+        var d = s.data();
+        if (d.reqId !== reqId) return; // status reload lama — abaikan
+        if (d.tahap === 'padam') setSt('1/3 Worker sedang memadam mesej lama...');
+        else if (d.tahap === 'muat') setSt('2/3 ' + (d.padam || 0) + ' mesej lama dipadam. Worker sedang ambil mesej dari Telegram...');
+        else if (d.tahap === 'siap') { setSt('3/3 Siap — ' + (d.bil || 0) + ' mesej dimuatkan.'); tamat(''); }
+        else if (d.tahap === 'gagal') tamat('Reload gagal: ' + (d.mesej || 'ralat tidak diketahui'));
+      }, function(e) { tamat('Gagal baca status worker: ' + e.message); });
+
+      db.doc('users/' + uid + '/tg_worker/wake_cmd')
+        .set({ expiry: new Date(Date.now() + 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+        .catch(function() {});
+      db.doc('users/' + uid + '/tg_worker/cmd')
+        .set({ action: 'reload_chat', chatId: cid, reqId: reqId, requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+        .catch(function(e) { tamat('Reload gagal: ' + e.message); });
     }
     document.getElementById('btn-tg-chat-reload').onclick = _tgReloadChat;
     document.getElementById('btn-tg-send').onclick = function() { sendMessage(); };
@@ -6271,31 +6241,19 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     document.getElementById('btn-jenis-seterusnya-float').addEventListener('click', function() {
       var jenisBerikutId = this._jenisBerikutId;
       if (!jenisBerikutId || !currentUser) return;
-      var uid = currentUser.uid;
       var self = this;
 
       // Sembunyi button — hanya bila user tekan
       self.className = '';
-
-      // Cari perkataan pertama dalam jenis kata berikut
-      var perkataanDlmJenis = allBahasaPerkataan
-        .filter(function(p) { return p.jenisId === jenisBerikutId; })
-        .sort(function(a, b) { return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }); });
-
-      if (!perkataanDlmJenis.length) {
-        setText('play-err', 'Tiada perkataan dalam jenis kata ini.');
-        return;
-      }
-
-      var pertama = perkataanDlmJenis[0];
       var dariPerkBtn = activePerkataan ? activePerkataan.id : null;
+      setText('play-err', '');
+      setText('main-text', 'Memuat jenis kata seterusnya...');
 
-      // Check dulu kalau phone dah tukar tick
-      checkPhoneDahTukar(uid, dariPerkBtn)
-        .catch(function() { return { phoneDahTukar: false }; })
+      // Worker semak tick phone, cari & tick perkataan pertama dalam jenis kata berikut
+      hantarArahanBelajar('jenis_seterusnya', { dariId: dariPerkBtn, jenisId: jenisBerikutId })
         .then(function(hasil) {
-        if (hasil && hasil.phoneDahTukar && hasil.aktif) {
-          activePerkataan = hasil.aktif;
+        if (hasil.tahap === 'phone_tukar' && hasil.aktif) {
+          _terimaPerkataanDariWorker(hasil.aktif);
           simpanJenisState(null);
           rebuildBahasaCards(function(ok) {
             isBusy = false;
@@ -6305,25 +6263,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           });
           return;
         }
-
-      var batch = db.batch();
-
-      // Buang isActive semua perkataan
-      for (var k = 0; k < allBahasaPerkataan.length; k++) {
-        if (allBahasaPerkataan[k].isActive) {
-          batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(allBahasaPerkataan[k].id), { isActive: false });
-          allBahasaPerkataan[k].isActive = false;
+        if (hasil.tahap !== 'siap' || !hasil.aktif) {
+          setText('play-err', 'Ralat: ' + (hasil.mesej || 'tidak diketahui'));
+          self.className = 'active';
+          return;
         }
-      }
-
-      // Tick perkataan pertama jenis kata berikut
-      batch.update(db.collection('users').doc(uid).collection('bahasa_perkataan').doc(pertama.id), { isActive: true, lastIndex: 0, lastDrawerId: null });
-      pertama.isActive = true;
-      pertama.lastIndex = 0;
-      pertama.lastDrawerId = null;
-
-      batch.commit().then(function() {
-        activePerkataan = pertama;
+        var pertama = hasil.aktif;
+        _terimaPerkataanDariWorker(pertama);
         // Padam state dari Firebase — button dah digunakan
         simpanJenisState(null);
         rebuildBahasaCards(function(ok) {
@@ -6332,11 +6278,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           setText('play-status', 'BAHASA · ' + (pertama.name || ''));
           renderCard();
         });
-      }).catch(function(e) {
-        setText('play-err', 'Ralat: ' + (e.message || e));
-        self.className = 'active';
-      });
-        }); // tutup .then() checkPhoneDahTukar
+        }); // tutup .then() arahan worker jenis_seterusnya
     });
     document.getElementById('counter-box').onclick = function() {
       var taipBox = document.getElementById('taip-ayat-box');
@@ -6785,44 +6727,50 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       _muatNtFocus(function(fokus) {
         if (fokus && fokus.chatId) {
           if (lbl) lbl.textContent = '...';
-          // 1) Padam mesej lama chat fokus dari Firestore
-          var msgsRef = db.collection('users/' + currentUser.uid + '/tg_messages/' + fokus.chatId + '/msgs');
-          msgsRef.get().then(function(snap) {
-            var batch = db.batch();
-            snap.docs.forEach(function(d) { batch.delete(d.ref); });
-            return batch.commit();
-          }).then(function() {
-            // 2) Wake worker + hantar sync_one (expiry 30s — cukup untuk sync, lepas tu offline)
-            db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
-              .set({ expiry: new Date(Date.now() + 30 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+          // 1) Minta WORKER padam mesej lama & muat semula (ikut turutan) — Kindle hanya baca status
+          var uidF = currentUser.uid;
+          var reqIdF = String(Date.now()) + '_' + Math.floor(Math.random() * 100000);
+          var stRefF = db.doc('users/' + uidF + '/tg_worker/reload_status');
+          var siapF = false, unsubF = null, tMaksF = null;
+          var _bandingSelepasReload = function() {
+            if (siapF) return;
+            siapF = true;
+            if (unsubF) { unsubF(); unsubF = null; }
+            clearTimeout(tMaksF);
+            // 2) Paksa worker offline selepas compare
+            db.doc('users/' + uidF + '/tg_worker/wake_cmd')
+              .set({ expiry: new Date(Date.now() - 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
               .catch(function(){});
-            return db.doc('users/' + currentUser.uid + '/tg_worker/cmd')
-              .set({ action: 'sync_one', chatId: fokus.chatId, requestedAt: firebase.firestore.FieldValue.serverTimestamp() });
-          }).then(function() {
-            // 3) Tunggu worker selesai write BARU compare
-            if (lbl) lbl.textContent = '...';
-            setTimeout(function() {
-              // 4) Paksa worker offline selepas compare
-              db.doc('users/' + currentUser.uid + '/tg_worker/wake_cmd')
-                .set({ expiry: new Date(Date.now() - 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
-                .catch(function(){});
-              var lastReadTs;
-              try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
-              db.doc('users/' + currentUser.uid + '/tg_worker/dialogs').get().then(function(snap) {
-                if (!snap.exists || !snap.data().list) { if (lbl) lbl.textContent = '; 0'; return; }
+            var lastReadTs;
+            try { lastReadTs = parseInt(localStorage.getItem('tg_last_read_all') || '0'); } catch(e) { lastReadTs = 0; }
+            db.doc('users/' + uidF + '/tg_worker/dialogs').get().then(function(snap) {
+              if (!snap.exists || !snap.data().list) { if (lbl) lbl.textContent = '; 0'; return; }
               _tgNotifChats = [];
-                snap.data().list.forEach(function(dlg) {
-                  if (!dlg.lastMsgAt || dlg.lastMsgIsOut) return;
-                  if (fokus && fokus.chatId && dlg.cid !== fokus.chatId) return;
-                  if (new Date(dlg.lastMsgAt).getTime() > lastReadTs)
-                    _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
-                });
-                var total = _tgNotifChats.reduce(function(s,c){ return s+c.count; }, 0);
-                if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
-                updateTgNotifBadge();
-              }).catch(function(e){ if (lbl) lbl.textContent = 'err'; });
-            }, 8000);
-          }).catch(function(e) { if (lbl) lbl.textContent = 'err'; console.warn(e); });
+              snap.data().list.forEach(function(dlg) {
+                if (!dlg.lastMsgAt || dlg.lastMsgIsOut) return;
+                if (fokus && fokus.chatId && dlg.cid !== fokus.chatId) return;
+                if (new Date(dlg.lastMsgAt).getTime() > lastReadTs)
+                  _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
+              });
+              var total = _tgNotifChats.reduce(function(s,c){ return s+c.count; }, 0);
+              if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
+              updateTgNotifBadge();
+            }).catch(function(e){ if (lbl) lbl.textContent = 'err'; });
+          };
+          tMaksF = setTimeout(_bandingSelepasReload, 60000);
+          // 3) Compare hanya bila worker lapor siap (bukan tunggu masa tetap)
+          unsubF = stRefF.onSnapshot(function(s) {
+            if (!s.exists) return;
+            var d = s.data();
+            if (d.reqId !== reqIdF) return;
+            if (d.tahap === 'siap' || d.tahap === 'gagal') _bandingSelepasReload();
+          }, function() { _bandingSelepasReload(); });
+          db.doc('users/' + uidF + '/tg_worker/wake_cmd')
+            .set({ expiry: new Date(Date.now() + 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+            .catch(function(){});
+          db.doc('users/' + uidF + '/tg_worker/cmd')
+            .set({ action: 'reload_chat', chatId: fokus.chatId, reqId: reqIdF, requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+            .catch(function(e) { if (lbl) lbl.textContent = 'err'; console.warn(e); _bandingSelepasReload(); });
 
         } else {
           // Tiada fokus — buat semak biasa (tanpa sync)
