@@ -86,6 +86,11 @@
     #btn-jq.on, #btn-quran-jq.on, #btn-taip.on, #btn-monitor.on, #btn-kb-lebar.on { background: #000; color: #fff; }
     /* Keyboard Lebar ON → papan kekunci ikut lebar penuh skrin Kindle */
     body.kb-lebar-penuh #kb-sendiri { max-width: none; }
+    /* Skrin kunci (manual & azan) → tiada latar papan kekunci, hanya butang terapung */
+    body.kb-telus #kb-sendiri { background: transparent; border-top: none; }
+    /* Butang skrin kunci: biru gelap, nombor putih, tanpa garis tepi */
+    body.kb-telus #kb-sendiri .kb-k { background: #020617; color: #fff; border-color: #020617; }
+    body.kb-telus #kb-sendiri .kb-k.kb-gelap, body.kb-telus #kb-sendiri .kb-k.kb-tekan { background: #fff; color: #020617; }
     .btn-row .btn-menu {
       background: #ddd;
       color: #000;
@@ -8588,10 +8593,22 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     // Teks berubah (cth. Delete All, hantar mesej) atau skrol → kemas kini kursor
     document.addEventListener('input', function(e) { if (e.target === elAktif) setTimeout(lukisKursor, 0); }, true);
     document.addEventListener('scroll', function() { if (elAktif) lukisKursor(); }, true);
+    // Kotak PIN dalam skrin kunci manual / azan?
+    function dalamSkrinKunci(el) {
+      var p = el;
+      while (p && p !== document.body) {
+        if (p.id === 'lock-overlay' || p.id === 'azan-lock') return true;
+        p = p.parentNode;
+      }
+      return false;
+    }
     function buka(el) {
       elAktif = el;
       lapisan = modPin(el) ? 'pin' : (modNombor(el) ? 'nombor' : 'huruf');
       shift = false; caps = false;
+      // Skrin kunci → papan kekunci tanpa latar (butang terapung sahaja)
+      if (dalamSkrinKunci(el)) document.body.classList.add('kb-telus');
+      else document.body.classList.remove('kb-telus');
       // Fokus bukan dari tap (cth. butang balas mesej) → kursor terus ke hujung teks
       if (!(_sentuhKotak.el === el && Date.now() - _sentuhKotak.masa < 800)) letakKursor(el, el.value.length);
       lukis();
@@ -8615,6 +8632,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       kursor.style.display = 'none';
       kb.style.display = 'none';
       document.body.classList.remove('kb-buka');
+      document.body.classList.remove('kb-telus');
       turunOverlay();
       elAktif = null;
     }
