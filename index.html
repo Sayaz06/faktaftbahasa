@@ -1259,7 +1259,7 @@
         <div style="font-size:0.85rem;font-weight:bold;color:#0088cc;">📌 Pilih Chat Nt</div>
         <button id="btn-tg-pilih-nt-tutup" style="width:28px;height:28px;border-radius:50%;border:2px solid #000;background:#fff;font-size:1rem;font-weight:bold;cursor:pointer;">×</button>
       </div>
-      <div style="font-size:0.75rem;color:#555;margin-bottom:6px;">Pilih satu chat — refresh 🔄 akan sync chat ini sahaja</div>
+      <div style="font-size:0.75rem;color:#555;margin-bottom:6px;">Pilih satu chat — refresh 🔄 akan sync chat ini sahaja. Pilih "Semua chat" untuk semak semua chat, termasuk nombor baru.</div>
       <div id="tg-pilih-nt-semasa" style="font-size:0.72rem;color:#0088cc;margin-bottom:6px;"></div>
       <div id="tg-pilih-nt-list"></div>
       <div style="display:flex;gap:6px;margin-top:8px;">
@@ -6652,7 +6652,10 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           list.innerHTML = '<div style="font-size:0.8rem;color:#aaa;padding:8px 0;">Tiada chat. Buka Telegram dulu.</div>';
           return;
         }
-        snap.data().list.forEach(function(dlg) {
+        // Pilihan khas "Semua chat" di atas sekali — refresh akan semak SEMUA chat (termasuk nombor baru)
+        var senaraiNt = [{ cid: '__SEMUA__', name: 'Semua chat', lastMsg: 'Semak semua chat, termasuk nombor baru' }]
+          .concat(snap.data().list);
+        senaraiNt.forEach(function(dlg) {
           var div = document.createElement('div');
           div.className = 'tg-pilih-nt-item' + (_ntFocus && _ntFocus.chatId === dlg.cid ? ' terpilih' : '');
           div.innerHTML = '<div class="tg-pilih-nt-nama">' + (dlg.name || dlg.cid) + '</div>' +
@@ -6705,6 +6708,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           var reqIdF = String(Date.now()) + '_' + Math.floor(Math.random() * 100000);
           var stRefF = db.doc('users/' + uidF + '/tg_worker/reload_status');
           var siapF = false, unsubF = null, tMaksF = null;
+          var semuaF = fokus.chatId === '__SEMUA__'; // pilihan "Semua chat"
           var _bandingSelepasReload = function() {
             if (siapF) return;
             siapF = true;
@@ -6721,7 +6725,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
               _tgNotifChats = [];
               snap.data().list.forEach(function(dlg) {
                 if (!dlg.lastMsgAt || dlg.lastMsgIsOut) return;
-                if (fokus && fokus.chatId && dlg.cid !== fokus.chatId) return;
+                // "Semua chat" → semak semua; chat fokus → semak chat itu sahaja
+                if (!semuaF && dlg.cid !== fokus.chatId) return;
                 if (new Date(dlg.lastMsgAt).getTime() > lastReadTs)
                   _tgNotifChats.push({ chatId: dlg.cid, chatName: dlg.name || dlg.cid, count: 1, lastMsg: dlg.lastMsg || '' });
               });
@@ -6741,8 +6746,12 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           db.doc('users/' + uidF + '/tg_worker/wake_cmd')
             .set({ expiry: new Date(Date.now() + 60 * 1000).toISOString(), requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
             .catch(function(){});
+          // Semua chat → worker muat semula SENARAI semua chat dari Telegram (nombor baru ikut masuk)
+          // Satu chat → worker padam & muat semula mesej chat itu
           db.doc('users/' + uidF + '/tg_worker/cmd')
-            .set({ action: 'reload_chat', chatId: fokus.chatId, reqId: reqIdF, requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
+            .set(semuaF
+              ? { action: 'sync_dialogs', reqId: reqIdF, requestedAt: firebase.firestore.FieldValue.serverTimestamp() }
+              : { action: 'reload_chat', chatId: fokus.chatId, reqId: reqIdF, requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
             .catch(function(e) { if (lbl) lbl.textContent = 'err'; console.warn(e); _bandingSelepasReload(); });
 
         } else {
