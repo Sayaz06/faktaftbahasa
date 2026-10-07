@@ -91,6 +91,10 @@
     /* Butang skrin kunci: biru gelap, nombor putih, tanpa garis tepi */
     body.kb-telus #kb-sendiri .kb-k { background: #020617; color: #fff; border-color: #020617; }
     body.kb-telus #kb-sendiri .kb-k.kb-gelap, body.kb-telus #kb-sendiri .kb-k.kb-tekan { background: #fff; color: #020617; }
+    /* Papan kekunci terbuka di skrin kunci → sorok butang countdown (tak nampak di celah butang nombor) */
+    body.kb-telus #lock-cd-start,
+    body.kb-telus #azan-pin-cd-start,
+    body.kb-telus #azan-cd-start { visibility: hidden !important; }
     .btn-row .btn-menu {
       background: #ddd;
       color: #000;
@@ -1118,6 +1122,8 @@
     </div>
     <button id="btn-next" class="btn btn-primary">SETERUSNYA</button>
     <button id="btn-quran-undo" class="btn" style="display:none;margin-top:4px;">← UNDUR AYAT</button>
+    <!-- Muncul pada kad "jenis kata belum ada perkataan" — teruskan dengan SR sahaja sementara menunggu -->
+    <button id="btn-sr-sahaja" class="btn" style="display:none;margin-top:4px;">TERUSKAN SR</button>
     <div id="taip-ayat-box" style="display:none;margin-top:6px;">
       <textarea id="taip-ayat-input" rows="2" placeholder="Taip ayat dari ingatan..." style="width:100%;padding:8px;font-size:0.85rem;background:#fff;color:#000;border:2px solid #ccc;border-radius:6px;resize:none;box-sizing:border-box;"></textarea>
       <div id="taip-ayat-status" style="font-size:0.72rem;text-align:center;min-height:1.2em;padding:2px 0;"></div>
@@ -2411,6 +2417,9 @@
       jqModeSemasa = ''; jqKadSemasa = null;
       jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
       _srAdaCache = false; // reset cache SR
+      srSahaja = false; _jenisKosong = null; // mod SR sahaja bermula semula dari kad
+      var btnSRS1 = document.getElementById('btn-sr-sahaja');
+      if (btnSRS1) btnSRS1.style.display = 'none';
       setText('play-status', 'Memuat Bahasa + SR...');
       setText('play-err', '');
       showScreen('screen-play');
@@ -2735,6 +2744,8 @@
     function renderCard() {
       var mainEl = document.getElementById('main-text');
       var counterBox = document.getElementById('counter-box');
+      var btnSRS0 = document.getElementById('btn-sr-sahaja');
+      if (btnSRS0) btnSRS0.style.display = 'none'; // hanya untuk kad jenis kata kosong
       if (counterBox) {
         var isLastPerk = (mode === 'bahasa' && activePerkataan && activePerkataan.isLastPerkataan === true);
         var isLast10Fakta = false;
@@ -3068,6 +3079,96 @@
       _muatJenisAktif();
     }
 
+    // ── JENIS KATA KOSONG & MOD SR SAHAJA ──
+    var _jenisKosong = null;       // { id, name } jenis kata seterusnya yang belum ada perkataan
+    var srSahaja = false;          // true = buat SR sahaja sementara tunggu perkataan baru
+    var _kosongCubaLagi = false;   // true = baru tekan SETERUSNYA untuk semak semula
+    function _tunjukKadKosong(jk, nota) {
+      _jenisKosong = jk || _jenisKosong;
+      jk = _jenisKosong || { id: '', name: '' };
+      srModeAktif = false; srLaciSemasa = null;
+      simpanJenisState(null);
+      var bfK = document.getElementById('btn-jenis-seterusnya-float');
+      if (bfK) bfK.className = '';
+      cards = [{
+        front: 'Jenis kata seterusnya "' + (jk.name || '') + '" belum ada perkataan.\nTambah perkataan di app phone, kemudian tekan SETERUSNYA.',
+        back: '', tips: '', imageUrl: '', title: '', drawerId: null,
+        isF0: false, isTamat: false, isSR: false,
+        isKadSelesai: true, jenisKosongId: jk.id, jenisKosongNama: jk.name || ''
+      }];
+      cardIndex = 0;
+      setText('play-status', 'BAHASA · Tiada perkataan');
+      setText('play-mode', 'JENIS KATA KOSONG');
+      setText('side-label', '');
+      setText('main-text', cards[0].front);
+      var mainElK = document.getElementById('main-text');
+      if (mainElK) mainElK.className = 'big-text tips-mode';
+      setText('play-progress', ''); setText('play-meta', '');
+      if (!nota && _kosongCubaLagi) nota = 'Masih belum ada perkataan dalam jenis kata ini.';
+      _kosongCubaLagi = false;
+      setText('play-err', nota || '');
+      setCardImage(''); clearBlockCard();
+      var btnSRS = document.getElementById('btn-sr-sahaja');
+      if (btnSRS) btnSRS.style.display = 'block';
+      isBusy = false;
+    }
+    // Buat SR yang DAH SAMPAI MASA sahaja, satu demi satu. Selepas setiap SR, app semak semula
+    // perkataan seterusnya — kalau dah ada perkataan baru, terus ke perkataan itu.
+    function mulaSRSahaja(denganJQ) {
+      srSahaja = true;
+      isBusy = true;
+      var btnSRS = document.getElementById('btn-sr-sahaja');
+      if (btnSRS) btnSRS.style.display = 'none';
+      function lanjut() {
+        isBusy = true;
+        setText('play-err', '');
+        setText('main-text', 'Memuat SR...');
+        loadSROverdue('bahasa_sr_queue').then(function(overdue) {
+          if (!overdue || !overdue.length) {
+            srSahaja = false;
+            _tunjukKadKosong(null, 'Tiada SR lagi buat masa ini. Rehat dulu — SR seterusnya muncul bila sampai masa.');
+            return;
+          }
+          srQueue = overdue;
+          srLaciSemasa = srQueue.shift();
+          srModeAktif = true;
+          _srAdaCache = true;
+          loadSRIntoCards(srLaciSemasa, 'bahasa', function(ok) {
+            if (!ok) {
+              srSahaja = false;
+              _tunjukKadKosong(null, 'Gagal muat SR. Tekan TERUSKAN SR untuk cuba lagi.');
+              return;
+            }
+            isFlipped = false; showTips = false; isBusy = false;
+            var srLabel = 'SR SAHAJA · ' + getLabelFasaSR(srLaciSemasa.fasaSemasa || 0);
+            setText('play-status', srLabel);
+            var srDrawer = allBahasaDrawers.filter(function(d) { return d.id === srLaciSemasa.drawerId; })[0];
+            if (srDrawer) {
+              var srIss = checkTipsBlock(srDrawer);
+              if (srIss.length) { renderBlockCard(srDrawer.title || '', srIss); return; }
+            }
+            clearBlockCard();
+            renderCard();
+            setText('play-status', srLabel);
+          });
+        }).catch(function(e) {
+          srSahaja = false;
+          _tunjukKadKosong(null, 'Gagal semak SR: ' + (e.message || e));
+        });
+      }
+      if (denganJQ && jqAktif && jqMotivasiList.length) {
+        tunjukMotivasiJQ(function() { if (quranAktif) tunjukQuranJQ(lanjut); else lanjut(); });
+      } else if (denganJQ && quranAktif) {
+        tunjukQuranJQ(lanjut);
+      } else {
+        lanjut();
+      }
+    }
+    document.getElementById('btn-sr-sahaja').addEventListener('click', function() {
+      if (isLoading) return;
+      mulaSRSahaja(false);
+    });
+
     function _tunjukRalatBelajar(mesej) {
       isBusy = false;
       setText('main-text', mesej || 'Ralat tidak diketahui.');
@@ -3150,9 +3251,18 @@
           }
 
           // Ada perkataan seterusnya — worker dah tick, terus lompat ke sana
+          // (termasuk perkataan pertama jenis kata seterusnya bila jenis kata semasa dah habis)
           if (hasil.tahap === 'siap' && hasil.aktif) {
             var next = hasil.aktif;
             _terimaPerkataanDariWorker(next);
+            if (hasil.jenisBaru) {
+              // Dah masuk jenis kata baru → butang "Jenis Kata Seterusnya" tak perlu lagi
+              simpanJenisState(null);
+              var bfBaru = document.getElementById('btn-jenis-seterusnya-float');
+              if (bfBaru) bfBaru.className = '';
+            }
+            // Perkataan baru dah ada → keluar dari mod SR sahaja
+            srSahaja = false; _jenisKosong = null;
               rebuildBahasaCards(function(ok) {
                 setText('play-status', 'BAHASA · ' + (next.name || ''));
                 function _renderLompat() { renderCard(); }
@@ -3170,7 +3280,17 @@
               return true;
           }
 
-          // Habis semua perkataan — tunjuk JQ dulu, kemudian kad "selesai"
+          // Jenis kata seterusnya BELUM ADA perkataan → berhenti di sini (jangan langkau jenis kata)
+          if (hasil.tahap === 'kosong' && hasil.jenisBerikut) {
+            if (hasil.aktif) _terimaPerkataanDariWorker(hasil.aktif);
+            _jenisKosong = hasil.jenisBerikut;
+            // Sedang dalam mod SR sahaja → terus ke SR seterusnya (JQ/Quran dulu macam biasa)
+            if (srSahaja) { mulaSRSahaja(true); return true; }
+            _tunjukKadKosong(hasil.jenisBerikut);
+            return true;
+          }
+
+          // Habis semua perkataan & TIADA jenis kata seterusnya — tunjuk JQ dulu, kemudian kad "selesai"
           if (hasil.aktif) _terimaPerkataanDariWorker(hasil.aktif);
           var jenisBerikut = hasil.jenisBerikut || null;
           function _tunjukKadSelesai() {
@@ -3745,6 +3865,20 @@
 
       // Kad selesai bahasa — terus ke perkataan pertama (jangan JQ semula)
       if (c.isKadSelesai) {
+        if (c.jenisKosongId) {
+          // Semak semula dari perkataan semasa — kalau user dah tambah perkataan ATAU jenis kata baru
+          // (ikut susunan nama), worker terus pilih yang betul
+          isBusy = true;
+          _kosongCubaLagi = true;
+          var btnSRK = document.getElementById('btn-sr-sahaja');
+          if (btnSRK) btnSRK.style.display = 'none';
+          setText('play-err', '');
+          setText('main-text', 'Menyemak perkataan seterusnya...');
+          lompatPerkataanSeterusnya().then(function(ok) {
+            if (!ok) { _tunjukKadKosong(null, 'Gagal semak. Tekan SETERUSNYA untuk cuba lagi.'); }
+          });
+          return;
+        }
         resetBahasaKePerkataanPertama();
         return;
       }
