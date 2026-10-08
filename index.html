@@ -732,6 +732,8 @@
     <div class="sub" id="menu-user">—</div>
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
+    <!-- Ulang SR Bahasa tanpa had (atas → bawah, pusing semula) — TIADA kesan pada jadual SR -->
+    <button id="btn-go-sr-bebas" class="btn">SR Bebas (Bahasa)</button>
     <button id="btn-go-gotick" class="btn">Go-Tick</button>
     <button id="btn-go-main-motivation" class="btn">[ MAIN MOTIVATION ]</button>
     <button id="btn-go-reminder-list" class="btn">[ REMINDER ]</button>
@@ -2747,7 +2749,8 @@
       var btnSRS0 = document.getElementById('btn-sr-sahaja');
       if (btnSRS0) btnSRS0.style.display = 'none'; // hanya untuk kad jenis kata kosong
       if (counterBox) {
-        var isLastPerk = (mode === 'bahasa' && activePerkataan && activePerkataan.isLastPerkataan === true);
+        // Kotak hitam 'perkataan terakhir' hanya untuk laci biasa — bukan semasa SR / SR Bebas
+        var isLastPerk = (mode === 'bahasa' && !srModeAktif && activePerkataan && activePerkataan.isLastPerkataan === true);
         var isLast10Fakta = false;
         if (mode === 'fakta' && !srModeAktif && activeTopic && activeTopic.totalBaris > 0) {
           var c0 = cards[cardIndex];
@@ -3400,6 +3403,8 @@
     }
 
     function _terusAfterTamat(c) {
+      // SR Bebas: JANGAN sentuh jadual SR / kedudukan laci — terus ke laci SR seterusnya
+      if (srBebas) { setCardImage(''); _selesaiSRBebas(); return; }
       setCardImage('');
       var mainEl = document.getElementById('main-text');
       if (mainEl) { mainEl.textContent = 'Menyimpan...'; mainEl.className = 'big-text'; }
@@ -4307,12 +4312,103 @@
       if (e.key === 'Enter') cubaLoginPin();
     };
     document.getElementById('btn-logout').onclick = function() { auth.signOut(); };
-    document.getElementById('btn-go-bahasa').onclick = startBahasa;
-    document.getElementById('btn-go-fakta').onclick = startFakta;
+    document.getElementById('btn-go-bahasa').onclick = function() { srBebas = false; startBahasa(); };
+    document.getElementById('btn-go-fakta').onclick = function() { srBebas = false; startFakta(); };
+    document.getElementById('btn-go-sr-bebas').onclick = function() { startSRBebas(); };
     document.getElementById('btn-back-menu').onclick = function() {
       isLoading = false;
       showScreen('screen-menu');
     };
+
+    // ══ SR BEBAS (Bahasa) ══
+    // Ulang laci yang dah ada dalam SR Bahasa, ikut masa didaftar (paling lama dulu), aliran penuh
+    // (Gambar, F1, F2). Habis → pusing semula ke atas. TIADA kesan pada fasa / nextDueAt / sejarah SR.
+    // Kindle baca SATU laci SR sahaja setiap kali. Kedudukan disimpan di kindle_settings/sr_bebas.
+    var srBebas = false;
+    var _srBebasSemasa = null;
+    function _srBebasRef() {
+      return db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('sr_bebas');
+    }
+    // Ambil SATU laci SR selepas kedudukan 'selepas' (createdAt). Habis → pusing ke laci pertama.
+    function _ambilSRBebas(selepas) {
+      var q = db.collection('users').doc(currentUser.uid).collection('bahasa_sr_queue').orderBy('createdAt', 'asc');
+      return (selepas ? q.startAfter(selepas) : q).limit(1).get().then(function(snap) {
+        if (!snap.empty) return snap.docs[0];
+        if (!selepas) return null;
+        return q.limit(1).get().then(function(s2) { return s2.empty ? null : s2.docs[0]; });
+      });
+    }
+    function _muatSRBebas(selepas, cubaan) {
+      cubaan = cubaan || 0;
+      isBusy = true;
+      setCardImage('');
+      setText('play-err', '');
+      setText('main-text', 'Memuat SR Bebas...');
+      _ambilSRBebas(selepas).then(function(doc) {
+        if (!doc) {
+          isBusy = false; isLoading = false;
+          cards = []; cardIndex = 0; srModeAktif = false; srLaciSemasa = null;
+          setText('play-status', 'SR BEBAS');
+          setText('play-mode', 'SR BEBAS');
+          setText('main-text', 'Tiada laci dalam SR Bahasa lagi.');
+          return;
+        }
+        var sr = doc.data(); sr.id = doc.id;
+        _srBebasSemasa = sr;
+        srLaciSemasa = sr;
+        srModeAktif = true;
+        loadSRIntoCards(sr, 'bahasa', function(ok) {
+          isLoading = false;
+          if (!ok) {
+            // Laci SR ni dah dipadam — langkau ke seterusnya (had 20 cubaan supaya tak berpusing tanpa henti)
+            if (cubaan < 20) { _muatSRBebas(sr.createdAt, cubaan + 1); return; }
+            isBusy = false;
+            setText('main-text', 'Gagal muat laci SR Bebas.');
+            return;
+          }
+          isFlipped = false; showTips = false; isBusy = false;
+          clearBlockCard();
+          renderCard();
+          setText('play-status', 'SR BEBAS · ' + (sr.drawerTitle || ''));
+        });
+      }).catch(function(e) {
+        isBusy = false; isLoading = false;
+        setText('play-err', 'Gagal muat SR Bebas: ' + (e.message || e));
+      });
+    }
+    function startSRBebas() {
+      if (isLoading || !currentUser) return;
+      isLoading = true;
+      _prefetchCache = {};
+      mode = 'bahasa';
+      srBebas = true;
+      isFlipped = false; showTips = false;
+      jqModeSemasa = ''; jqKadSemasa = null;
+      jqCardIndexSimpan = -1; jqPendingCardIndex = -1;
+      setText('play-status', 'Memuat SR Bebas...');
+      setText('play-err', '');
+      showScreen('screen-play');
+      // Sambung dari laci terakhir yang dah habis dibaca
+      _srBebasRef().get().then(function(s) {
+        var d = s.exists ? s.data() : {};
+        _muatSRBebas(d.createdAt || null);
+      }).catch(function() { _muatSRBebas(null); });
+    }
+    // Satu laci SR Bebas habis → simpan kedudukan → JQ/Quran (kalau ON) → laci seterusnya
+    function _selesaiSRBebas() {
+      var sr = _srBebasSemasa;
+      var selepas = sr ? sr.createdAt : null;
+      if (sr) _srBebasRef().set({ createdAt: sr.createdAt, id: sr.id, updatedAt: Date.now() }).catch(function() {});
+      srModeAktif = false; srLaciSemasa = null;
+      function lanjut() { _muatSRBebas(selepas); }
+      if (jqAktif && jqMotivasiList.length) {
+        tunjukMotivasiJQ(function() { if (quranAktif) tunjukQuranJQ(lanjut); else lanjut(); });
+      } else if (quranAktif) {
+        tunjukQuranJQ(lanjut);
+      } else {
+        lanjut();
+      }
+    }
 
     // ══════════════════════════════════════════
     // OTHER MOTIVATION
