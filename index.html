@@ -7408,54 +7408,89 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           }).catch(function() {});
       }
 
+      // ── WAKTU SOLAT HARIAN — Kindle urus sendiri, tak bergantung pada app Lokasi Solat ──
+      // 1) Ambil waktu HARI INI untuk lokasi aktif sahaja (1 permintaan internet)
+      // 2) Bila tarikh bertukar (tengah malam / Kindle bangun dari tidur) → ambil & jadual semula
+      var _azanTarikhSemasa = '';   // tarikh (YYYY-MM-DD) waktu yang sedang dijadualkan
+      var _azanSemakTimer = null;
+      function _pad2(n) { return (n < 10 ? '0' : '') + n; }
+      function _tarikhAzanKey(ms) {
+        var d = new Date(ms);
+        return d.getFullYear() + '-' + _pad2(d.getMonth() + 1) + '-' + _pad2(d.getDate());
+      }
+      function _semakTarikhAzan() {
+        if (!currentUser) return;
+        if (_tarikhAzanKey(getNowMs()) !== _azanTarikhSemasa) fetchAzanData(currentUser.uid);
+      }
+      function _mulaSemakHarian() {
+        if (_azanSemakTimer) return;
+        _azanSemakTimer = setInterval(_semakTarikhAzan, 5 * 60 * 1000); // semak setiap 5 minit
+        document.addEventListener('visibilitychange', function() { if (!document.hidden) _semakTarikhAzan(); });
+      }
+
       function fetchAzanData(uid) {
+        _mulaSemakHarian();
         loadAzanUnlocked(uid, function() {
           db.collection('users').doc(uid).collection('kindle_settings').doc('solat_lokasi')
             .get().then(function(snap) {
-              if (!snap.exists) { loadAzanLockState(uid); return; }
-              var d = snap.data();
-              _lokasiNama = d.nama || '';
-              var lat = d.lat; var lng = d.lng;
-              if (!lat || !lng) { loadAzanLockState(uid); return; }
-              refreshSemuaLokasi(uid, lat, lng, function() {
-                loadAzanLockState(uid);
-              });
+              var tetapan = snap.exists ? snap.data() : {};
+              _lokasiNama = tetapan.nama || '';
+              muatWaktuLokasiAktif(uid, tetapan, function() { loadAzanLockState(uid); });
             }).catch(function() { loadAzanLockState(uid); });
         });
       }
 
-      function refreshSemuaLokasi(uid, activeLat, activeLng, cb) {
-        db.collection('users').doc(uid).collection('solat_lokasi').get()
-          .then(function(snap) {
-            var cbDipanggil = false;
-            snap.forEach(function(d) {
-              var lok = d.data();
-              if (!lok.lat || !lok.lng) return;
-              // Guna cache Firestore dulu — azan tidak tunggu API
-              if (lok.lat === activeLat && lok.lng === activeLng && lok.waktu) {
-                setAzanTimers(lok.waktu, _lokasiNama);
-                if (!cbDipanggil) { cbDipanggil = true; cb && cb(); }
-              } else if (lok.lat === activeLat && lok.lng === activeLng) {
-                // Tiada cache waktu — tetap panggil cb supaya loadAzanLockState jalan
-                if (!cbDipanggil) { cbDipanggil = true; cb && cb(); }
-              }
-              // Fetch API untuk waktu terkini
-              var url = 'https://api.aladhan.com/v1/timings?latitude=' + lok.lat + '&longitude=' + lok.lng + '&method=11';
-              fetch(url).then(function(r) { return r.json(); }).then(function(data) {
-                if (data.code !== 200) return;
-                var t = data.data.timings;
-                var waktu = { Subuh: t.Fajr, Syuruk: t.Sunrise, Zohor: t.Dhuhr, Asar: t.Asr, Maghrib: t.Maghrib, Isyak: t.Isha };
-                d.ref.update({ waktu: waktu, waktuUpdated: Date.now() }).catch(function() {});
-                if (lok.lat === activeLat && lok.lng === activeLng) {
-                  setAzanTimers(waktu, _lokasiNama);
-                  if (!cbDipanggil) { cbDipanggil = true; cb && cb(); }
-                }
-              }).catch(function() {
-                if (!cbDipanggil) { cbDipanggil = true; cb && cb(); }
-              });
-            });
-            if (!snap.size && !cbDipanggil) { cbDipanggil = true; cb && cb(); }
-          }).catch(function() { cb && cb(); });
+      // Cari lokasi aktif (ikut lokasiId → aktif:true → lat/lng) dan jadualkan waktu HARI INI.
+      // Waktu yang disimpan dah untuk hari ini → guna terus. Kalau belum → ambil dari internet;
+      // kalau internet gagal (atau lambat lebih 15 saat) → guna waktu terakhir sebagai sandaran.
+      function muatWaktuLokasiAktif(uid, tetapan, cb) {
+        var hariIni = _tarikhAzanKey(getNowMs());
+        db.collection('users').doc(uid).collection('solat_lokasi').get().then(function(snap) {
+          var pilih = null;
+          snap.forEach(function(doc) { if (!pilih && tetapan.lokasiId && doc.id === tetapan.lokasiId) pilih = doc; });
+          if (!pilih) snap.forEach(function(doc) { if (!pilih && doc.data().aktif) pilih = doc; });
+          if (!pilih) snap.forEach(function(doc) {
+            var x = doc.data();
+            if (!pilih && tetapan.lat && x.lat === tetapan.lat && x.lng === tetapan.lng) pilih = doc;
+          });
+          if (!pilih) { cb && cb(); return; }
+          var lok = pilih.data();
+          if (lok.nama) _lokasiNama = lok.nama;
+
+          var selesaiDah = false;
+          function selesai() { if (!selesaiDah) { selesaiDah = true; cb && cb(); } }
+          var dahHariIni = lok.waktu && (lok.waktuTarikh === hariIni ||
+            (lok.waktuUpdated && _tarikhAzanKey(lok.waktuUpdated) === hariIni));
+          if (dahHariIni) {
+            setAzanTimers(lok.waktu, _lokasiNama);
+            _azanTarikhSemasa = hariIni;
+            selesai();
+            return;
+          }
+          var guna = false; // elak jadual dua kali (sandaran + internet)
+          function guneSandaran() {
+            if (guna) return;
+            guna = true;
+            if (lok.waktu) setAzanTimers(lok.waktu, _lokasiNama); // tarikh kekal lama → cuba lagi 5 minit
+            selesai();
+          }
+          if (!lok.lat || !lok.lng) { guneSandaran(); return; }
+          var tSandaran = setTimeout(guneSandaran, 15000);
+          var n = new Date(getNowMs());
+          var tarikhApi = _pad2(n.getDate()) + '-' + _pad2(n.getMonth() + 1) + '-' + n.getFullYear();
+          var url = 'https://api.aladhan.com/v1/timings/' + tarikhApi + '?latitude=' + lok.lat + '&longitude=' + lok.lng + '&method=11';
+          fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+            if (!data || data.code !== 200) { clearTimeout(tSandaran); guneSandaran(); return; }
+            var t = data.data.timings;
+            var waktu = { Subuh: t.Fajr, Syuruk: t.Sunrise, Zohor: t.Dhuhr, Asar: t.Asr, Maghrib: t.Maghrib, Isyak: t.Isha };
+            pilih.ref.update({ waktu: waktu, waktuUpdated: Date.now(), waktuTarikh: hariIni }).catch(function() {});
+            clearTimeout(tSandaran);
+            guna = true;
+            setAzanTimers(waktu, _lokasiNama);
+            _azanTarikhSemasa = hariIni;
+            selesai();
+          }).catch(function() { clearTimeout(tSandaran); guneSandaran(); });
+        }).catch(function() { cb && cb(); });
       }
 
       function setAzanTimers(waktu, lokasiNama) {
