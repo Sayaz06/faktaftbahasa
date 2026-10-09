@@ -7459,7 +7459,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
           var selesaiDah = false;
           function selesai() { if (!selesaiDah) { selesaiDah = true; cb && cb(); } }
-          var dahHariIni = lok.waktu && (lok.waktuTarikh === hariIni ||
+          var dahHariIni = lok.waktu && lok.waktuSumber === 'jakim' && (lok.waktuTarikh === hariIni ||
             (lok.waktuUpdated && _tarikhAzanKey(lok.waktuUpdated) === hariIni));
           if (dahHariIni) {
             setAzanTimers(lok.waktu, _lokasiNama);
@@ -7475,21 +7475,47 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
             selesai();
           }
           if (!lok.lat || !lok.lng) { guneSandaran(); return; }
-          var tSandaran = setTimeout(guneSandaran, 15000);
+          var tSandaran = setTimeout(guneSandaran, 20000);
           var n = new Date(getNowMs());
-          var tarikhApi = _pad2(n.getDate()) + '-' + _pad2(n.getMonth() + 1) + '-' + n.getFullYear();
-          var url = 'https://api.aladhan.com/v1/timings/' + tarikhApi + '?latitude=' + lok.lat + '&longitude=' + lok.lng + '&method=11';
-          fetch(url).then(function(r) { return r.json(); }).then(function(data) {
-            if (!data || data.code !== 200) { clearTimeout(tSandaran); guneSandaran(); return; }
-            var t = data.data.timings;
-            var waktu = { Subuh: t.Fajr, Syuruk: t.Sunrise, Zohor: t.Dhuhr, Asar: t.Asr, Maghrib: t.Maghrib, Isyak: t.Isha };
-            pilih.ref.update({ waktu: waktu, waktuUpdated: Date.now(), waktuTarikh: hariIni }).catch(function() {});
+          function jamMinit(saat) {
+            var d = new Date(saat * 1000);
+            return _pad2(d.getHours()) + ':' + _pad2(d.getMinutes());
+          }
+          function berjaya(waktu) {
+            if (guna) return;
+            pilih.ref.update({ waktu: waktu, waktuUpdated: Date.now(), waktuTarikh: hariIni, waktuSumber: 'jakim' }).catch(function() {});
             clearTimeout(tSandaran);
             guna = true;
             setAzanTimers(waktu, _lokasiNama);
             _azanTarikhSemasa = hariIni;
             selesai();
-          }).catch(function() { clearTimeout(tSandaran); guneSandaran(); });
+          }
+          // Sandaran kedua: Aladhan dilaras ikut JAKIM (Subuh 18°, ihtiyat +1/+2 minit)
+          function cubaAladhan() {
+            if (guna) return;
+            var tarikhApi = _pad2(n.getDate()) + '-' + _pad2(n.getMonth() + 1) + '-' + n.getFullYear();
+            var url = 'https://api.aladhan.com/v1/timings/' + tarikhApi + '?latitude=' + lok.lat + '&longitude=' + lok.lng +
+              '&method=99&methodSettings=18,null,18&tune=0,1,0,2,0,2,0,2,0';
+            fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+              if (!data || data.code !== 200) { clearTimeout(tSandaran); guneSandaran(); return; }
+              var t = data.data.timings;
+              berjaya({ Subuh: t.Fajr, Syuruk: t.Sunrise, Zohor: t.Dhuhr, Asar: t.Asr, Maghrib: t.Maghrib, Isyak: t.Isha });
+            }).catch(function() { clearTimeout(tSandaran); guneSandaran(); });
+          }
+          // Utama: data rasmi JAKIM (e-Solat) ikut zon GPS
+          var urlJ = 'https://api.waktusolat.app/v2/solat/gps/' + lok.lat + '/' + lok.lng +
+            '?year=' + n.getFullYear() + '&month=' + (n.getMonth() + 1);
+          fetch(urlJ).then(function(r) { return r.json(); }).then(function(data) {
+            var hari = null;
+            if (data && data.prayers) {
+              for (var i = 0; i < data.prayers.length; i++) {
+                if (data.prayers[i].day === n.getDate()) { hari = data.prayers[i]; break; }
+              }
+            }
+            if (!hari || !hari.fajr || !hari.isha) { cubaAladhan(); return; }
+            berjaya({ Subuh: jamMinit(hari.fajr), Syuruk: jamMinit(hari.syuruk), Zohor: jamMinit(hari.dhuhr),
+              Asar: jamMinit(hari.asr), Maghrib: jamMinit(hari.maghrib), Isyak: jamMinit(hari.isha) });
+          }).catch(function() { cubaAladhan(); });
         }).catch(function() { cb && cb(); });
       }
 
