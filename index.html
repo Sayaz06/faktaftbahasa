@@ -1115,8 +1115,13 @@
       <button id="btn-ai-k-pause" class="btn-sm" style="width:33%;">PAUSE</button>
       <button id="btn-ai-k-statusbtn" class="btn-sm" style="width:33%;">STATUS</button>
     </div>
+    <div style="font-size:0.75rem;margin:2px 0;">START guna Claude API (berbayar, ~RM5 satu MS). Gambar sahaja guna butang di bawah.</div>
     <div id="ai-k-info" class="msg"></div>
     <div id="ai-k-err" class="msg error"></div>
+    <!-- GAMBAR G1 SAHAJA — xAI (Grok), tiada kos Claude, prompt = Arahan Gambar 1 golongan (sama dengan app phone) -->
+    <button id="btn-ai-k-imej" class="btn" style="margin-top:6px;font-size:0.9rem;padding:9px;">JANA GAMBAR SAHAJA (G1)</button>
+    <div id="ai-k-imej-box" style="display:none;border:2px dashed #000;border-radius:6px;padding:6px;margin-top:4px;"></div>
+    <div id="ai-k-imej-status" style="font-size:0.85rem;line-height:1.5;margin-top:4px;"></div>
     <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">2. Model AI</div>
     <div class="btn-row">
       <button id="ai-k-m-sonnet" class="btn-sm" style="width:50%;">Sonnet 5.5</button>
@@ -6836,7 +6841,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       _pjK.unsub = _pjRef('ai_penjana').doc(_pjK.gid).onSnapshot(function(s) {
         _pjK.data = s.exists ? s.data() : null;
         if (pertama) { pertama = false; if (!_pjK.data || !_pjK.data.ringkasan) _pjMintaRingkasan(); }
-        _pjRenderKad(); _pjRenderMS();
+        _pjRenderKad(); _pjRenderMS(); _pjRenderImej();
         if (_pjK.tungguTimer && _pjK.data && _pjK.data.ringkasanUntuk === _pjK.tunggu) {
           clearTimeout(_pjK.tungguTimer); _pjK.tungguTimer = null;
           setText('ai-k-info', '');
@@ -6892,14 +6897,135 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       }
       if (d.mesej && d.status !== 'berjalan') t += '\n\nNota: ' + d.mesej;
       if (d.status === 'berjalan' && d.arahan === 'jalan') { _pjKonfirm(t + '\n\nWorker sedang berjalan.', null); return; }
-      _pjKonfirm(t + '\n\nTeruskan dengan ' + _pjLabelModel(_pjK.model) + '?', _pjMula);
+      _pjKonfirm(t + '\n\nTeruskan dengan ' + _pjLabelModel(_pjK.model) + '?', _pjMulaAmaran);
     }
 
-    document.getElementById('btn-go-ai').onclick = function() { if (currentUser) _pjBuka(); };
+    // ⚠️ START guna Claude API → amaran 2 kali + PIN (kos sebenar: 1 MS / 81 laci ≈ US$1.12 ≈ RM5 dengan Sonnet)
+    function _pjMulaAmaran() {
+      var g = _pjGol();
+      if (!g) return;
+      var r = _pjRingkasan(), belum = 0;
+      for (var i = 0; i < r.length; i++) if (!r[i].ok) belum++;
+      var rmMs = _pjK.model === 'claude-opus-5-5' ? 10 : 5;
+      var m1 = 'AMARAN KOS (1/2)\n\n' +
+        'Penjana guna Claude API — dicaj ikut setiap token. Ini BUKAN langganan Claude chat biasa. Kredit ditolak terus dari akaun Anthropic anda.\n\n' +
+        'Kos sebenar yang pernah diukur:\n1 muka surat (33 perkataan → 81 laci) = US$1.12 ≈ RM5 dengan Sonnet 5.5. Opus 5.5 ≈ RM10.\n\n' +
+        'Penjana TIDAK berhenti selepas 1 MS — ia terus ke MS seterusnya sehingga semua siap, kredit habis atau anda tekan PAUSE.\n\n' +
+        'Belum lengkap: ' + belum + ' MS ≈ RM' + (belum * rmMs) + ' (' + _pjLabelModel(_pjK.model) + ') + kos gambar Grok.\n\n' +
+        'Bahagian paling mahal ialah Tips. Kredit yang dipakai TIDAK dipulangkan.\n\n' +
+        'Lebih murah: Claude chat biasa + butang manual Step 1 / 2 / 3 di app phone (hampir RM0).\n\n' +
+        'Teruskan ke amaran terakhir?';
+      var m2 = 'AMARAN TERAKHIR (2/2)\n\n' + (g.name || '') + ' · ' + _pjLabelModel(_pjK.model) + '\n\n' +
+        '• 1 MS ≈ RM' + rmMs + '\n• 10 MS ≈ RM' + (10 * rmMs) + '\n• Semua ' + belum + ' MS ≈ RM' + (belum * rmMs) + '\n\n' +
+        'Anda pasti mahu belanja duit ini?\nSeterusnya masukkan PIN untuk sahkan.';
+      _pjKonfirm(m1, function() {
+        setTimeout(function() {
+          _pjKonfirm(m2, function() {
+            setTimeout(function() { _bukaDenganPin('PIN — sahkan belanja Claude API', _pjMula); }, 50);
+          });
+        }, 50);
+      });
+    }
+
+    // 🖼️ JANA GAMBAR G1 SAHAJA — satu muka surat, laci tanpa gambar. Worker guna xAI + Arahan Gambar 1 golongan.
+    var _pjImej = { jobs: [], unsub: null, pilih: '', buka: false, siapLepas: '' };
+    function _pjImejCalon() {
+      var r = _pjRingkasan(), c = [];
+      for (var i = 0; i < r.length; i++) if (r[i].l > 0 && r[i].i < r[i].l) c.push(r[i]);
+      return c;
+    }
+    function _pjImejJob() {
+      for (var i = 0; i < _pjImej.jobs.length; i++) if (_pjImej.jobs[i].jenis === 'jana_imej') return _pjImej.jobs[i];
+      return null;
+    }
+    function _pjRenderImej() {
+      var box = document.getElementById('ai-k-imej-box');
+      if (!box) return;
+      if (!_pjImej.buka) { box.style.display = 'none'; return; }
+      box.style.display = '';
+      if (!_pjK.data || !_pjK.data.ringkasan) { box.innerHTML = '<div class="msg">Tekan STATUS dahulu untuk semak muka surat.</div>'; return; }
+      var c = _pjImejCalon();
+      if (!c.length) { box.innerHTML = '<div class="msg">Semua laci dalam golongan ini sudah ada Gambar G1.</div>'; return; }
+      var ada = false, aktifJenis = (typeof activePerkataan !== 'undefined' && activePerkataan) ? activePerkataan.jenisId : '';
+      for (var i = 0; i < c.length; i++) if (c[i].id === _pjImej.pilih) ada = true;
+      if (!ada) {
+        _pjImej.pilih = c[0].id;
+        for (var a = 0; a < c.length; a++) if (c[a].id === aktifJenis) _pjImej.pilih = aktifJenis;
+      }
+      var html = '<div style="font-size:0.8rem;font-weight:bold;margin-bottom:2px;">Pilih muka surat (laci tanpa gambar):</div>';
+      for (var k = 0; k < c.length && k < 30; k++) {
+        html += '<button class="btn' + (c[k].id === _pjImej.pilih ? ' btn-primary' : '') + '" data-imej="' + _pjEsc(c[k].id) +
+          '" style="padding:6px;font-size:0.85rem;margin:3px 0;">' + _pjEsc(_pjNamaMs(c[k])) + ' — ' + (c[k].l - c[k].i) + ' laci tanpa gambar (' + c[k].i + '/' + c[k].l + ')</button>';
+      }
+      if (c.length > 30) html += '<div class="msg">+ ' + (c.length - 30) + ' muka surat lagi</div>';
+      html += '<button id="btn-ai-k-imej-jana" class="btn btn-primary" style="margin-top:6px;">JANA GAMBAR SEKARANG</button>';
+      box.innerHTML = html;
+      var btns = box.querySelectorAll('button[data-imej]');
+      for (var b = 0; b < btns.length; b++) btns[b].onclick = function() { _pjImej.pilih = this.getAttribute('data-imej'); _pjRenderImej(); };
+      document.getElementById('btn-ai-k-imej-jana').onclick = _pjImejHantar;
+    }
+    function _pjImejHantar() {
+      var c = _pjImejCalon(), r = null;
+      for (var i = 0; i < c.length; i++) if (c[i].id === _pjImej.pilih) r = c[i];
+      if (!r) return;
+      var j = _pjImejJob();
+      if (j && (j.status === 'menunggu' || j.status === 'diproses')) { setText('ai-k-info', 'Masih ada kerja gambar sedang berjalan.'); return; }
+      _pjKonfirm('JANA GAMBAR G1 — ' + _pjNamaMs(r) + '\n\n' + (r.l - r.i) + ' laci tanpa gambar akan dijana guna Grok (xAI).\n' +
+        'Prompt: Arahan Gambar 1 golongan (sama dengan app phone).\n\nKos Claude: RM0. Gambar dicaj oleh xAI.\n\nTeruskan?', function() {
+        _pjRef('ai_jobs').add({
+          jenis: 'jana_imej', jenisKataId: r.id, jenisKataNama: r.nama || '', imej: true,
+          status: 'menunggu', createdAt: Date.now(), sumber: 'kindle'
+        }).then(function() { _pjImej.buka = false; _pjRenderImej(); setText('ai-k-info', 'Kerja gambar dihantar ke worker.'); })
+          .catch(function(e) { setText('ai-k-err', 'Gagal hantar: ' + e.message); });
+      });
+    }
+    function _pjRenderImejStatus() {
+      var el = document.getElementById('ai-k-imej-status');
+      if (!el) return;
+      var j = _pjImejJob();
+      if (!j) { el.innerHTML = ''; return; }
+      var h = j.hasil || {}, t = '<b>Gambar ' + _pjEsc(j.jenisKataNama || '') + ':</b> ';
+      var aktif = j.status === 'menunggu' || j.status === 'diproses';
+      if (j.status === 'menunggu') t += 'menunggu worker...';
+      else if (j.status === 'diproses') t += _pjEsc(j.progress || 'sedang dijana...');
+      else if (j.status === 'siap') t += '&#10003; ' + (h.laciAdaImej || 0) + '/' + (h.laci || 0) + ' laci ada gambar (' + (h.imejDijana || 0) + ' baru)' + ((h.tertinggal || []).length ? ' · ' + h.tertinggal.length + ' gagal' : '');
+      else if (j.status === 'gagal') t += 'GAGAL — ' + _pjEsc(j.ralat || '');
+      else if (j.status === 'dibatal') t += 'dibatalkan.';
+      if (aktif) t += '<br><button id="btn-ai-k-imej-batal" class="btn" style="padding:5px;font-size:0.8rem;margin-top:3px;">Batal Gambar</button>';
+      el.innerHTML = t;
+      var bb = document.getElementById('btn-ai-k-imej-batal');
+      if (bb) bb.onclick = function() {
+        _pjKonfirm('Batalkan jana gambar? (Gambar yang sudah siap kekal.)', function() {
+          _pjRef('ai_jobs').doc(j.id).update({ status: 'dibatal', selesaiAt: Date.now() }).catch(function() {});
+        });
+      };
+      if (j.status === 'siap' && _pjImej.siapLepas !== j.id) { _pjImej.siapLepas = j.id; _pjMintaRingkasan(); }
+    }
+    function _pjImejLanggan() {
+      if (_pjImej.unsub || !currentUser) return;
+      var pertama = true;
+      _pjImej.unsub = _pjRef('ai_jobs').orderBy('createdAt', 'desc').limit(10).onSnapshot(function(snap) {
+        _pjImej.jobs = [];
+        snap.forEach(function(d) { var x = d.data(); x.id = d.id; _pjImej.jobs.push(x); });
+        var j = _pjImejJob();
+        if (pertama && j && j.status === 'siap') _pjImej.siapLepas = j.id; // siap lama — tak perlu segar
+        pertama = false;
+        _pjRenderImejStatus();
+      }, function(e) { setText('ai-k-err', 'Gagal pantau kerja gambar: ' + e.message); });
+    }
+
+    document.getElementById('btn-go-ai').onclick = function() { if (currentUser) { _pjBuka(); _pjImejLanggan(); } };
     document.getElementById('btn-ai-k-back').onclick = function() {
       if (_pjK.unsub) { _pjK.unsub(); _pjK.unsub = null; }
+      if (_pjImej.unsub) { _pjImej.unsub(); _pjImej.unsub = null; }
       if (_pjK.tungguTimer) { clearTimeout(_pjK.tungguTimer); _pjK.tungguTimer = null; }
       showScreen('screen-menu');
+    };
+    document.getElementById('btn-ai-k-imej').onclick = function() {
+      if (!currentUser || !_pjGol()) { setText('ai-k-err', 'Pilih golongan dahulu.'); return; }
+      _pjImej.buka = !_pjImej.buka;
+      if (_pjImej.buka && (!_pjK.data || !_pjK.data.ringkasan)) _pjMintaRingkasan();
+      _pjRenderImej();
     };
     document.getElementById('btn-ai-k-segar').onclick = function() { _pjBuka(); };
     document.getElementById('ai-k-m-sonnet').onclick = function() { _pjK.model = 'claude-sonnet-5-5'; _pjSimpan(); _pjRenderModel(); };
@@ -6911,7 +7037,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (!currentUser || !g) { setText('ai-k-err', 'Pilih golongan dahulu.'); return; }
       var d = _pjK.data || {};
       if (d.arahan === 'jalan' && (d.status === 'berjalan' || d.status === 'menunggu')) { setText('ai-k-info', 'Worker sudah berjalan.'); return; }
-      _pjKonfirm('START — ' + (g.name || '') + ' (' + _pjLabelModel(_pjK.model) + ')\n\nWorker jana muka surat ikut susunan: Pukal → Tips → Gambar G1.\nBerhenti sendiri bila fail habis atau kredit habis.', _pjMula);
+      _pjMulaAmaran();
     };
 
     document.getElementById('btn-ai-k-pause').onclick = function() {
