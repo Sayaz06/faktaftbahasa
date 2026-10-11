@@ -735,8 +735,8 @@
     <!-- Ulang SR Bahasa tanpa had (atas → bawah, pusing semula) — TIADA kesan pada jadual SR -->
     <button id="btn-go-sr-bebas" class="btn">SR Bebas (Bahasa)</button>
     <button id="btn-go-gotick" class="btn">Go-Tick</button>
-    <!-- WORKER AI — jana perkataan, laci & tips dari Bank Kamus -->
-    <button id="btn-go-ai" class="btn">WORKER AI</button>
+    <!-- PENJANA BAHASA — worker AI jana muka surat ikut golongan (Pukal → Tips → Gambar G1) -->
+    <button id="btn-go-ai" class="btn">PENJANA BAHASA</button>
     <button id="btn-go-main-motivation" class="btn">[ MAIN MOTIVATION ]</button>
     <button id="btn-go-reminder-list" class="btn">[ REMINDER ]</button>
     <button id="btn-go-other-motivation" class="btn">[ OTHER MOTIVATION ]</button>
@@ -1100,39 +1100,32 @@
     <div id="gt-list-err" class="msg error"></div>
   </div>
 
-  <!-- SCREEN: WORKER AI -->
+  <!-- SCREEN: PENJANA BAHASA -->
   <div id="screen-ai" class="screen">
-    <div class="status-bar" id="ai-k-status">WORKER AI</div>
+    <div class="status-bar" id="ai-k-status">PENJANA BAHASA</div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin:4px 0;">
       <button id="btn-ai-k-back" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">← Menu</button>
       <button id="btn-ai-k-segar" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">Muat Semula</button>
     </div>
-    <div id="ai-k-kad" style="display:none;border:2px solid #000;border-radius:6px;padding:8px;margin:4px 0;font-size:0.85rem;line-height:1.6;"></div>
-    <button id="btn-ai-k-batal" class="btn" style="display:none;">Batal Kerja</button>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">1. Bahasa</div>
-    <div id="ai-k-bahasa"></div>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">Rujukan — jenis kata paling bawah</div>
-    <div id="ai-k-rujukan" style="border:1px dashed #000;border-radius:6px;padding:6px 8px;font-size:0.82rem;line-height:1.6;"></div>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">2. Simpan ke Jenis Kata</div>
-    <div id="ai-k-jenis"></div>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">3. Fail Kamus — Parent</div>
-    <div id="ai-k-parent"></div>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">4. Fail (✓ = sudah dijana)</div>
-    <input id="ai-k-cari" type="text" placeholder="Cari fail... (cth: ms16)" style="width:100%;padding:8px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;margin-bottom:4px;">
-    <div id="ai-k-fail"></div>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">5. Langkah</div>
+    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">1. Golongan</div>
+    <div id="ai-k-gol"></div>
+    <div id="ai-k-kad" style="border:2px solid #000;border-radius:6px;padding:8px;margin:6px 0;font-size:0.85rem;line-height:1.6;"></div>
     <div class="btn-row">
-      <button id="ai-k-l-pt" class="btn-sm" style="width:34%;">PUKAL + TIPS</button>
-      <button id="ai-k-l-p" class="btn-sm" style="width:33%;">PUKAL</button>
-      <button id="ai-k-l-t" class="btn-sm" style="width:33%;">TIPS</button>
+      <button id="btn-ai-k-start" class="btn-sm" style="width:34%;">START</button>
+      <button id="btn-ai-k-pause" class="btn-sm" style="width:33%;">PAUSE</button>
+      <button id="btn-ai-k-statusbtn" class="btn-sm" style="width:33%;">STATUS</button>
     </div>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">6. Model AI</div>
+    <div id="ai-k-info" class="msg"></div>
+    <div id="ai-k-err" class="msg error"></div>
+    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">2. Model AI</div>
     <div class="btn-row">
       <button id="ai-k-m-sonnet" class="btn-sm" style="width:50%;">Sonnet 5.5</button>
       <button id="ai-k-m-opus" class="btn-sm" style="width:50%;">Opus 5.5</button>
     </div>
-    <button id="btn-ai-k-jana" class="btn btn-primary" style="margin-top:10px;">JANA SEKARANG</button>
-    <div id="ai-k-err" class="msg error"></div>
+    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">3. Muka surat belum lengkap (&#9658; = seterusnya)</div>
+    <div id="ai-k-ms" style="border:1px solid #000;border-radius:6px;padding:2px 6px;"></div>
+    <button id="btn-ai-k-arkib" class="btn" style="margin-top:8px;font-size:0.9rem;padding:9px;">Arkib</button>
+    <div id="ai-k-arkib" style="display:none;border:1px dashed #000;border-radius:6px;padding:2px 6px;margin-top:4px;"></div>
   </div>
 
   <!-- SCREEN: GO-TICK CHECKLIST DALAM DESTINASI -->
@@ -6708,306 +6701,240 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     }
 
     // ══════════════════════════════════════════
-    // WORKER AI (Kindle) — pilih Bahasa → Jenis Kata sasaran → Parent → Fail → Langkah → JANA
-    // Kerja sebenar dibuat oleh worker AI (Railway). Kindle hanya baca senarai ringkas & hantar arahan.
+    // PENJANA BAHASA (Kindle) — pilih Golongan → START / PAUSE / STATUS
+    // Worker AI (Railway) jana setiap muka surat ikut susunan MS: Pukal → Tips → Gambar G1.
+    // MS seterusnya hanya bila MS semasa lengkap. Berhenti sendiri bila kredit / fail habis.
+    // Kawalan: users/{uid}/ai_penjana/{golonganId}
     // ══════════════════════════════════════════
-    var _aiK = {
-      unsub: null, jobs: [], bahasa: [], jenis: [], parents: [], kiraan: {},
-      bahasaId: '', jenisId: '', parentId: '', failId: '', failAuto: true,
-      langkah: 'pukal_tips', model: 'claude-sonnet-5-5'
-    };
+    var _pjK = { gol: [], bahasa: {}, gid: '', model: 'claude-sonnet-5-5', unsub: null, data: null, tunggu: 0, tungguTimer: null, arkib: false, worker: null };
     try {
-      _aiK.bahasaId = localStorage.getItem('ai_k_bahasa') || '';
-      _aiK.parentId = localStorage.getItem('ai_k_parent') || '';
-      _aiK.model = localStorage.getItem('ai_k_model') || _aiK.model;
-      _aiK.langkah = localStorage.getItem('ai_k_langkah') || _aiK.langkah;
+      _pjK.gid = localStorage.getItem('ai_k_gol') || '';
+      _pjK.model = localStorage.getItem('ai_k_model') || _pjK.model;
     } catch (e) {}
-    if (_aiK.model !== 'claude-sonnet-5-5' && _aiK.model !== 'claude-opus-5-5') _aiK.model = 'claude-sonnet-5-5';
+    if (_pjK.model !== 'claude-sonnet-5-5' && _pjK.model !== 'claude-opus-5-5') _pjK.model = 'claude-sonnet-5-5';
 
-    function _aiKRef(nama) { return db.collection('users').doc(currentUser.uid).collection(nama); }
-    function _aiKEsc(s) {
+    function _pjRef(nama) { return db.collection('users').doc(currentUser.uid).collection(nama); }
+    function _pjEsc(s) {
       return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
-    function _aiKCmp(a, b) { return String(a || '').localeCompare(String(b || ''), undefined, { numeric: true }); }
-    function _aiKSimpan() {
-      try {
-        localStorage.setItem('ai_k_bahasa', _aiK.bahasaId);
-        localStorage.setItem('ai_k_parent', _aiK.parentId);
-        localStorage.setItem('ai_k_model', _aiK.model);
-        localStorage.setItem('ai_k_langkah', _aiK.langkah);
-      } catch (e) {}
+    function _pjCmp(a, b) { return String(a || '').localeCompare(String(b || ''), undefined, { numeric: true }); }
+    function _pjSimpan() {
+      try { localStorage.setItem('ai_k_gol', _pjK.gid); localStorage.setItem('ai_k_model', _pjK.model); } catch (e) {}
     }
-    function _aiKCari(arr, id) { for (var i = 0; i < arr.length; i++) { if (arr[i].id === id) return arr[i]; } return null; }
-    function _aiKBtn(attr, id, label, pilih) {
-      return '<button class="btn' + (pilih ? ' btn-primary' : '') + '" ' + attr + '="' + _aiKEsc(id) +
-        '" style="padding:7px 6px;font-size:0.85rem;margin:3px 0;">' + label + '</button>';
+    function _pjGol() { for (var i = 0; i < _pjK.gol.length; i++) { if (_pjK.gol[i].id === _pjK.gid) return _pjK.gol[i]; } return null; }
+    function _pjLabelModel(m) { return m === 'claude-opus-5-5' ? 'Opus 5.5' : 'Sonnet 5.5'; }
+    function _pjMasa(t) {
+      if (!t) return '-';
+      var d = new Date(t), j = d.getHours(), m = d.getMinutes();
+      return d.getDate() + '/' + (d.getMonth() + 1) + ' ' + (j < 10 ? '0' : '') + j + ':' + (m < 10 ? '0' : '') + m;
     }
-    function _aiKIkat(elId, attr, fn) {
-      var el = document.getElementById(elId);
-      if (!el) return;
-      var btns = el.querySelectorAll('button[' + attr + ']');
-      for (var i = 0; i < btns.length; i++) btns[i].onclick = function() { fn(this.getAttribute(attr)); };
+    function _pjKonfirm(msg, cb) {
+      var el = document.getElementById('ws-confirm-msg');
+      if (el) el.style.whiteSpace = 'pre-line';
+      if (typeof wsConfirm === 'function') wsConfirm(msg, cb); else if (confirm(msg) && cb) cb();
     }
-    function _aiKNomborMs(nama) { var m = String(nama || '').match(/ms\s*0*(\d+)/i); return m ? parseInt(m[1], 10) : null; }
+    function _pjRingkasan() { return (_pjK.data && _pjK.data.ringkasan) || []; }
+    function _pjNamaMs(r) { return r.ms != null ? 'MS' + r.ms : (r.nama || '?'); }
 
-    // ── 1. Bahasa ──
-    function _aiKRenderBahasa() {
-      var el = document.getElementById('ai-k-bahasa');
-      if (!el) return;
-      if (!_aiK.bahasa.length) { el.innerHTML = '<div class="msg">Tiada bahasa.</div>'; return; }
-      var html = '';
-      for (var i = 0; i < _aiK.bahasa.length; i++) {
-        var b = _aiK.bahasa[i];
-        html += _aiKBtn('data-bhs', b.id, _aiKEsc(b.name || '(tiada nama)'), b.id === _aiK.bahasaId);
-      }
-      el.innerHTML = html;
-      _aiKIkat('ai-k-bahasa', 'data-bhs', function(id) {
-        _aiK.bahasaId = id; _aiK.jenisId = ''; _aiKSimpan(); _aiKRenderBahasa(); _aiKMuatJenis();
-      });
-    }
-
-    // ── Rujukan + 2. Jenis kata sasaran ──
-    function _aiKMuatJenis() {
-      var el = document.getElementById('ai-k-jenis');
-      var ruj = document.getElementById('ai-k-rujukan');
-      if (el) el.innerHTML = '<div class="msg">Memuatkan jenis kata...</div>';
-      if (ruj) ruj.innerHTML = '';
-      if (!_aiK.bahasaId) return;
-      _aiKRef('jenis_kata').where('bahasaId', '==', _aiK.bahasaId).get().then(function(snap) {
-        _aiK.jenis = [];
-        snap.forEach(function(d) { var x = d.data(); x.id = d.id; _aiK.jenis.push(x); });
-        _aiK.jenis.sort(function(a, b) { return _aiKCmp(a.name, b.name); });
-        if (!_aiKCari(_aiK.jenis, _aiK.jenisId)) _aiK.jenisId = _aiK.jenis.length ? _aiK.jenis[_aiK.jenis.length - 1].id : '';
-        _aiK.failAuto = true;
-        _aiKRenderJenis();
-        _aiKMuatRujukan();
-        _aiKRenderFail();
-      }).catch(function(e) { if (el) el.innerHTML = '<div class="msg error">Gagal: ' + _aiKEsc(e.message) + '</div>'; });
-    }
-
-    // Rujukan: 3 jenis kata paling bawah + bilangan perkataan
-    function _aiKMuatRujukan() {
-      var ruj = document.getElementById('ai-k-rujukan');
-      if (!ruj) return;
-      var bawah = _aiK.jenis.slice(-3);
-      if (!bawah.length) { ruj.innerHTML = 'Tiada jenis kata dalam bahasa ini.'; return; }
-      var baris = [];
-      function lukis() {
-        var html = '';
-        for (var i = 0; i < bawah.length; i++) {
-          var n = _aiK.kiraan[bawah[i].id];
-          html += (i === bawah.length - 1 ? '<b>&#9658; ' : '&nbsp;&nbsp;') + _aiKEsc(bawah[i].name || '(tiada nama)') +
-            ' — ' + (n == null ? '...' : n + ' perkataan') + (i === bawah.length - 1 ? '</b>' : '') + '<br>';
-        }
-        ruj.innerHTML = html;
-      }
-      lukis();
-      bawah.forEach(function(j) {
-        _aiKRef('bahasa_perkataan').where('jenisId', '==', j.id).get().then(function(s) {
-          _aiK.kiraan[j.id] = s.size; lukis(); _aiKRenderJenis();
-        }).catch(function() {});
-      });
-    }
-
-    function _aiKRenderJenis() {
-      var el = document.getElementById('ai-k-jenis');
-      if (!el) return;
-      if (!_aiK.jenis.length) { el.innerHTML = '<div class="msg">Cipta jenis kata dalam app phone dahulu.</div>'; return; }
-      var senarai = _aiK.jenis.slice(-6);
-      var html = '';
-      for (var i = 0; i < senarai.length; i++) {
-        var j = senarai[i], n = _aiK.kiraan[j.id];
-        html += _aiKBtn('data-jns', j.id, _aiKEsc(j.name || '(tiada nama)') + (n != null ? ' (' + n + ')' : ''), j.id === _aiK.jenisId);
-      }
-      el.innerHTML = html;
-      _aiKIkat('ai-k-jenis', 'data-jns', function(id) { _aiK.jenisId = id; _aiK.failAuto = true; _aiKRenderJenis(); _aiKRenderFail(); });
-    }
-
-    // ── 3. Parent ──
-    function _aiKRenderParent() {
-      var el = document.getElementById('ai-k-parent');
-      if (!el) return;
-      if (!_aiK.parents.length) { el.innerHTML = '<div class="msg">Bank Kamus kosong. Upload fail di app phone (📚 Bank Kamus).</div>'; return; }
-      if (!_aiKCari(_aiK.parents, _aiK.parentId)) _aiK.parentId = _aiK.parents[0].id;
-      var html = '';
-      for (var i = 0; i < _aiK.parents.length; i++) {
-        var p = _aiK.parents[i];
-        html += _aiKBtn('data-prt', p.id, _aiKEsc(p.nama || '(tiada nama)') + ' (' + Object.keys(p.fail || {}).length + ')', p.id === _aiK.parentId);
-      }
-      el.innerHTML = html;
-      _aiKIkat('ai-k-parent', 'data-prt', function(id) { _aiK.parentId = id; _aiK.failAuto = true; _aiKSimpan(); _aiKRenderParent(); _aiKRenderFail(); });
-    }
-
-    // ── 4. Fail (dengan carian) ──
-    function _aiKRenderFail() {
-      var el = document.getElementById('ai-k-fail');
-      if (!el) return;
-      var p = _aiKCari(_aiK.parents, _aiK.parentId);
-      if (!p) { el.innerHTML = ''; return; }
-      var semua = [];
-      var peta = p.fail || {};
-      for (var fid in peta) { if (peta.hasOwnProperty(fid)) { var f = peta[fid]; semua.push({ id: fid, nama: f.nama, bil: f.bil, dijanaKe: f.dijanaKe }); } }
-      semua.sort(function(a, b) { return _aiKCmp(a.nama, b.nama); });
-      // Auto-pilih fail yang nombor MS sama dengan jenis kata sasaran
-      if (_aiK.failAuto) {
-        var j = _aiKCari(_aiK.jenis, _aiK.jenisId);
-        var ms = j ? _aiKNomborMs(j.name) : null;
-        _aiK.failId = '';
-        if (ms != null) {
-          for (var i = 0; i < semua.length; i++) { if (_aiKNomborMs(semua[i].nama) === ms) { _aiK.failId = semua[i].id; break; } }
-        }
-      }
-      var cari = ((document.getElementById('ai-k-cari') || {}).value || '').toLowerCase();
-      var tapis = [];
-      for (var k = 0; k < semua.length; k++) {
-        if (!cari || String(semua[k].nama || '').toLowerCase().indexOf(cari) !== -1 || semua[k].id === _aiK.failId) tapis.push(semua[k]);
-      }
-      var html = '';
-      var had = Math.min(tapis.length, 25);
-      for (var t = 0; t < had; t++) {
-        var x = tapis[t];
-        html += _aiKBtn('data-fl', x.id, _aiKEsc(x.nama) + ' (' + (x.bil || 0) + ')' + (x.dijanaKe ? ' ✓' : ''), x.id === _aiK.failId);
-      }
-      if (tapis.length > had) html += '<div class="msg">+' + (tapis.length - had) + ' lagi — taip dalam kotak carian</div>';
-      if (!tapis.length) html = '<div class="msg">Tiada fail sepadan.</div>';
-      el.innerHTML = html;
-      _aiKIkat('ai-k-fail', 'data-fl', function(id) { _aiK.failId = id; _aiK.failAuto = false; _aiKRenderFail(); });
-    }
-
-    function _aiKRenderPilihan() {
-      var ids = { 'ai-k-l-pt': 'pukal_tips', 'ai-k-l-p': 'pukal', 'ai-k-l-t': 'tips' };
-      for (var id in ids) { var b = document.getElementById(id); if (b) b.className = 'btn-sm' + (_aiK.langkah === ids[id] ? ' on' : ''); }
+    function _pjRenderModel() {
       var s = document.getElementById('ai-k-m-sonnet'), o = document.getElementById('ai-k-m-opus');
-      if (s) s.className = 'btn-sm' + (_aiK.model === 'claude-sonnet-5-5' ? ' on' : '');
-      if (o) o.className = 'btn-sm' + (_aiK.model === 'claude-opus-5-5' ? ' on' : '');
+      if (s) s.className = 'btn-sm' + (_pjK.model === 'claude-sonnet-5-5' ? ' on' : '');
+      if (o) o.className = 'btn-sm' + (_pjK.model === 'claude-opus-5-5' ? ' on' : '');
     }
 
-    // ── Kad status kerja terkini ──
-    function _aiKJobKindle() {
-      for (var i = 0; i < _aiK.jobs.length; i++) { if (_aiK.jobs[i].jenis === 'jana_kindle') return _aiK.jobs[i]; }
-      return null;
-    }
-    function _aiKRenderKad() {
-      var kad = document.getElementById('ai-k-kad');
-      var btnBatal = document.getElementById('btn-ai-k-batal');
-      var j = _aiKJobKindle();
-      if (!kad) return;
-      if (!j) { kad.style.display = 'none'; if (btnBatal) btnBatal.style.display = 'none'; setText('ai-k-status', 'WORKER AI'); return; }
-      var h = j.hasil || {};
-      var model = j.model === 'claude-opus-5-5' ? 'Opus 5.5' : 'Sonnet 5.5';
-      var tajuk = (j.failNama ? j.failNama + ' → ' : '') + (j.jenisKataNama || '') + ' · ' + model;
-      var badan = '';
-      if (j.status === 'menunggu') badan = 'Menunggu worker AI mengambil kerja ini...';
-      else if (j.status === 'diproses') badan = 'Sedang diproses:<br>' + _aiKEsc(j.progress || '...');
-      else if (j.status === 'dibatal') badan = 'Dibatalkan.';
-      else if (j.status === 'gagal') badan = '<b>GAGAL:</b> ' + _aiKEsc(j.ralat || 'Ralat tidak diketahui');
-      else if (j.status === 'siap') {
-        var b = [];
-        if (h.diterima != null) {
-          b.push(h.diterima + ' perkataan diterima oleh AI');
-          b.push((h.dijanaAI != null ? h.dijanaAI : '?') + ' perkataan dijana · ' + (h.perkataanBaru || 0) + ' disimpan' + (h.perkataanSedia ? ' · ' + h.perkataanSedia + ' sedia ada diskip' : ''));
-          b.push((h.laciDijana || 0) + ' laci dijana');
-        }
-        if (h.laciDihantar != null) b.push((h.laciDapatTips || 0) + '/' + h.laciDihantar + ' laci dapat tips');
-        var hilang = h.tertinggal || [];
-        if (hilang.length) b.push('<b>TERTINGGAL (' + hilang.length + '):</b> ' + _aiKEsc(hilang.slice(0, 8).join(', ')) + (hilang.length > 8 ? ' ...' : ''));
-        else b.push('Tiada yang tertinggal ✓');
-        if (typeof h.kosUSD === 'number') b.push('Kos lebih kurang US$' + h.kosUSD.toFixed(3));
-        badan = b.join('<br>');
+    function _pjRenderGol() {
+      var el = document.getElementById('ai-k-gol');
+      if (!el) return;
+      if (!_pjK.gol.length) { el.innerHTML = '<div class="msg">Tiada golongan. Cipta golongan &amp; upload fail di app phone.</div>'; return; }
+      var html = '';
+      for (var i = 0; i < _pjK.gol.length; i++) {
+        var g = _pjK.gol[i];
+        var b = _pjK.bahasa[g.bahasaId] || '';
+        html += '<button class="btn' + (g.id === _pjK.gid ? ' btn-primary' : '') + '" data-gol="' + _pjEsc(g.id) +
+          '" style="padding:7px 6px;font-size:0.85rem;margin:3px 0;">' + _pjEsc(g.name || '(tiada nama)') + (b ? ' · ' + _pjEsc(b) : '') + '</button>';
       }
-      kad.innerHTML = '<div style="font-weight:bold;margin-bottom:4px;">' + _aiKEsc(tajuk) + '</div>' + badan;
-      kad.style.display = 'block';
-      var aktif = j.status === 'menunggu' || j.status === 'diproses';
-      if (btnBatal) btnBatal.style.display = aktif ? 'block' : 'none';
-      setText('ai-k-status', aktif ? 'WORKER AI — SEDANG BERJALAN' : (j.status === 'siap' ? 'WORKER AI — SIAP' : 'WORKER AI'));
+      el.innerHTML = html;
+      var btns = el.querySelectorAll('button[data-gol]');
+      for (var k = 0; k < btns.length; k++) btns[k].onclick = function() {
+        _pjK.gid = this.getAttribute('data-gol'); _pjSimpan(); _pjRenderGol(); _pjLanggan();
+      };
     }
 
-    function _aiKBuka() {
-      setText('ai-k-err', '');
+    function _pjRenderKad() {
+      var el = document.getElementById('ai-k-kad');
+      if (!el) return;
+      var g = _pjGol();
+      if (!g) { el.innerHTML = 'Pilih golongan.'; return; }
+      var d = _pjK.data || {};
+      var label = {
+        berjalan: '&#9654; SEDANG BERJALAN', menunggu: '&#8987; MENUNGGU GILIRAN', jeda: '&#10074;&#10074; DIJEDA',
+        berhenti: '&#9632; BERHENTI', siap: '&#10003; SIAP', ralat: '! RALAT'
+      }[d.status] || 'Belum dimulakan';
+      if (d.arahan === 'jeda' && d.status === 'berjalan') label = '&#10074;&#10074; JEDA DIMINTA (habiskan langkah semasa)';
+      if (d.arahan === 'jalan' && d.status !== 'berjalan' && d.status !== 'menunggu') label = '&#8987; START DIHANTAR — menunggu worker...';
+      var r = _pjRingkasan(), siap = 0;
+      for (var i = 0; i < r.length; i++) if (r[i].ok) siap++;
+      var langkah = { pukal: 'Jana Pukal', tips: 'Tips F0 + F1&amp;2', imej: 'Gambar G1' };
+      var html = '<b>' + _pjEsc(g.name || '') + '</b> — ' + label + '<br>';
+      if (d.semasa && d.status === 'berjalan') html += 'Sedang: <b>' + _pjEsc(d.semasa.nama || '') + '</b> · ' + (langkah[d.semasa.langkah] || '') + '<br>';
+      if (d.progress && d.status === 'berjalan') html += _pjEsc(d.progress) + '<br>';
+      if (d.mesej) html += '<div style="border-top:1px dashed #000;margin-top:4px;padding-top:4px;">' + _pjEsc(d.mesej) + '</div>';
+      html += 'Lengkap: <b>' + siap + '/' + r.length + '</b> muka surat';
+      if (d.status) html += '<br>Sesi: $' + (d.kosUSD || 0) + ' · ' + (d.imejDijana || 0) + ' gambar · Jumlah: $' + (Math.round((d.kosJumlah || 0) * 100) / 100);
+      if (d.model) html += ' · ' + _pjLabelModel(d.model);
+      html += '<br><span style="font-size:0.75rem;">Kemas kini: ' + _pjMasa(d.updatedAt || d.ringkasanAt) +
+        (_pjK.worker ? ' · Worker hidup: ' + _pjMasa(_pjK.worker) : '') + '</span>';
+      el.innerHTML = html;
+    }
+
+    function _pjBaris(r, seterusnya) {
+      var t;
+      if (!r.l) t = r.fail ? 'belum dijana (' + r.bil + ' perkataan dalam fail)' : '<b>tiada fail</b>';
+      else t = r.l + ' laci · Tips ' + (r.t >= r.l ? '&#10003;' : r.t + '/' + r.l) + ' · G1 ' + (r.i >= r.l ? '&#10003;' : r.i + '/' + r.l);
+      return '<div style="padding:5px 2px;border-bottom:1px solid #000;font-size:0.85rem;">' + (seterusnya ? '<b>&#9658; ' : '') +
+        (r.ok ? '&#10003; ' : '') + _pjEsc(_pjNamaMs(r)) + (seterusnya ? '</b>' : '') + ' — ' + t + '</div>';
+    }
+
+    function _pjRenderMS() {
+      var el = document.getElementById('ai-k-ms'), ark = document.getElementById('ai-k-arkib'), bA = document.getElementById('btn-ai-k-arkib');
+      if (!el) return;
+      var r = _pjRingkasan(), belum = [], lengkap = [];
+      for (var i = 0; i < r.length; i++) (r[i].ok ? lengkap : belum).push(r[i]);
+      if (!_pjK.data || !_pjK.data.ringkasan) el.innerHTML = '<div class="msg">Tekan STATUS untuk semak muka surat.</div>';
+      else if (!belum.length) el.innerHTML = '<div class="msg">Tiada muka surat belum lengkap.</div>';
+      else {
+        var html = '';
+        for (var k = 0; k < belum.length && k < 40; k++) html += _pjBaris(belum[k], k === 0);
+        if (belum.length > 40) html += '<div class="msg">+ ' + (belum.length - 40) + ' muka surat lagi</div>';
+        el.innerHTML = html;
+      }
+      if (bA) bA.textContent = (_pjK.arkib ? 'Tutup Arkib' : 'Arkib') + ' (' + lengkap.length + ' lengkap)';
+      if (ark) {
+        ark.style.display = _pjK.arkib ? '' : 'none';
+        if (_pjK.arkib) {
+          var h = '';
+          for (var a = lengkap.length - 1; a >= 0 && a >= lengkap.length - 200; a--) h += _pjBaris(lengkap[a], false);
+          ark.innerHTML = h || '<div class="msg">Arkib kosong.</div>';
+        }
+      }
+    }
+
+    function _pjMintaRingkasan() {
+      if (!currentUser || !_pjK.gid) return;
+      _pjK.tunggu = Date.now();
+      _pjRef('ai_penjana').doc(_pjK.gid).set({ mintaRingkasan: _pjK.tunggu }, { merge: true })
+        .catch(function(e) { setText('ai-k-err', 'Gagal: ' + e.message); });
+    }
+
+    function _pjLanggan() {
+      if (_pjK.unsub) { _pjK.unsub(); _pjK.unsub = null; }
+      _pjK.data = null; _pjK.tunggu = 0;
+      if (_pjK.tungguTimer) { clearTimeout(_pjK.tungguTimer); _pjK.tungguTimer = null; }
+      _pjRenderKad(); _pjRenderMS();
+      if (!_pjK.gid) return;
+      var pertama = true;
+      _pjK.unsub = _pjRef('ai_penjana').doc(_pjK.gid).onSnapshot(function(s) {
+        _pjK.data = s.exists ? s.data() : null;
+        if (pertama) { pertama = false; if (!_pjK.data || !_pjK.data.ringkasan) _pjMintaRingkasan(); }
+        _pjRenderKad(); _pjRenderMS();
+        if (_pjK.tungguTimer && _pjK.data && _pjK.data.ringkasanUntuk === _pjK.tunggu) {
+          clearTimeout(_pjK.tungguTimer); _pjK.tungguTimer = null;
+          setText('ai-k-info', '');
+          _pjTunjukStatus(false);
+        }
+      }, function(e) { setText('ai-k-err', 'Gagal pantau: ' + e.message); });
+    }
+
+    function _pjBuka() {
+      setText('ai-k-err', ''); setText('ai-k-info', '');
       showScreen('screen-ai');
-      _aiKRenderPilihan();
-      // Bahasa: ikut bahasa perkataan aktif (jika ada), atau pilihan terakhir
-      _aiKRef('bahasa_list').get().then(function(snap) {
-        _aiK.bahasa = [];
-        snap.forEach(function(d) { var x = d.data(); x.id = d.id; _aiK.bahasa.push(x); });
-        _aiK.bahasa.sort(function(a, b) { return _aiKCmp(a.name, b.name); });
-        if (!_aiKCari(_aiK.bahasa, _aiK.bahasaId)) {
-          var aktif = null;
-          if (activePerkataan && activePerkataan.jenisId) {
-            for (var i = 0; i < allJenisKata.length; i++) { if (allJenisKata[i].id === activePerkataan.jenisId) aktif = allJenisKata[i].bahasaId; }
-          }
-          _aiK.bahasaId = aktif || (_aiK.bahasa[0] ? _aiK.bahasa[0].id : '');
-        }
-        _aiKRenderBahasa();
-        _aiKMuatJenis();
-      }).catch(function(e) { setText('ai-k-err', 'Gagal baca bahasa: ' + e.message); });
-      // Bank Kamus (ringan: hanya senarai nama fail)
-      _aiKRef('kamus_parent').get().then(function(snap) {
-        _aiK.parents = [];
-        snap.forEach(function(d) { var x = d.data(); x.id = d.id; _aiK.parents.push(x); });
-        _aiK.parents.sort(function(a, b) { return _aiKCmp(a.nama, b.nama); });
-        _aiKRenderParent();
-        _aiKRenderFail();
-      }).catch(function(e) { setText('ai-k-err', 'Gagal baca Bank Kamus: ' + e.message); });
-      if (!_aiK.unsub) {
-        _aiK.unsub = _aiKRef('ai_jobs').orderBy('createdAt', 'desc').limit(5).onSnapshot(function(snap) {
-          _aiK.jobs = [];
-          snap.forEach(function(d) { var x = d.data(); x.id = d.id; _aiK.jobs.push(x); });
-          _aiKRenderKad();
-        }, function(e) { setText('ai-k-err', 'Gagal pantau: ' + e.message); });
-      }
+      _pjRenderModel();
+      _pjRef('ai_worker').doc('status').get().then(function(s) {
+        _pjK.worker = s.exists ? (s.data().at || null) : null; _pjRenderKad();
+      }).catch(function() {});
+      _pjRef('bahasa_list').get().then(function(sb) {
+        _pjK.bahasa = {};
+        sb.forEach(function(d) { _pjK.bahasa[d.id] = d.data().name || ''; });
+        return _pjRef('bahasa_golongan').get();
+      }).then(function(sg) {
+        _pjK.gol = [];
+        sg.forEach(function(d) { var x = d.data(); x.id = d.id; _pjK.gol.push(x); });
+        _pjK.gol.sort(function(a, b) { return _pjCmp(_pjK.bahasa[a.bahasaId], _pjK.bahasa[b.bahasaId]) || _pjCmp(a.name, b.name); });
+        if (!_pjGol()) _pjK.gid = _pjK.gol.length ? _pjK.gol[0].id : '';
+        _pjRenderGol();
+        _pjLanggan();
+      }).catch(function(e) { setText('ai-k-err', 'Gagal baca golongan: ' + e.message); });
     }
 
-    document.getElementById('btn-go-ai').onclick = function() { if (currentUser) _aiKBuka(); };
+    function _pjMula() {
+      var g = _pjGol();
+      if (!g) return;
+      setText('ai-k-err', '');
+      _pjRef('ai_penjana').doc(g.id).set({ arahan: 'jalan', model: _pjK.model, golonganNama: g.name || '', dimintaAt: Date.now() }, { merge: true })
+        .then(function() { setText('ai-k-info', 'START dihantar. Worker akan mula sebentar lagi.'); })
+        .catch(function(e) { setText('ai-k-err', 'Gagal START: ' + e.message); });
+    }
+
+    // STATUS: ringkasan MS seterusnya → "Teruskan?"
+    function _pjTunjukStatus(lama) {
+      var g = _pjGol(), d = _pjK.data || {}, r = _pjRingkasan();
+      if (!g) return;
+      var siap = 0, n = null;
+      for (var i = 0; i < r.length; i++) { if (r[i].ok) siap++; else if (!n) n = r[i]; }
+      var t = (g.name || '') + ' — lengkap ' + siap + '/' + r.length + ' muka surat' + (lama ? '\n(Worker tidak respon — data mungkin lama)' : '');
+      if (!n) { _pjKonfirm(t + '\n\nSemua muka surat lengkap. Tiada apa untuk dijana.', null); return; }
+      t += '\n\nSeterusnya: ' + _pjNamaMs(n) + '\n';
+      if (!n.l) t += n.fail ? 'Laci: belum dijana (' + n.bil + ' perkataan dalam fail)' : 'Laci: TIADA FAIL — upload fail di app phone dahulu';
+      else {
+        t += 'Laci dijana ✓ (' + n.p + ' perkataan, ' + n.l + ' laci)\n';
+        t += 'Tips F0 + F1&2: ' + (n.t >= n.l ? '✓' : n.t + '/' + n.l + ' — belum') + '\n';
+        t += 'Gambar G1: ' + (n.i >= n.l ? '✓' : n.i + '/' + n.l + ' — belum');
+      }
+      if (d.mesej && d.status !== 'berjalan') t += '\n\nNota: ' + d.mesej;
+      if (d.status === 'berjalan' && d.arahan === 'jalan') { _pjKonfirm(t + '\n\nWorker sedang berjalan.', null); return; }
+      _pjKonfirm(t + '\n\nTeruskan dengan ' + _pjLabelModel(_pjK.model) + '?', _pjMula);
+    }
+
+    document.getElementById('btn-go-ai').onclick = function() { if (currentUser) _pjBuka(); };
     document.getElementById('btn-ai-k-back').onclick = function() {
-      if (_aiK.unsub) { _aiK.unsub(); _aiK.unsub = null; }
+      if (_pjK.unsub) { _pjK.unsub(); _pjK.unsub = null; }
+      if (_pjK.tungguTimer) { clearTimeout(_pjK.tungguTimer); _pjK.tungguTimer = null; }
       showScreen('screen-menu');
     };
-    document.getElementById('btn-ai-k-segar').onclick = function() { _aiK.kiraan = {}; _aiKBuka(); };
-    document.getElementById('ai-k-cari').addEventListener('input', function() { _aiKRenderFail(); });
-    document.getElementById('ai-k-l-pt').onclick = function() { _aiK.langkah = 'pukal_tips'; _aiKSimpan(); _aiKRenderPilihan(); };
-    document.getElementById('ai-k-l-p').onclick = function() { _aiK.langkah = 'pukal'; _aiKSimpan(); _aiKRenderPilihan(); };
-    document.getElementById('ai-k-l-t').onclick = function() { _aiK.langkah = 'tips'; _aiKSimpan(); _aiKRenderPilihan(); };
-    document.getElementById('ai-k-m-sonnet').onclick = function() { _aiK.model = 'claude-sonnet-5-5'; _aiKSimpan(); _aiKRenderPilihan(); };
-    document.getElementById('ai-k-m-opus').onclick = function() { _aiK.model = 'claude-opus-5-5'; _aiKSimpan(); _aiKRenderPilihan(); };
+    document.getElementById('btn-ai-k-segar').onclick = function() { _pjBuka(); };
+    document.getElementById('ai-k-m-sonnet').onclick = function() { _pjK.model = 'claude-sonnet-5-5'; _pjSimpan(); _pjRenderModel(); };
+    document.getElementById('ai-k-m-opus').onclick = function() { _pjK.model = 'claude-opus-5-5'; _pjSimpan(); _pjRenderModel(); };
+    document.getElementById('btn-ai-k-arkib').onclick = function() { _pjK.arkib = !_pjK.arkib; _pjRenderMS(); };
 
-    document.getElementById('btn-ai-k-jana').onclick = function() {
-      if (!currentUser) return;
-      setText('ai-k-err', '');
-      var j = _aiKCari(_aiK.jenis, _aiK.jenisId);
-      if (!j) { setText('ai-k-err', 'Pilih jenis kata sasaran dahulu.'); return; }
-      var p = _aiKCari(_aiK.parents, _aiK.parentId);
-      var f = p && _aiK.failId && p.fail ? p.fail[_aiK.failId] : null;
-      if (_aiK.langkah !== 'tips' && !f) { setText('ai-k-err', 'Pilih fail kamus dahulu.'); return; }
-      var aktif = _aiKJobKindle();
-      if (aktif && (aktif.status === 'menunggu' || aktif.status === 'diproses')) { setText('ai-k-err', 'Masih ada kerja AI sedang berjalan.'); return; }
-      var labelL = _aiK.langkah === 'pukal' ? 'PUKAL sahaja' : (_aiK.langkah === 'tips' ? 'TIPS sahaja' : 'PUKAL + TIPS');
-      var labelM = _aiK.model === 'claude-opus-5-5' ? 'Opus 5.5' : 'Sonnet 5.5';
-      var bhs = _aiKCari(_aiK.bahasa, _aiK.bahasaId);
-      var msg = labelL + ' (' + labelM + ')\n' + (f && _aiK.langkah !== 'tips' ? 'Fail: ' + f.nama + '\n' : '') + 'Simpan ke: ' + (j.name || '');
-      var btn = this;
-      var hantar = function() {
-        btn.disabled = true;
-        _aiKRef('ai_jobs').add({
-          jenis: 'jana_kindle', langkah: _aiK.langkah, model: _aiK.model,
-          jenisKataId: j.id, jenisKataNama: j.name || '', bahasaNama: bhs ? (bhs.name || '') : '',
-          failId: _aiK.langkah !== 'tips' ? _aiK.failId : '', failNama: f && _aiK.langkah !== 'tips' ? (f.nama || '') : '',
-          parentId: p ? p.id : '', parentNama: p ? (p.nama || '') : '',
-          sedia: 'skip', status: 'menunggu', createdAt: Date.now(), sumber: 'kindle'
-        }).then(function() { btn.disabled = false; })
-          .catch(function(e) { btn.disabled = false; setText('ai-k-err', 'Gagal hantar: ' + e.message); });
-      };
-      if (typeof wsConfirm === 'function') wsConfirm(msg, hantar); else hantar();
+    document.getElementById('btn-ai-k-start').onclick = function() {
+      var g = _pjGol();
+      if (!currentUser || !g) { setText('ai-k-err', 'Pilih golongan dahulu.'); return; }
+      var d = _pjK.data || {};
+      if (d.arahan === 'jalan' && (d.status === 'berjalan' || d.status === 'menunggu')) { setText('ai-k-info', 'Worker sudah berjalan.'); return; }
+      _pjKonfirm('START — ' + (g.name || '') + ' (' + _pjLabelModel(_pjK.model) + ')\n\nWorker jana muka surat ikut susunan: Pukal → Tips → Gambar G1.\nBerhenti sendiri bila fail habis atau kredit habis.', _pjMula);
     };
 
-    document.getElementById('btn-ai-k-batal').onclick = function() {
-      var j = _aiKJobKindle();
-      if (!j || (j.status !== 'menunggu' && j.status !== 'diproses')) return;
-      var batal = function() {
-        _aiKRef('ai_jobs').doc(j.id).update({ status: 'dibatal', selesaiAt: Date.now() })
-          .catch(function(e) { setText('ai-k-err', 'Gagal batal: ' + e.message); });
-      };
-      if (typeof wsConfirm === 'function') wsConfirm('Batalkan kerja AI ini?', batal); else batal();
+    document.getElementById('btn-ai-k-pause').onclick = function() {
+      var g = _pjGol();
+      if (!currentUser || !g) return;
+      var d = _pjK.data || {};
+      if (d.arahan !== 'jalan') { setText('ai-k-info', 'Worker tidak berjalan.'); return; }
+      _pjRef('ai_penjana').doc(g.id).set({ arahan: 'jeda' }, { merge: true })
+        .then(function() { setText('ai-k-info', 'PAUSE dihantar. Worker berhenti selepas langkah semasa (Jana Pukal tidak dipotong separuh).'); })
+        .catch(function(e) { setText('ai-k-err', 'Gagal PAUSE: ' + e.message); });
+    };
+
+    document.getElementById('btn-ai-k-statusbtn').onclick = function() {
+      if (!currentUser || !_pjGol()) return;
+      setText('ai-k-err', '');
+      setText('ai-k-info', 'Menyemak muka surat...');
+      if (_pjK.tungguTimer) clearTimeout(_pjK.tungguTimer);
+      _pjK.tungguTimer = setTimeout(function() {
+        _pjK.tungguTimer = null;
+        setText('ai-k-info', '');
+        _pjTunjukStatus(true);
+      }, 25000);
+      _pjMintaRingkasan();
     };
 
     document.getElementById('btn-go-gotick').onclick = function() {
