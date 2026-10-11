@@ -6739,7 +6739,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (typeof wsConfirm === 'function') wsConfirm(msg, cb); else if (confirm(msg) && cb) cb();
     }
     function _pjRingkasan() { return (_pjK.data && _pjK.data.ringkasan) || []; }
-    function _pjNamaMs(r) { return r.ms != null ? 'MS' + r.ms : (r.nama || '?'); }
+    function _pjNamaMs(r) { return r.ms != null ? 'MS' + r.ms : (r.nama || '(muka surat tanpa nama / nombor MS)'); }
 
     function _pjRenderModel() {
       var s = document.getElementById('ai-k-m-sonnet'), o = document.getElementById('ai-k-m-opus');
@@ -6840,7 +6840,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var pertama = true;
       _pjK.unsub = _pjRef('ai_penjana').doc(_pjK.gid).onSnapshot(function(s) {
         _pjK.data = s.exists ? s.data() : null;
-        if (pertama) { pertama = false; if (!_pjK.data || !_pjK.data.ringkasan) _pjMintaRingkasan(); }
+        if (pertama) { pertama = false; _pjMintaRingkasan(); } // sentiasa minta ringkasan TERKINI bila skrin dibuka
         _pjRenderKad(); _pjRenderMS(); _pjRenderImej();
         if (_pjK.tungguTimer && _pjK.data && _pjK.data.ringkasanUntuk === _pjK.tunggu) {
           clearTimeout(_pjK.tungguTimer); _pjK.tungguTimer = null;
@@ -6943,6 +6943,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (!box) return;
       if (!_pjImej.buka) { box.style.display = 'none'; return; }
       box.style.display = '';
+      if (_pjImej.semak && (!_pjK.data || _pjK.data.ringkasanUntuk !== _pjImej.semak)) { box.innerHTML = '<div class="msg">Menyemak muka surat terkini...</div>'; return; }
       if (!_pjK.data || !_pjK.data.ringkasan) { box.innerHTML = '<div class="msg">Tekan STATUS dahulu untuk semak muka surat.</div>'; return; }
       var c = _pjImejCalon();
       if (!c.length) { box.innerHTML = '<div class="msg">Semua laci dalam golongan ini sudah ada Gambar G1.</div>'; return; }
@@ -7024,7 +7025,15 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     document.getElementById('btn-ai-k-imej').onclick = function() {
       if (!currentUser || !_pjGol()) { setText('ai-k-err', 'Pilih golongan dahulu.'); return; }
       _pjImej.buka = !_pjImej.buka;
-      if (_pjImej.buka && (!_pjK.data || !_pjK.data.ringkasan)) _pjMintaRingkasan();
+      if (_pjImej.buka) {
+        // Sentiasa semak data TERKINI (laci/gambar yang baru dijana dari phone)
+        _pjMintaRingkasan();
+        _pjImej.semak = _pjK.tunggu;
+        var tanda = _pjImej.semak;
+        setTimeout(function() {
+          if (_pjImej.semak === tanda && (!_pjK.data || _pjK.data.ringkasanUntuk !== tanda)) { _pjImej.semak = 0; setText('ai-k-info', 'Worker tidak respon — senarai mungkin lama.'); _pjRenderImej(); }
+        }, 20000);
+      }
       _pjRenderImej();
     };
     document.getElementById('btn-ai-k-segar').onclick = function() { _pjBuka(); };
