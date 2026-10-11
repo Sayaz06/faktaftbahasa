@@ -743,6 +743,8 @@
     <button id="btn-go-perjanjian" class="btn">[ LACI PERJANJIAN ]</button>
     <button id="btn-go-telegram" class="btn" style="margin-top:8px;background:#0088cc;color:#fff;border-color:#0088cc;">Telegram</button>
     <button id="btn-jq" class="btn" style="margin-top:8px;">JQ: OFF</button>
+    <!-- JQ: tajuk depan, ayat di Flip (Main / Other Motivation & Perjanjian sekaligus) -->
+    <button id="btn-tf-semua" class="btn" style="margin-top:4px;">JQ TAJUK FLIP: OFF</button>
 
     <button id="btn-quran-jq" class="btn" style="margin-top:4px;">Quran: OFF</button>
     <button id="btn-taip" class="btn" style="margin-top:8px;">TAIP: OFF</button>
@@ -1996,14 +1998,22 @@
       try { localStorage.setItem('champ_tajuk_flip', JSON.stringify({ mainMotivation: _tf.mainMotivation, otherMotivation: _tf.otherMotivation, perjanjian: _tf.perjanjian })); } catch (e) {}
     }
     function _tfRender() {
-      var srcs = ['mainMotivation', 'otherMotivation', 'perjanjian'];
+      var srcs = ['mainMotivation', 'otherMotivation', 'perjanjian'], bil = 0;
       for (var i = 0; i < srcs.length; i++) {
+        var on = !!_tf[srcs[i]];
+        if (on) bil++;
         var b = document.getElementById('btn-tf-' + srcs[i]);
         if (!b) continue;
-        var on = !!_tf[srcs[i]];
         b.textContent = 'Tajuk depan, ayat di Flip: ' + (on ? 'ON' : 'OFF');
         b.style.background = on ? '#000' : '#fff';
         b.style.color = on ? '#fff' : '#000';
+      }
+      // Butang menu — satu untuk ketiga-tiga laci
+      var m = document.getElementById('btn-tf-semua');
+      if (m) {
+        m.textContent = 'JQ TAJUK FLIP: ' + (bil === 3 ? 'ON' : bil === 0 ? 'OFF' : 'SEBAHAGIAN (' + bil + '/3)');
+        m.style.background = bil ? '#000' : '#fff';
+        m.style.color = bil ? '#fff' : '#000';
       }
     }
     function _tfMuat() {
@@ -2031,6 +2041,19 @@
           }
         };
       }
+      // Butang menu: ON/OFF ketiga-tiga laci sekaligus
+      var bm = document.getElementById('btn-tf-semua');
+      if (bm) bm.onclick = function() {
+        var semuaOn = _tf.mainMotivation && _tf.otherMotivation && _tf.perjanjian;
+        var nilai = !semuaOn;
+        _tf.mainMotivation = nilai; _tf.otherMotivation = nilai; _tf.perjanjian = nilai;
+        _tfSimpanLokal(); _tfRender();
+        if (currentUser) {
+          db.collection('users').doc(currentUser.uid).collection('settings').doc('champTajukFlip')
+            .set({ mainMotivation: nilai, otherMotivation: nilai, perjanjian: nilai, updatedAt: Date.now() }, { merge: true }).catch(function() {});
+        }
+      };
+      if (currentUser) _tfMuat();
       _tfRender();
     })();
 
