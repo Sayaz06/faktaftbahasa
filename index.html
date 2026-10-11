@@ -735,6 +735,8 @@
     <!-- Ulang SR Bahasa tanpa had (atas → bawah, pusing semula) — TIADA kesan pada jadual SR -->
     <button id="btn-go-sr-bebas" class="btn">SR Bebas (Bahasa)</button>
     <button id="btn-go-gotick" class="btn">Go-Tick</button>
+    <!-- WORKER AI — jana MS seterusnya dari Bank Kamus (Pukal + Tips) -->
+    <button id="btn-go-ai" class="btn">WORKER AI</button>
     <button id="btn-go-main-motivation" class="btn">[ MAIN MOTIVATION ]</button>
     <button id="btn-go-reminder-list" class="btn">[ REMINDER ]</button>
     <button id="btn-go-other-motivation" class="btn">[ OTHER MOTIVATION ]</button>
@@ -1096,6 +1098,25 @@
     </div>
     <button id="btn-gt-back-menu" class="btn" style="margin-top:8px;font-size:0.9rem;padding:10px;">← Menu</button>
     <div id="gt-list-err" class="msg error"></div>
+  </div>
+
+  <!-- SCREEN: WORKER AI -->
+  <div id="screen-ai" class="screen">
+    <div class="status-bar" id="ai-k-status">WORKER AI</div>
+    <h1>Worker AI</h1>
+    <div class="sub">Jana MS seterusnya dari Bank Kamus — perkataan, laci &amp; tips</div>
+    <div style="font-size:0.8rem;font-weight:bold;margin:6px 0 2px;">Golongan</div>
+    <div id="ai-k-golongan"></div>
+    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">Model AI</div>
+    <div class="btn-row">
+      <button id="ai-k-m-sonnet" class="btn-sm" style="width:50%;">Sonnet 5.5</button>
+      <button id="ai-k-m-opus" class="btn-sm" style="width:50%;">Opus 5.5</button>
+    </div>
+    <button id="btn-ai-k-jana" class="btn btn-primary" style="margin-top:10px;">JANA MS SETERUSNYA</button>
+    <div id="ai-k-kad" style="display:none;border:2px solid #000;border-radius:6px;padding:8px;margin-top:8px;font-size:0.85rem;line-height:1.6;"></div>
+    <button id="btn-ai-k-batal" class="btn" style="display:none;">Batal Kerja</button>
+    <button id="btn-ai-k-back" class="btn" style="margin-top:8px;font-size:0.9rem;padding:10px;">← Menu</button>
+    <div id="ai-k-err" class="msg error"></div>
   </div>
 
   <!-- SCREEN: GO-TICK CHECKLIST DALAM DESTINASI -->
@@ -6669,6 +6690,168 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         gtRenderChecklist();
       });
     }
+
+    // ══════════════════════════════════════════
+    // WORKER AI (Kindle) — tekan sekali: worker cari MS seterusnya dalam Bank Kamus
+    // (MS terawal selepas MS terakhir yang sudah ada perkataan) → Jana Pukal + Jana Tips
+    // ══════════════════════════════════════════
+    var _aiKUnsub = null, _aiKJobs = [], _aiKBank = {}, _aiKGol = '', _aiKModel = 'claude-sonnet-5-5';
+    try {
+      _aiKGol = localStorage.getItem('ai_k_gol') || '';
+      _aiKModel = localStorage.getItem('ai_k_model') || _aiKModel;
+    } catch (e) {}
+    if (_aiKModel !== 'claude-sonnet-5-5' && _aiKModel !== 'claude-opus-5-5') _aiKModel = 'claude-sonnet-5-5';
+
+    function _aiKRef(nama) { return db.collection('users').doc(currentUser.uid).collection(nama); }
+    function _aiKEsc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+    function _aiKSimpan() {
+      try { localStorage.setItem('ai_k_gol', _aiKGol); localStorage.setItem('ai_k_model', _aiKModel); } catch (e) {}
+    }
+
+    function _aiKRenderModel() {
+      var s = document.getElementById('ai-k-m-sonnet'), o = document.getElementById('ai-k-m-opus');
+      if (s) s.className = 'btn-sm' + (_aiKModel === 'claude-sonnet-5-5' ? ' on' : '');
+      if (o) o.className = 'btn-sm' + (_aiKModel === 'claude-opus-5-5' ? ' on' : '');
+    }
+
+    function _aiKRenderGolongan() {
+      var el = document.getElementById('ai-k-golongan');
+      if (!el) return;
+      var nama = Object.keys(_aiKBank).sort();
+      if (!nama.length) {
+        el.innerHTML = '<div class="msg">Bank Kamus kosong. Upload fail .txt di app phone (📚 Bank Kamus).</div>';
+        _aiKGol = '';
+        return;
+      }
+      if (nama.indexOf(_aiKGol) === -1) _aiKGol = nama.indexOf('KATA KERJA') !== -1 ? 'KATA KERJA' : nama[0];
+      var html = '';
+      for (var i = 0; i < nama.length; i++) {
+        var bil = Object.keys((_aiKBank[nama[i]] && _aiKBank[nama[i]].fail) || {}).length;
+        html += '<button class="btn' + (nama[i] === _aiKGol ? ' btn-primary' : '') + '" data-gol="' + _aiKEsc(nama[i]) +
+          '" style="padding:8px;font-size:0.9rem;">' + _aiKEsc(nama[i]) + ' (' + bil + ' fail)</button>';
+      }
+      el.innerHTML = html;
+      var btns = el.querySelectorAll('button[data-gol]');
+      for (var b = 0; b < btns.length; b++) {
+        btns[b].onclick = function() {
+          _aiKGol = this.getAttribute('data-gol');
+          _aiKSimpan();
+          _aiKRenderGolongan();
+        };
+      }
+    }
+
+    function _aiKMuatBank() {
+      var el = document.getElementById('ai-k-golongan');
+      if (el) el.innerHTML = '<div class="msg">Memuatkan Bank Kamus...</div>';
+      _aiKRef('kamus_bank_info').doc('ringkasan').get().then(function(snap) {
+        _aiKBank = (snap.exists && snap.data().golongan) || {};
+        _aiKRenderGolongan();
+      }).catch(function(e) {
+        if (el) el.innerHTML = '<div class="msg error">Gagal baca Bank Kamus: ' + _aiKEsc(e.message) + '</div>';
+      });
+    }
+
+    function _aiKJobAktif() {
+      for (var i = 0; i < _aiKJobs.length; i++) {
+        var j = _aiKJobs[i];
+        if (j.jenis === 'jana_ms' && (j.status === 'menunggu' || j.status === 'diproses')) return j;
+      }
+      return null;
+    }
+
+    function _aiKRenderKad() {
+      var kad = document.getElementById('ai-k-kad');
+      var btnBatal = document.getElementById('btn-ai-k-batal');
+      var j = null;
+      for (var i = 0; i < _aiKJobs.length; i++) { if (_aiKJobs[i].jenis === 'jana_ms') { j = _aiKJobs[i]; break; } }
+      if (!kad) return;
+      if (!j) { kad.style.display = 'none'; if (btnBatal) btnBatal.style.display = 'none'; setText('ai-k-status', 'WORKER AI'); return; }
+      var h = j.hasil || {};
+      var model = j.model === 'claude-opus-5-5' ? 'Opus 5.5' : 'Sonnet 5.5';
+      var tajuk = (j.jenisKataNama ? j.jenisKataNama : (j.golongan || '')) + ' · ' + model;
+      var badan = '';
+      if (j.status === 'menunggu') badan = 'Menunggu worker AI mengambil kerja ini...';
+      else if (j.status === 'diproses') badan = 'Sedang diproses:<br>' + _aiKEsc(j.progress || '...');
+      else if (j.status === 'dibatal') badan = 'Dibatalkan.';
+      else if (j.status === 'gagal') badan = '<b>GAGAL:</b> ' + _aiKEsc(j.ralat || 'Ralat tidak diketahui');
+      else if (j.status === 'siap') {
+        var b = [];
+        b.push((h.diterima != null ? h.diterima : '?') + ' perkataan diterima oleh AI');
+        b.push((h.dijanaAI != null ? h.dijanaAI : '?') + ' perkataan dijana · ' + (h.perkataanBaru || 0) + ' disimpan');
+        b.push((h.laciDijana || 0) + ' laci dijana');
+        b.push((h.laciDapatTips || 0) + '/' + (h.laciDihantar != null ? h.laciDihantar : '?') + ' laci dapat tips');
+        var hilang = h.tertinggal || [];
+        if (hilang.length) b.push('<b>TERTINGGAL (' + hilang.length + '):</b> ' + _aiKEsc(hilang.slice(0, 8).join(', ')) + (hilang.length > 8 ? ' ...' : ''));
+        else b.push('Tiada yang tertinggal ✓');
+        if (typeof h.kosUSD === 'number') b.push('Kos lebih kurang US$' + h.kosUSD.toFixed(3));
+        badan = b.join('<br>');
+      }
+      kad.innerHTML = '<div style="font-weight:bold;margin-bottom:4px;">' + _aiKEsc(tajuk) + '</div>' + badan;
+      kad.style.display = 'block';
+      var aktif = j.status === 'menunggu' || j.status === 'diproses';
+      if (btnBatal) btnBatal.style.display = aktif ? 'block' : 'none';
+      setText('ai-k-status', aktif ? 'WORKER AI — SEDANG BERJALAN' : (j.status === 'siap' ? 'WORKER AI — SIAP' : 'WORKER AI'));
+    }
+
+    function _aiKPantau() {
+      if (_aiKUnsub || !currentUser) return;
+      _aiKUnsub = _aiKRef('ai_jobs').orderBy('createdAt', 'desc').limit(5).onSnapshot(function(snap) {
+        _aiKJobs = [];
+        snap.forEach(function(d) { var x = d.data(); x.id = d.id; _aiKJobs.push(x); });
+        _aiKRenderKad();
+      }, function(e) { setText('ai-k-err', 'Gagal pantau: ' + e.message); });
+    }
+
+    document.getElementById('btn-go-ai').onclick = function() {
+      if (!currentUser) return;
+      setText('ai-k-err', '');
+      showScreen('screen-ai');
+      _aiKRenderModel();
+      _aiKMuatBank();
+      _aiKPantau();
+    };
+    document.getElementById('btn-ai-k-back').onclick = function() {
+      if (_aiKUnsub) { _aiKUnsub(); _aiKUnsub = null; }
+      showScreen('screen-menu');
+    };
+    document.getElementById('ai-k-m-sonnet').onclick = function() { _aiKModel = 'claude-sonnet-5-5'; _aiKSimpan(); _aiKRenderModel(); };
+    document.getElementById('ai-k-m-opus').onclick = function() { _aiKModel = 'claude-opus-5-5'; _aiKSimpan(); _aiKRenderModel(); };
+
+    document.getElementById('btn-ai-k-jana').onclick = function() {
+      if (!currentUser) return;
+      setText('ai-k-err', '');
+      if (!_aiKGol) { setText('ai-k-err', 'Bank Kamus kosong — upload fail di app phone dahulu.'); return; }
+      if (_aiKJobAktif()) { setText('ai-k-err', 'Masih ada kerja AI sedang berjalan.'); return; }
+      var btn = this;
+      var hantar = function() {
+        btn.disabled = true;
+        _aiKRef('ai_jobs').add({
+          jenis: 'jana_ms', golongan: _aiKGol, model: _aiKModel,
+          status: 'menunggu', createdAt: Date.now(), sumber: 'kindle'
+        }).then(function() {
+          btn.disabled = false;
+        }).catch(function(e) {
+          btn.disabled = false;
+          setText('ai-k-err', 'Gagal hantar: ' + e.message);
+        });
+      };
+      var label = _aiKModel === 'claude-opus-5-5' ? 'Opus 5.5' : 'Sonnet 5.5';
+      var msg = 'Jana MS seterusnya untuk ' + _aiKGol + ' (' + label + ')?\nWorker akan jana perkataan, laci & tips.';
+      if (typeof wsConfirm === 'function') wsConfirm(msg, hantar); else hantar();
+    };
+
+    document.getElementById('btn-ai-k-batal').onclick = function() {
+      var j = _aiKJobAktif();
+      if (!j) return;
+      var batal = function() {
+        _aiKRef('ai_jobs').doc(j.id).update({ status: 'dibatal', selesaiAt: Date.now() })
+          .catch(function(e) { setText('ai-k-err', 'Gagal batal: ' + e.message); });
+      };
+      if (typeof wsConfirm === 'function') wsConfirm('Batalkan kerja AI ini?', batal); else batal();
+    };
 
     document.getElementById('btn-go-gotick').onclick = function() {
       _bukaDenganPin('PIN untuk buka Go-Tick', function() {
