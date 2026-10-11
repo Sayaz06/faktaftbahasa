@@ -2140,7 +2140,8 @@
       
       window._jqMotivasiHandler = {
         adaFlip: item.adaFlip,
-        depan: item.depan,
+        depan: kandungan, // muka depan SEBENAR yang dipapar (tajuk / tajuk + ayat) — untuk Flip balik
+        kelasDepan: mainEl ? mainEl.className : 'big-text',
         champSourceKey: item._champSourceKey || null,
         champActiveLen: item._champActiveLen || 1,
         belakang: item.belakang,
@@ -6608,11 +6609,11 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         if (!h.adaFlip) return;
         h.flipped = !h.flipped;
         setText('side-label', h.flipped ? 'MUKA BELAKANG' : 'MUKA DEPAN');
-        var txt = h.flipped ? h.belakang : h.depan;
+        var txt = (h.flipped ? h.belakang : h.depan) || '';
         setText('main-text', txt);
         setText('play-progress', h.flipped ? '(Tekan SETERUSNYA untuk teruskan)' : '(Flip untuk penerangan)');
         var mainEl = document.getElementById('main-text');
-        if (mainEl) mainEl.className = txt.length > 80 ? 'big-text long-text' : 'big-text';
+        if (mainEl) mainEl.className = h.flipped ? (txt.length > 80 ? 'big-text long-text' : 'big-text') : (h.kelasDepan || 'big-text');
         document.getElementById('btn-flip').className = h.flipped ? 'btn-sm on' : 'btn-sm';
         return;
       }
