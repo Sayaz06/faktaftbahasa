@@ -928,6 +928,8 @@
 
   <div id="screen-main-motivation" class="screen">
     <div class="status-bar" id="mm-status">MAIN MOTIVATION</div>
+    <!-- ON: tajuk di depan, ayat di Flip · OFF: tajuk + ayat di depan -->
+    <button id="btn-tf-mainMotivation" data-tf="mainMotivation" style="width:100%;margin-bottom:8px;padding:9px;border:2px solid #000;background:#fff;color:#000;font-weight:bold;font-size:0.85rem;border-radius:6px;cursor:pointer;font-family:inherit;">Tajuk depan, ayat di Flip: OFF</button>
     <button id="btn-mm-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Motivasi</button>
     <div id="mm-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
     <button id="btn-mm-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Balik ke Menu</button>
@@ -967,6 +969,8 @@
   <!-- SCREEN: OTHER MOTIVATION -->
   <div id="screen-other-motivation" class="screen">
     <div class="status-bar" id="om-status">OTHER MOTIVATION</div>
+    <!-- ON: tajuk di depan, ayat di Flip · OFF: tajuk + ayat di depan -->
+    <button id="btn-tf-otherMotivation" data-tf="otherMotivation" style="width:100%;margin-bottom:8px;padding:9px;border:2px solid #000;background:#fff;color:#000;font-weight:bold;font-size:0.85rem;border-radius:6px;cursor:pointer;font-family:inherit;">Tajuk depan, ayat di Flip: OFF</button>
     <button id="btn-om-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Motivasi</button>
     <div id="om-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
     <button id="btn-om-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Balik ke Menu</button>
@@ -1034,6 +1038,8 @@
       </div>
     </div>
 
+    <!-- ON: tajuk di depan, ayat di Flip · OFF: tajuk + ayat di depan (= dalam teks tetap jadi flip) -->
+    <button id="btn-tf-perjanjian" data-tf="perjanjian" style="width:100%;margin-bottom:8px;padding:9px;border:2px solid #000;background:#fff;color:#000;font-weight:bold;font-size:0.85rem;border-radius:6px;cursor:pointer;font-family:inherit;">Tajuk depan, ayat di Flip: OFF</button>
     <button id="btn-pj-tambah" class="btn btn-primary" style="margin-bottom:4px;">+ Tambah Perjanjian</button>
     <div style="font-size:0.7rem;color:#444;text-align:center;margin-bottom:6px;">Tekan <b>#nombor</b> untuk pindah terus · Guna <b>=</b> dalam teks untuk flip</div>
     <div id="pj-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
@@ -1978,6 +1984,56 @@
       hantarArahanChampion('selesai');
     }
 
+    // ── ON/OFF "Tajuk depan, ayat di Flip" — Main Motivation / Other Motivation / Perjanjian ──
+    // Disimpan di Firebase: users/{uid}/settings/champTajukFlip { mainMotivation, otherMotivation, perjanjian }
+    var _tf = { mainMotivation: false, otherMotivation: false, perjanjian: false, dimuat: false };
+    try { var _tfLs = JSON.parse(localStorage.getItem('champ_tajuk_flip') || '{}'); for (var _k in _tfLs) if (_tf.hasOwnProperty(_k)) _tf[_k] = !!_tfLs[_k]; } catch (e) {}
+    function _tfAktif(src) {
+      if (!_tf.dimuat && currentUser) _tfMuat();
+      return !!_tf[src];
+    }
+    function _tfSimpanLokal() {
+      try { localStorage.setItem('champ_tajuk_flip', JSON.stringify({ mainMotivation: _tf.mainMotivation, otherMotivation: _tf.otherMotivation, perjanjian: _tf.perjanjian })); } catch (e) {}
+    }
+    function _tfRender() {
+      var srcs = ['mainMotivation', 'otherMotivation', 'perjanjian'];
+      for (var i = 0; i < srcs.length; i++) {
+        var b = document.getElementById('btn-tf-' + srcs[i]);
+        if (!b) continue;
+        var on = !!_tf[srcs[i]];
+        b.textContent = 'Tajuk depan, ayat di Flip: ' + (on ? 'ON' : 'OFF');
+        b.style.background = on ? '#000' : '#fff';
+        b.style.color = on ? '#fff' : '#000';
+      }
+    }
+    function _tfMuat() {
+      if (!currentUser || _tf.dimuat) return;
+      _tf.dimuat = true;
+      db.collection('users').doc(currentUser.uid).collection('settings').doc('champTajukFlip').get().then(function(s) {
+        if (!s.exists) return;
+        var d = s.data() || {};
+        _tf.mainMotivation = !!d.mainMotivation; _tf.otherMotivation = !!d.otherMotivation; _tf.perjanjian = !!d.perjanjian;
+        _tfSimpanLokal(); _tfRender();
+      }).catch(function() { _tf.dimuat = false; });
+    }
+    (function() {
+      var srcs = ['mainMotivation', 'otherMotivation', 'perjanjian'];
+      for (var i = 0; i < srcs.length; i++) {
+        var b = document.getElementById('btn-tf-' + srcs[i]);
+        if (!b) continue;
+        b.onclick = function() {
+          var src = this.getAttribute('data-tf');
+          _tf[src] = !_tf[src];
+          _tfSimpanLokal(); _tfRender();
+          if (currentUser) {
+            var upd = {}; upd[src] = _tf[src]; upd.updatedAt = Date.now();
+            db.collection('users').doc(currentUser.uid).collection('settings').doc('champTajukFlip').set(upd, { merge: true }).catch(function() {});
+          }
+        };
+      }
+      _tfRender();
+    })();
+
     function tunjukMotivasiJQ(cbSelepas) {
       isBusy = true;
       _champOverlayOpen = false;
@@ -2003,16 +2059,27 @@
 
       var sourceLabel = { motivasi: 'MOTIVASI', perjanjian: 'PERJANJIAN', rutin: 'RUTIN', supplement: 'SUPLEMEN', water: 'AIR', mainMotivation: 'MAIN MOTIVASI', otherMotivation: 'MOTIVASI LAIN' };      
       isFlipped = false; showTips = false;
-      // otherMotivation — tajuk tidak dipapar di status bar
-      var hideTajuk = (item.source === 'mainMotivation' || item.source === 'otherMotivation');
-      setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + (hideTajuk ? '' : ' · ' + item.title));
+      // Main / Other Motivation & Perjanjian — tajuk dipapar dalam kotak (bukan status bar)
+      var sumberTajuk = (item.source === 'mainMotivation' || item.source === 'otherMotivation' || item.source === 'perjanjian');
+      setText('play-status', (sourceLabel[item.source] || 'CHAMPION') + (sumberTajuk ? '' : ' · ' + item.title));
       setText('play-mode', 'CHAMPION · ' + (sourceLabel[item.source] || item.source));
       setText('side-label', 'MUKA DEPAN');
 
-      // otherMotivation & mainMotivation: tajuk dipapar dalam kotak — bawah gambar, atas teks
+      // Butang ON/OFF "Tajuk depan, ayat di Flip"
+      //   ON  → depan: tajuk sahaja · Flip: ayat penuh
+      //   OFF → depan: tajuk + ayat (Perjanjian: teks selepas "=" kekal di Flip)
       var kandungan;
-      if (item.source === 'otherMotivation' || item.source === 'mainMotivation') {
-        kandungan = (item.title ? item.title + '\n\n' : '') + (item.depan || '');
+      if (sumberTajuk) {
+        var ayatDepan = (item.depan && item.depan !== item.title) ? item.depan : '';
+        var ayatPenuh = [ayatDepan, item.belakang || ''].filter(function(x) { return x; }).join('\n\n');
+        if (_tfAktif(item.source) && item.title && ayatPenuh) {
+          kandungan = item.title;
+          item.adaFlip = true;
+          item.belakang = ayatPenuh;
+        } else {
+          kandungan = (item.title ? item.title + (ayatDepan ? '\n\n' : '') : '') + ayatDepan;
+          if (!kandungan) kandungan = item.depan || '';
+        }
       } else {
         kandungan = item.depan;
       }
