@@ -1115,7 +1115,7 @@
       <button id="btn-ai-k-back" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">← Menu</button>
       <button id="btn-ai-k-segar" class="btn" style="font-size:0.85rem;padding:7px 10px;width:auto;">Muat Semula</button>
     </div>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">1. Golongan</div>
+    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">1. Bahasa &amp; Jenis Kata</div>
     <div id="ai-k-gol"></div>
     <div id="ai-k-kad" style="border:2px solid #000;border-radius:6px;padding:8px;margin:6px 0;font-size:0.85rem;line-height:1.6;"></div>
     <div class="btn-row">
@@ -6802,9 +6802,10 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     // MS seterusnya hanya bila MS semasa lengkap. Berhenti sendiri bila kredit / fail habis.
     // Kawalan: users/{uid}/ai_penjana/{golonganId}
     // ══════════════════════════════════════════
-    var _pjK = { gol: [], bahasa: {}, gid: '', model: 'claude-sonnet-5-5', unsub: null, data: null, tunggu: 0, tungguTimer: null, arkib: false, worker: null };
+    var _pjK = { gol: [], bahasa: {}, gid: '', bid: '', semuaGol: false, tukarBahasa: false, model: 'claude-sonnet-5-5', unsub: null, data: null, tunggu: 0, tungguTimer: null, arkib: false, worker: null };
     try {
       _pjK.gid = localStorage.getItem('ai_k_gol') || '';
+      _pjK.bid = localStorage.getItem('ai_k_bahasa') || '';
       _pjK.model = localStorage.getItem('ai_k_model') || _pjK.model;
     } catch (e) {}
     if (_pjK.model !== 'claude-sonnet-5-5' && _pjK.model !== 'claude-opus-5-5') _pjK.model = 'claude-sonnet-5-5';
@@ -6815,7 +6816,17 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     }
     function _pjCmp(a, b) { return String(a || '').localeCompare(String(b || ''), undefined, { numeric: true }); }
     function _pjSimpan() {
-      try { localStorage.setItem('ai_k_gol', _pjK.gid); localStorage.setItem('ai_k_model', _pjK.model); } catch (e) {}
+      try { localStorage.setItem('ai_k_gol', _pjK.gid); localStorage.setItem('ai_k_bahasa', _pjK.bid); localStorage.setItem('ai_k_model', _pjK.model); } catch (e) {}
+    }
+    // Label jenis kata: kategori tetap → "1.KATA KERJA" (nombor ikut kepentingan) · golongan manual → nama asal
+    function _pjLabelGol(g) {
+      if (!g) return '';
+      return (g.tetapKunci && g.urutan) ? (g.urutan + '.' + (g.name || '')) : (g.name || '(tiada nama)');
+    }
+    // Susunan: kategori tetap ikut nombor (1 di atas), kemudian golongan manual ikut nama
+    function _pjSusunGol(a, b) {
+      var ua = a.tetapKunci ? (a.urutan || 0) : 1e9, ub = b.tetapKunci ? (b.urutan || 0) : 1e9;
+      return (ua - ub) || _pjCmp(a.name, b.name);
     }
     function _pjGol() { for (var i = 0; i < _pjK.gol.length; i++) { if (_pjK.gol[i].id === _pjK.gid) return _pjK.gol[i]; } return null; }
     function _pjLabelModel(m) { return m === 'claude-opus-5-5' ? 'Opus 5.5' : 'Sonnet 5.5'; }
@@ -6838,22 +6849,73 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (o) o.className = 'btn-sm' + (_pjK.model === 'claude-opus-5-5' ? ' on' : '');
     }
 
+    // 1) Pilih BAHASA → 2) pilih JENIS KATA (1.KATA KERJA paling atas). Bila dipilih, yang lain disorok (boleh tunjuk semula).
     function _pjRenderGol() {
       var el = document.getElementById('ai-k-gol');
       if (!el) return;
-      if (!_pjK.gol.length) { el.innerHTML = '<div class="msg">Tiada golongan. Cipta golongan &amp; upload fail di app phone.</div>'; return; }
+      if (!_pjK.gol.length) { el.innerHTML = '<div class="msg">Tiada golongan. Cipta bahasa di app phone dahulu.</div>'; return; }
+      var bids = [];
+      for (var i = 0; i < _pjK.gol.length; i++) if (bids.indexOf(_pjK.gol[i].bahasaId) < 0) bids.push(_pjK.gol[i].bahasaId);
+      bids.sort(function(a, b) { return _pjCmp(_pjK.bahasa[a], _pjK.bahasa[b]); });
+      var gSel = _pjGol();
+      if (gSel && !_pjK.bid) _pjK.bid = gSel.bahasaId;
+      if (bids.indexOf(_pjK.bid) < 0) _pjK.bid = bids.length === 1 ? bids[0] : '';
+      var bt = 'padding:7px 6px;font-size:0.85rem;margin:3px 0;';
+      var kecil = 'padding:5px;font-size:0.8rem;margin:3px 0;';
       var html = '';
-      for (var i = 0; i < _pjK.gol.length; i++) {
-        var g = _pjK.gol[i];
-        var b = _pjK.bahasa[g.bahasaId] || '';
-        html += '<button class="btn' + (g.id === _pjK.gid ? ' btn-primary' : '') + '" data-gol="' + _pjEsc(g.id) +
-          '" style="padding:7px 6px;font-size:0.85rem;margin:3px 0;">' + _pjEsc(g.name || '(tiada nama)') + (b ? ' · ' + _pjEsc(b) : '') + '</button>';
+
+      // ── Bahasa ──
+      if (_pjK.bid && !_pjK.tukarBahasa) {
+        html += '<button class="btn btn-primary" data-bah="' + _pjEsc(_pjK.bid) + '" style="' + bt + '">' + _pjEsc(_pjK.bahasa[_pjK.bid] || '(bahasa)') + '</button>';
+        if (bids.length > 1) html += '<button class="btn" id="btn-ai-k-tukar-bahasa" style="' + kecil + '">Tukar bahasa (' + (bids.length - 1) + ' lagi)</button>';
+      } else {
+        html += '<div class="msg" style="margin:2px 0;">Pilih bahasa:</div>';
+        for (var b = 0; b < bids.length; b++) {
+          html += '<button class="btn' + (bids[b] === _pjK.bid ? ' btn-primary' : '') + '" data-bah="' + _pjEsc(bids[b]) + '" style="' + bt + '">' + _pjEsc(_pjK.bahasa[bids[b]] || '(bahasa)') + '</button>';
+        }
+      }
+
+      // ── Jenis kata (bahasa dipilih sahaja) ──
+      if (_pjK.bid && !_pjK.tukarBahasa) {
+        var senarai = [];
+        for (var k = 0; k < _pjK.gol.length; k++) if (_pjK.gol[k].bahasaId === _pjK.bid) senarai.push(_pjK.gol[k]);
+        senarai.sort(_pjSusunGol);
+        html += '<div style="font-size:0.8rem;font-weight:bold;margin:6px 0 2px;">Jenis kata:</div>';
+        if (gSel && gSel.bahasaId === _pjK.bid && !_pjK.semuaGol) {
+          html += '<button class="btn btn-primary" data-gol="' + _pjEsc(gSel.id) + '" style="' + bt + '">&#10003; ' + _pjEsc(_pjLabelGol(gSel)) + '</button>';
+          if (senarai.length > 1) html += '<button class="btn" id="btn-ai-k-gol-semua" style="' + kecil + '">Tunjuk jenis kata lain (' + (senarai.length - 1) + ' disorok)</button>';
+        } else {
+          for (var m = 0; m < senarai.length; m++) {
+            var g = senarai[m];
+            html += '<button class="btn' + (gSel && g.id === gSel.id ? ' btn-primary' : '') + '" data-gol="' + _pjEsc(g.id) + '" style="' + bt + '">' + _pjEsc(_pjLabelGol(g)) + '</button>';
+          }
+          if (gSel && gSel.bahasaId === _pjK.bid) html += '<button class="btn" id="btn-ai-k-gol-sorok" style="' + kecil + '">Sorok jenis kata lain</button>';
+        }
       }
       el.innerHTML = html;
-      var btns = el.querySelectorAll('button[data-gol]');
-      for (var k = 0; k < btns.length; k++) btns[k].onclick = function() {
-        _pjK.gid = this.getAttribute('data-gol'); _pjSimpan(); _pjRenderGol(); _pjLanggan();
+
+      var bb = el.querySelectorAll('button[data-bah]');
+      for (var x = 0; x < bb.length; x++) bb[x].onclick = function() {
+        var baru = this.getAttribute('data-bah');
+        if (_pjK.bid === baru && !_pjK.tukarBahasa) { _pjK.tukarBahasa = true; _pjRenderGol(); return; } // tekan bahasa terpilih = tukar
+        _pjK.bid = baru; _pjK.tukarBahasa = false;
+        var gs = _pjGol();
+        if (gs && gs.bahasaId !== baru) { _pjK.gid = ''; _pjK.semuaGol = true; _pjSimpan(); _pjRenderGol(); _pjLanggan(); return; }
+        _pjK.semuaGol = !gs; _pjSimpan(); _pjRenderGol();
       };
+      var bgs = el.querySelectorAll('button[data-gol]');
+      for (var y = 0; y < bgs.length; y++) bgs[y].onclick = function() {
+        var id = this.getAttribute('data-gol');
+        _pjK.semuaGol = false;
+        if (id === _pjK.gid) { _pjRenderGol(); return; }
+        _pjK.gid = id; _pjSimpan(); _pjRenderGol(); _pjLanggan();
+      };
+      var tb = document.getElementById('btn-ai-k-tukar-bahasa');
+      if (tb) tb.onclick = function() { _pjK.tukarBahasa = true; _pjRenderGol(); };
+      var bs = document.getElementById('btn-ai-k-gol-semua');
+      if (bs) bs.onclick = function() { _pjK.semuaGol = true; _pjRenderGol(); };
+      var bk = document.getElementById('btn-ai-k-gol-sorok');
+      if (bk) bk.onclick = function() { _pjK.semuaGol = false; _pjRenderGol(); };
     }
 
     function _pjRenderKad() {
@@ -6871,7 +6933,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var r = _pjRingkasan(), siap = 0;
       for (var i = 0; i < r.length; i++) if (r[i].ok) siap++;
       var langkah = { pukal: 'Jana Pukal', tips: 'Tips F0 + F1&amp;2', imej: 'Gambar G1' };
-      var html = '<b>' + _pjEsc(g.name || '') + '</b> — ' + label + '<br>';
+      var html = '<b>' + _pjEsc(_pjLabelGol(g)) + '</b> — ' + label + '<br>';
       if (d.semasa && d.status === 'berjalan') html += 'Sedang: <b>' + _pjEsc(d.semasa.nama || '') + '</b> · ' + (langkah[d.semasa.langkah] || '') + '<br>';
       if (d.progress && d.status === 'berjalan') html += _pjEsc(d.progress) + '<br>';
       if (d.mesej) html += '<div style="border-top:1px dashed #000;margin-top:4px;padding-top:4px;">' + _pjEsc(d.mesej) + '</div>';
@@ -6955,8 +7017,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       }).then(function(sg) {
         _pjK.gol = [];
         sg.forEach(function(d) { var x = d.data(); x.id = d.id; _pjK.gol.push(x); });
-        _pjK.gol.sort(function(a, b) { return _pjCmp(_pjK.bahasa[a.bahasaId], _pjK.bahasa[b.bahasaId]) || _pjCmp(a.name, b.name); });
-        if (!_pjGol()) _pjK.gid = _pjK.gol.length ? _pjK.gol[0].id : '';
+        _pjK.gol.sort(function(a, b) { return _pjCmp(_pjK.bahasa[a.bahasaId], _pjK.bahasa[b.bahasaId]) || _pjSusunGol(a, b); });
+        if (!_pjGol()) { _pjK.gid = ''; _pjK.semuaGol = true; } // user pilih bahasa → jenis kata sendiri
+        _pjK.tukarBahasa = false;
         _pjRenderGol();
         _pjLanggan();
       }).catch(function(e) { setText('ai-k-err', 'Gagal baca golongan: ' + e.message); });
