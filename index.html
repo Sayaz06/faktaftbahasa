@@ -6962,8 +6962,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       else if (!belum.length) el.innerHTML = '<div class="msg">Tiada muka surat belum lengkap.</div>';
       else {
         var html = '';
-        for (var k = 0; k < belum.length && k < 40; k++) html += _pjBaris(belum[k], k === 0);
-        if (belum.length > 40) html += '<div class="msg">+ ' + (belum.length - 40) + ' muka surat lagi</div>';
+        for (var k = 0; k < belum.length && k < 5; k++) html += _pjBaris(belum[k], k === 0);
+        if (belum.length > 5) html += '<div class="msg">+ ' + (belum.length - 5) + ' muka surat lagi</div>';
         el.innerHTML = html;
       }
       if (bA) bA.textContent = (_pjK.arkib ? 'Tutup Arkib' : 'Arkib') + ' (' + lengkap.length + ' lengkap)';
