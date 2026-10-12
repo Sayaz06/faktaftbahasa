@@ -1135,7 +1135,7 @@
       <button id="ai-k-m-sonnet" class="btn-sm" style="width:50%;">Sonnet 5.5</button>
       <button id="ai-k-m-opus" class="btn-sm" style="width:50%;">Opus 5.5</button>
     </div>
-    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">3. Muka surat belum lengkap (&#9658; = seterusnya)</div>
+    <div style="font-size:0.8rem;font-weight:bold;margin:8px 0 2px;">3. Muka surat yang belum siap (yang paling atas dijana dulu)</div>
     <div id="ai-k-ms" style="border:1px solid #000;border-radius:6px;padding:2px 6px;"></div>
     <button id="btn-ai-k-arkib" class="btn" style="margin-top:8px;font-size:0.9rem;padding:9px;">Arkib</button>
     <div id="ai-k-arkib" style="display:none;border:1px dashed #000;border-radius:6px;padding:2px 6px;margin-top:4px;"></div>
@@ -6948,9 +6948,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function _pjBaris(r, seterusnya) {
       var t;
       if (!r.l) t = r.fail ? 'belum dijana (' + r.bil + ' perkataan dalam fail)' : '<b>tiada fail</b>';
-      else t = r.l + ' laci · Tips ' + (r.t >= r.l ? '&#10003;' : r.t + '/' + r.l) + ' · G1 ' + (r.i >= r.l ? '&#10003;' : r.i + '/' + r.l);
-      return '<div style="padding:5px 2px;border-bottom:1px solid #000;font-size:0.85rem;">' + (seterusnya ? '<b>&#9658; ' : '') +
-        (r.ok ? '&#10003; ' : '') + _pjEsc(_pjNamaMs(r)) + (seterusnya ? '</b>' : '') + ' — ' + t + '</div>';
+      else t = r.l + ' laci · Tips ' + (r.t >= r.l ? 'siap' : r.t + '/' + r.l) + ' · Gambar ' + (r.i >= r.l ? 'siap' : r.i + '/' + r.l);
+      return '<div style="padding:5px 2px;border-bottom:1px solid #000;font-size:0.85rem;">' + (seterusnya ? '<b>SETERUSNYA: ' : '') +
+        _pjEsc(_pjNamaMs(r)) + (r.ok ? ' (lengkap)' : '') + (seterusnya ? '</b>' : '') + ' — ' + t + '</div>';
     }
 
     function _pjRenderMS() {
