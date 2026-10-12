@@ -7060,8 +7060,20 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var c = _pjImejCalon(), r = null;
       for (var i = 0; i < c.length; i++) if (c[i].id === _pjImej.pilih) r = c[i];
       if (!r) return;
-      var j = _pjImejJob();
-      if (j && (j.status === 'menunggu' || j.status === 'diproses')) { setText('ai-k-info', 'Masih ada kerja gambar sedang berjalan.'); return; }
+      // Kunci: kerja gambar lain (phone / Kindle) ATAU kerja AI untuk MS yang sama masih berjalan → jangan hantar dua kali
+      for (var q = 0; q < _pjImej.jobs.length; q++) {
+        var jb = _pjImej.jobs[q];
+        if ((jb.status === 'menunggu' || jb.status === 'diproses') && (jb.jenis === 'jana_imej' || jb.jenisKataId === r.id)) {
+          setText('ai-k-info', 'Worker sedang ' + (jb.jenis === 'jana_imej' ? 'jana gambar ' : 'memproses ') + (jb.jenisKataNama || '') +
+            (jb.sumber === 'phone' ? ' (dihantar dari phone)' : '') + '. Tunggu siap dahulu.');
+          return;
+        }
+      }
+      var pd = _pjK.data || {};
+      if (pd.arahan === 'jalan' && (pd.status === 'berjalan' || pd.status === 'menunggu')) {
+        setText('ai-k-info', 'Penjana sedang berjalan untuk golongan ini (ia jana gambar juga). Tekan PAUSE dahulu.');
+        return;
+      }
       _pjKonfirm('JANA GAMBAR G1 — ' + _pjNamaMs(r) + '\n\n' + (r.l - r.i) + ' laci tanpa gambar akan dijana guna Grok (xAI).\n' +
         'Prompt: Arahan Gambar 1 golongan (sama dengan app phone).\n\nKos Claude: RM0. Gambar dicaj oleh xAI.\n\nTeruskan?', function() {
         _pjRef('ai_jobs').add({
@@ -7076,7 +7088,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (!el) return;
       var j = _pjImejJob();
       if (!j) { el.innerHTML = ''; return; }
-      var h = j.hasil || {}, t = '<b>Gambar ' + _pjEsc(j.jenisKataNama || '') + ':</b> ';
+      var h = j.hasil || {}, t = '<b>Gambar ' + _pjEsc(j.jenisKataNama || '') + (j.sumber === 'phone' ? ' (dari phone)' : '') + ':</b> ';
       var aktif = j.status === 'menunggu' || j.status === 'diproses';
       if (j.status === 'menunggu') t += 'menunggu worker...';
       else if (j.status === 'diproses') t += _pjEsc(j.progress || 'sedang dijana...');
