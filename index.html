@@ -7146,11 +7146,24 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           .catch(function(e) { setText('ai-k-err', 'Gagal hantar: ' + e.message); });
       });
     }
+    // Baki kredit xAI (dibaca worker melalui Management API → settings/xaiBaki)
+    function _pjBakiHtml() {
+      var b = _pjImej.baki || {};
+      var menunggu = b.mintaAt && b.mintaAt > (b.at || 0);
+      var t;
+      if (menunggu) t = 'Baki xAI: menyemak...';
+      else if (!b.at) t = 'Baki xAI: belum disemak';
+      else if (b.ralat) t = 'Baki xAI: ' + _pjEsc(b.ralat);
+      else if (typeof b.usd === 'number') t = 'Baki xAI: <b>US$' + b.usd.toFixed(2) + '</b> (lebih kurang RM' + (b.usd * 4.5).toFixed(2) + ') · ' + _pjMasa(b.at);
+      else t = 'Baki xAI: -';
+      return '<div style="border-top:1px dashed #000;margin-top:4px;padding-top:4px;">' + t +
+        (menunggu ? '' : ' <button id="btn-ai-k-baki" class="btn-sm" style="width:auto;padding:3px 8px;font-size:0.75rem;">Semak</button>') + '</div>';
+    }
     function _pjRenderImejStatus() {
       var el = document.getElementById('ai-k-imej-status');
       if (!el) return;
       var j = _pjImejJob();
-      if (!j) { el.innerHTML = ''; return; }
+      if (!j) { el.innerHTML = _pjBakiHtml(); _pjIkatBaki(); return; }
       var h = j.hasil || {}, t = '<b>Gambar ' + _pjEsc(j.jenisKataNama || '') + (j.sumber === 'phone' ? ' (dari phone)' : '') + ':</b> ';
       var aktif = j.status === 'menunggu' || j.status === 'diproses';
       if (j.status === 'menunggu') t += 'menunggu worker...';
@@ -7159,7 +7172,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       else if (j.status === 'gagal') t += 'GAGAL — ' + _pjEsc(j.ralat || '');
       else if (j.status === 'dibatal') t += 'dibatalkan.';
       if (aktif) t += '<br><button id="btn-ai-k-imej-batal" class="btn" style="padding:5px;font-size:0.8rem;margin-top:3px;">Batal Gambar</button>';
-      el.innerHTML = t;
+      el.innerHTML = t + _pjBakiHtml();
+      _pjIkatBaki();
       var bb = document.getElementById('btn-ai-k-imej-batal');
       if (bb) bb.onclick = function() {
         _pjKonfirm('Batalkan jana gambar? (Gambar yang sudah siap kekal.)', function() {
@@ -7168,8 +7182,18 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       };
       if (j.status === 'siap' && _pjImej.siapLepas !== j.id) { _pjImej.siapLepas = j.id; _pjMintaRingkasan(); }
     }
+    function _pjIkatBaki() {
+      var b = document.getElementById('btn-ai-k-baki');
+      if (b) b.onclick = function() {
+        _pjRef('settings').doc('xaiBaki').set({ mintaAt: Date.now() }, { merge: true }).catch(function(e) { setText('ai-k-err', 'Gagal: ' + e.message); });
+      };
+    }
     function _pjImejLanggan() {
       if (_pjImej.unsub || !currentUser) return;
+      if (!_pjImej.unsubBaki) _pjImej.unsubBaki = _pjRef('settings').doc('xaiBaki').onSnapshot(function(s) {
+        _pjImej.baki = s.exists ? s.data() : null;
+        _pjRenderImejStatus();
+      }, function() {});
       var pertama = true;
       _pjImej.unsub = _pjRef('ai_jobs').orderBy('createdAt', 'desc').limit(10).onSnapshot(function(snap) {
         _pjImej.jobs = [];
@@ -7185,6 +7209,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     document.getElementById('btn-ai-k-back').onclick = function() {
       if (_pjK.unsub) { _pjK.unsub(); _pjK.unsub = null; }
       if (_pjImej.unsub) { _pjImej.unsub(); _pjImej.unsub = null; }
+      if (_pjImej.unsubBaki) { _pjImej.unsubBaki(); _pjImej.unsubBaki = null; }
       if (_pjK.tungguTimer) { clearTimeout(_pjK.tungguTimer); _pjK.tungguTimer = null; }
       showScreen('screen-menu');
     };
