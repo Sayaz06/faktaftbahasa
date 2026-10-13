@@ -3693,6 +3693,7 @@
           });
 
           function _terusLaciSeterusnya() {
+            if (window._tgAutoSemak) window._tgAutoSemak(); // 🔄 auto tekan "semak" Telegram bila tukar laci (Fakta & Bahasa)
             if (isLast && mode === 'bahasa') {
               lompatPerkataanSeterusnya().then(function(ok) {
                 if (!ok) {
@@ -7600,6 +7601,24 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         }
       });
     });
+
+    // 🔄 AUTO SEMAK — tekan butang "semak" secara automatik bila tukar laci (Fakta & Bahasa)
+    // Had: sekali setiap 2 minit sahaja (jimat bateri & worker), dilangkau jika semakan masih berjalan / butang tersorok.
+    var _tgAutoSemakAkhir = 0;
+    window._tgAutoSemak = function() {
+      try {
+        if (!currentUser) return;
+        var b = document.getElementById('btn-tg-refresh');
+        var l = document.getElementById('tg-refresh-label');
+        if (!b || b.style.display === 'none') return;
+        if (l && l.textContent === '...') return;
+        var kini = Date.now();
+        if (kini - _tgAutoSemakAkhir < 2 * 60 * 1000) return;
+        _tgAutoSemakAkhir = kini;
+        b.click();
+      } catch (e) {}
+    };
+    document.getElementById('btn-tg-refresh').addEventListener('click', function() { _tgAutoSemakAkhir = Date.now(); });
 
     // (auto-refresh touchstart dibuang — guna button 🔄 untuk semak manual)
     document.getElementById('btn-tg-notif-tutup').addEventListener('click', function() {
