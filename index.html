@@ -2825,6 +2825,8 @@
 
     function renderBlockCard(drawerTitle, issues) {
       var mainEl = document.getElementById('main-text');
+      // 🔄 Auto "semak" di latar bila laci baru dipapar (tidak sentuh laci)
+      try { if (window._tgAutoSemakLaci) window._tgAutoSemakLaci('B:' + (drawerTitle || '')); } catch (eAS) {}
       setText('play-mode', 'TIPS VERIFICATION');
       setText('side-label', 'ACTION REQUIRED');
       setText('play-progress', '');
@@ -2874,6 +2876,8 @@
       var counterBox = document.getElementById('counter-box');
       var btnSRS0 = document.getElementById('btn-sr-sahaja');
       if (btnSRS0) btnSRS0.style.display = 'none'; // hanya untuk kad jenis kata kosong
+      // 🔄 Auto "semak" di latar bila laci baru dipapar (Fakta & Bahasa) — jalan selepas render (setTimeout)
+      try { var _cA = cards[cardIndex]; if (_cA && _cA.drawerId && window._tgAutoSemakLaci) window._tgAutoSemakLaci(_cA.drawerId); } catch (eAS) {}
       if (counterBox) {
         // Kotak hitam 'perkataan terakhir' hanya untuk laci biasa — bukan semasa SR / SR Bebas
         var isLastPerk = (mode === 'bahasa' && !srModeAktif && activePerkataan && activePerkataan.isLastPerkataan === true);
@@ -3693,7 +3697,6 @@
           });
 
           function _terusLaciSeterusnya() {
-            if (window._tgAutoSemak) window._tgAutoSemak(); // 🔄 auto tekan "semak" Telegram bila tukar laci (Fakta & Bahasa)
             if (isLast && mode === 'bahasa') {
               lompatPerkataanSeterusnya().then(function(ok) {
                 if (!ok) {
@@ -7518,8 +7521,15 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       document.getElementById('tg-pilih-nt-overlay').className = '';
     });
 
+    // 🔄 Semakan "semak" — SATU fungsi untuk butang manual & auto (tukar laci)
+    // auto = true → jika gagal, diam & label kembali "semak" (bukan "err")
+    var _tgSemakAuto = false;
     document.getElementById('btn-tg-refresh').addEventListener('click', function() {
       var lbl = document.getElementById('tg-refresh-label');
+      var autoIni = _tgSemakAuto;
+      _tgSemakAuto = false;
+      var lblRalat = autoIni ? 'semak' : 'err';
+      if (lbl && lbl.textContent === '...') return; // semakan sebelum ini masih berjalan → jangan bertindih
       if (lbl) lbl.textContent = '...';
       if (!currentUser) { if (lbl) lbl.textContent = 'semak'; return; }
 
@@ -7557,7 +7567,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
               var total = _tgNotifChats.reduce(function(s,c){ return s+c.count; }, 0);
               if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
               updateTgNotifBadge();
-            }).catch(function(e){ if (lbl) lbl.textContent = 'err'; });
+            }).catch(function(e){ if (lbl) lbl.textContent = lblRalat; });
           };
           tMaksF = setTimeout(_bandingSelepasReload, 60000);
           // 3) Compare hanya bila worker lapor siap (bukan tunggu masa tetap)
@@ -7576,7 +7586,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
             .set(semuaF
               ? { action: 'sync_dialogs', reqId: reqIdF, requestedAt: firebase.firestore.FieldValue.serverTimestamp() }
               : { action: 'reload_chat', chatId: fokus.chatId, reqId: reqIdF, requestedAt: firebase.firestore.FieldValue.serverTimestamp() })
-            .catch(function(e) { if (lbl) lbl.textContent = 'err'; console.warn(e); _bandingSelepasReload(); });
+            .catch(function(e) { if (lbl) lbl.textContent = lblRalat; console.warn(e); _bandingSelepasReload(); });
 
         } else {
           // Tiada fokus — buat semak biasa (tanpa sync)
@@ -7597,14 +7607,16 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
             var total = _tgNotifChats.reduce(function(s,c){ return s+c.count; }, 0);
             if (lbl) lbl.textContent = total > 0 ? (total + ' baru') : '; 0';
             updateTgNotifBadge();
-          }).catch(function(e){ if (lbl) lbl.textContent = 'err'; console.warn(e); });
+          }).catch(function(e){ if (lbl) lbl.textContent = lblRalat; console.warn(e); });
         }
       });
     });
 
-    // 🔄 AUTO SEMAK — tekan butang "semak" secara automatik bila tukar laci (Fakta & Bahasa)
-    // Had: sekali setiap 2 minit sahaja (jimat bateri & worker), dilangkau jika semakan masih berjalan / butang tersorok.
-    var _tgAutoSemakAkhir = 0;
+    // 🔄 AUTO SEMAK — jalan sendiri setiap kali laci BARU dipaparkan (Fakta & Bahasa)
+    // Dipanggil dari renderCard / renderBlockCard SELEPAS laci siap dipapar (setTimeout → di latar).
+    // Guna butang yang SAMA (b.click) → kelakuan sama dengan tekan manual. Dilangkau jika masih "..." / butang tersorok.
+    var _tgAutoLaciAkhir = null;
+    var _tgAutoJaga = null;
     window._tgAutoSemak = function() {
       try {
         if (!currentUser) return;
@@ -7612,13 +7624,26 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         var l = document.getElementById('tg-refresh-label');
         if (!b || b.style.display === 'none') return;
         if (l && l.textContent === '...') return;
-        var kini = Date.now();
-        if (kini - _tgAutoSemakAkhir < 2 * 60 * 1000) return;
-        _tgAutoSemakAkhir = kini;
+        _tgSemakAuto = true;
         b.click();
-      } catch (e) {}
+        _tgSemakAuto = false;
+        // Jaring keselamatan: jangan tersangkut di "..." (contoh: tiada internet)
+        clearTimeout(_tgAutoJaga);
+        _tgAutoJaga = setTimeout(function() {
+          var l2 = document.getElementById('tg-refresh-label');
+          if (l2 && l2.textContent === '...') l2.textContent = 'semak';
+        }, 75000);
+      } catch (e) {
+        _tgSemakAuto = false;
+        try { var l3 = document.getElementById('tg-refresh-label'); if (l3 && l3.textContent === '...') l3.textContent = 'semak'; } catch (e2) {}
+      }
     };
-    document.getElementById('btn-tg-refresh').addEventListener('click', function() { _tgAutoSemakAkhir = Date.now(); });
+    // Kunci laci (drawerId) — semak hanya bila laci BERTUKAR (flip / tips / fasa dalam laci sama tidak dikira)
+    window._tgAutoSemakLaci = function(kunci) {
+      if (!kunci || kunci === _tgAutoLaciAkhir) return;
+      _tgAutoLaciAkhir = kunci;
+      setTimeout(function() { if (window._tgAutoSemak) window._tgAutoSemak(); }, 600);
+    };
 
     // (auto-refresh touchstart dibuang — guna button 🔄 untuk semak manual)
     document.getElementById('btn-tg-notif-tutup').addEventListener('click', function() {
