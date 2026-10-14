@@ -759,6 +759,8 @@
     /* Baris ketiga (Aa z x c v b n m Padam) lebih rendah — 42px */
     #kb-sendiri:not(.kb-nombor) .kb-baris:nth-child(3) .kb-k { height: 42px; }
     #kb-sendiri .kb-k.kb-gelap, #kb-sendiri .kb-k.kb-tekan { background: #000; color: #fff; }
+    /* Huruf besar KEKAL (tekan Aa 2 kali cepat) → garis putih tebal di bawah butang */
+    #kb-sendiri .kb-k.kb-caps { box-shadow: inset 0 -5px 0 #fff; text-decoration: underline; }
     #kb-sendiri.kb-nombor .kb-k { height: 52px; font-size: 1.4rem; }
     #kb-sendiri.kb-nombor .kb-k.kb-lebar { font-size: 0.9rem; }
     #kb-sendiri .kb-k.kb-lebar[data-k="DEL"] { font-size: 0.85rem; }
@@ -10040,13 +10042,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         ['q','w','e','r','t','y','u','i','o','p'],
         ['SELA','a','s','d','f','g','h','j','k','l','SELA'],
         ['SHIFT','z','x','c','v','b','n','m','DEL'],
-        ['L:simbol',',','KIRI','SPACE','KANAN','.','PADAMSEMUA']
+        ['L:simbol',',','KIRI','SPACE','KANAN','.']
       ],
       simbol: [
         ['1','2','3','4','5','6','7','8','9','0'],
         ['SELA','@','#','&','-','+','(',')','/','*','SELA'],
         ['SELA','=','"',"'",':',';','!','?','_','DEL'],
-        ['L:huruf',',','KIRI','SPACE','KANAN','.','PADAMSEMUA']
+        ['L:huruf',',','KIRI','SPACE','KANAN','.']
       ],
       nombor: [
         ['1','2','3'],
@@ -10119,13 +10121,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           if (rows[i][j] === 'SELA') { html += '<span class="kb-sela"></span>'; continue; } // ruang separuh butang
           var k = rows[i][j], cls = 'kb-k', lbl;
           if (k.length === 1) {
-            lbl = k; // label kekal huruf kecil — elak lukis semula bila tekan Aa
+            lbl = (lapisan === 'huruf' && (shift || caps)) ? k.toUpperCase() : k; // ikut Aa
           } else {
             lbl = (lapisan === 'pin' && k === 'ENTER') ? 'OK' : (LABEL[k] || k);
             // Pad PIN: semua butang sama lebar
             cls += k === 'SPACE' ? ' kb-ruang' : (lapisan === 'pin' ? '' : ' kb-lebar');
             if (k === 'SHIFT' && (shift || caps)) cls += ' kb-gelap';
-            if (k === 'SHIFT' && caps) lbl = 'AA';
+            if (k === 'SHIFT' && caps) { lbl = 'AA'; cls += ' kb-caps'; }
           }
           html += '<button type="button" tabindex="-1" class="' + cls + '" data-k="' + esc(k) + '">' + esc(lbl) + '</button>';
         }
@@ -10192,7 +10194,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     }
     function lukisKursor() {
       var el = elAktif;
-      if (!el || kb.style.display === 'none') { kursor.style.display = 'none'; return; }
+      if (!el || kb.style.display === 'none') { kursor.style.display = 'none'; sorokPilihan(); return; }
+      if (lukisPilihan()) { kursor.style.display = 'none'; return; } // ada teks diloret → papar sorotan, bukan kursor
       var pos = kedudukan(el)[1];
       var cs = window.getComputedStyle(el);
       if (!_cermin) {
@@ -10269,11 +10272,24 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     // Tiada kesan hitam bila tekan — setiap lukis semula e-ink buat taip laju tersangkut
     function kilat(btn) {}
     // Kemas kini butang Aa SAHAJA (bukan lukis semula seluruh papan kekunci)
+    // Aa: tekan sekali = SATU huruf besar (huruf papan kekunci jadi besar, kembali kecil selepas taip)
+    //     tekan 2 kali cepat = huruf besar KEKAL (AA + garis bawah) · tekan lagi = kembali kecil
     function kemaskiniShift() {
+      var besar = shift || caps;
       var b = kb.querySelector('[data-k="SHIFT"]');
-      if (!b) return;
-      b.className = 'kb-k kb-lebar' + ((shift || caps) ? ' kb-gelap' : '');
-      b.textContent = caps ? 'AA' : 'Aa';
+      if (b) {
+        b.className = 'kb-k kb-lebar' + (besar ? ' kb-gelap' : '') + (caps ? ' kb-caps' : '');
+        b.textContent = caps ? 'AA' : 'Aa';
+      }
+      if (lapisan !== 'huruf') return;
+      var hs = kb.querySelectorAll('.kb-k');
+      for (var i = 0; i < hs.length; i++) {
+        var hk = hs[i].getAttribute('data-k');
+        if (hk && hk.length === 1 && hk >= 'a' && hk <= 'z') {
+          var lb = besar ? hk.toUpperCase() : hk;
+          if (hs[i].textContent !== lb) hs[i].textContent = lb;
+        }
+      }
     }
 
     function kemaskiniTinggi() {
@@ -10381,8 +10397,110 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       }
       return terbaik;
     }
+    // ── LORET (pilih teks) — tekan & tahan ~0.4 saat pada teks, kemudian seret jari ──
+    // Teks dipilih disorot kelabu. Tekan Padam = buang semua yang dipilih. Taip = ganti teks dipilih.
+    // Sapu biasa (tanpa tahan) = tatal kotak seperti biasa.
+    var _sorot = [];          // kotak sorotan (div) — diguna semula
+    var _loret = null;        // { el, sauh, x, y, aktif }
+    var _tLoret = null, _baruLoret = 0;
+    function sorokPilihan() {
+      for (var i = 0; i < _sorot.length; i++) _sorot[i].style.display = 'none';
+    }
+    function lukisPilihan() {
+      sorokPilihan();
+      var el = elAktif;
+      if (!el || kb.style.display === 'none') return false;
+      var p = kedudukan(el);
+      if (p[0] === p[1]) return false;
+      var cs = window.getComputedStyle(el);
+      if (!_cermin) {
+        _cermin = document.createElement('div');
+        _cermin.style.cssText = 'position:absolute;visibility:hidden;top:0;left:-9999px;overflow:hidden;';
+        document.body.appendChild(_cermin);
+      }
+      salinGayaCermin(el, cs);
+      var v = el.value;
+      _cermin.textContent = v.substring(0, p[0]);
+      var sp = document.createElement('span');
+      sp.textContent = v.substring(p[0], p[1]);
+      _cermin.appendChild(sp);
+      _cermin.appendChild(document.createTextNode(v.substring(p[1]) || '.'));
+      var rc = _cermin.getBoundingClientRect(), r = el.getBoundingClientRect();
+      var kotak = sp.getClientRects(), n = 0;
+      for (var i = 0; i < kotak.length; i++) {
+        var q = kotak[i];
+        if (q.width < 1) continue;
+        var x = r.left + (q.left - rc.left) - el.scrollLeft;
+        var y = r.top + (q.top - rc.top) - el.scrollTop;
+        var y2 = y + q.height;
+        if (y2 < r.top || y > r.bottom) continue;           // di luar kawasan nampak
+        if (y < r.top) y = r.top;
+        if (y2 > r.bottom) y2 = r.bottom;
+        var d = _sorot[n];
+        if (!d) {
+          d = document.createElement('div');
+          d.style.cssText = 'position:fixed;background:rgba(0,0,0,0.3);z-index:2147483000;pointer-events:none;';
+          document.body.appendChild(d);
+          _sorot.push(d);
+        }
+        d.style.left = Math.round(x) + 'px';
+        d.style.top = Math.round(y) + 'px';
+        d.style.width = Math.round(q.width) + 'px';
+        d.style.height = Math.max(1, Math.round(y2 - y)) + 'px';
+        d.style.display = 'block';
+        n++;
+      }
+      return true;
+    }
+    function titik(e) {
+      var t = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || e;
+      return { x: t.clientX, y: t.clientY };
+    }
+    function mulaLoret(e) {
+      var el = elAktif;
+      if (!el || e.target !== el || (el.getAttribute('type') || '').toLowerCase() === 'password') return;
+      if (e.touches && e.touches.length > 1) return;
+      var pt = titik(e);
+      clearTimeout(_tLoret);
+      _loret = { el: el, x: pt.x, y: pt.y, aktif: false, sauh: 0 };
+      _tLoret = setTimeout(function() {
+        if (!_loret || elAktif !== _loret.el) return;
+        _loret.aktif = true;
+        _loret.sauh = indeksDariTap(_loret.el, _loret.x, _loret.y);
+        letakKursor(_loret.el, _loret.sauh);
+        lukisKursor();
+      }, 400);
+    }
+    function seretLoret(e) {
+      if (!_loret) return;
+      var pt = titik(e);
+      if (!_loret.aktif) {
+        // Bergerak sebelum 0.4 saat = tatal biasa → batal loret
+        if (Math.abs(pt.x - _loret.x) > 10 || Math.abs(pt.y - _loret.y) > 10) { clearTimeout(_tLoret); _loret = null; }
+        return;
+      }
+      if (e.cancelable) e.preventDefault(); // jangan tatal semasa meloret
+      var el = _loret.el, hujung = indeksDariTap(el, pt.x, pt.y), a = _loret.sauh;
+      try { el.setSelectionRange(Math.min(a, hujung), Math.max(a, hujung)); } catch (x) {}
+      lukisKursor();
+    }
+    function tamatLoret() {
+      clearTimeout(_tLoret);
+      if (_loret && _loret.aktif) _baruLoret = Date.now(); // jangan biar "tap" selepas loret buang pilihan
+      _loret = null;
+    }
+    document.addEventListener('touchstart', mulaLoret, true);
+    document.addEventListener('mousedown', mulaLoret, true);
+    document.addEventListener('touchmove', seretLoret, { capture: true, passive: false });
+    document.addEventListener('mousemove', seretLoret, true);
+    document.addEventListener('touchend', tamatLoret, true);
+    document.addEventListener('touchcancel', tamatLoret, true);
+    document.addEventListener('mouseup', tamatLoret, true);
+
     function selepasTap(e) {
       if (!elAktif || e.target !== elAktif) return;
+      if (_loret && _loret.aktif) return;                 // sedang meloret
+      if (Date.now() - _baruLoret < 600) return;          // baru habis meloret → kekalkan teks dipilih
       var t = (e.changedTouches && e.changedTouches[0]) || e;
       var cx = t.clientX, cy = t.clientY, el = elAktif;
       setTimeout(function() {
@@ -10433,6 +10551,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       hentiUlang();
       batalPadamSemua();
       kursor.style.display = 'none';
+      sorokPilihan();
       kb.style.display = 'none';
       document.body.classList.remove('kb-buka');
       document.body.classList.remove('kb-telus');
