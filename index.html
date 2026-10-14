@@ -10317,7 +10317,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function catatSentuh(e) { _sentuhKotak = { el: e.target, masa: Date.now() }; }
     document.addEventListener('touchstart', catatSentuh, true);
     document.addEventListener('mousedown', catatSentuh, true);
-    // Tap pada perkataan → kursor terus ke HUJUNG perkataan itu (kita kira sendiri — tak harap pelayar Kindle)
+    // Tap → kursor ke HURUF TEPAT yang ditekan (kita kira sendiri — tak harap pelayar Kindle).
+    // Kurang tepat? Guna butang ← → untuk alih satu huruf.
     function indeksDariTap(el, cx, cy) {
       var v = el.value;
       if (!v) return 0;
@@ -10335,6 +10336,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         if (m.index > akhir) _cermin.appendChild(document.createTextNode(v.slice(akhir, m.index)));
         var sp = document.createElement('span');
         sp.textContent = m[0];
+        sp._mula = m.index;
         sp._hujung = m.index + m[0].length;
         _cermin.appendChild(sp);
         kata.push(sp);
@@ -10354,7 +10356,30 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         var d = dy * 1000 + dx;
         if (d < jarak) { jarak = d; pilih = k; }
       }
-      return pilih ? pilih._hujung : v.length;
+      if (!pilih) return v.length;
+      // Dalam perkataan dipilih: pecah kepada huruf, cari sempadan huruf paling dekat dengan titik tap
+      var teksK = pilih.textContent, mulaK = pilih._mula, huruf = [];
+      pilih.textContent = '';
+      for (var h = 0; h < teksK.length; h++) {
+        var hs = document.createElement('span');
+        hs.textContent = teksK.charAt(h);
+        pilih.appendChild(hs);
+        huruf.push(hs);
+      }
+      var terbaik = pilih._hujung, jarakH = Infinity;
+      for (var b = 0; b <= huruf.length; b++) {
+        if (b > 0 && b < huruf.length) {
+          var kod = teksK.charCodeAt(b);
+          if (kod >= 0xDC00 && kod <= 0xDFFF) continue; // jangan letak kursor di tengah emoji
+        }
+        var ruj = huruf[b < huruf.length ? b : huruf.length - 1];
+        var bx = b < huruf.length ? ruj.offsetLeft : ruj.offsetLeft + ruj.offsetWidth;
+        var bt = ruj.offsetTop, bb = bt + ruj.offsetHeight;
+        var ddy = !besar ? 0 : (py < bt ? bt - py : (py > bb ? py - bb : 0));
+        var dd = ddy * 1000 + Math.abs(px - bx);
+        if (dd < jarakH) { jarakH = dd; terbaik = mulaK + b; }
+      }
+      return terbaik;
     }
     function selepasTap(e) {
       if (!elAktif || e.target !== elAktif) return;
