@@ -689,6 +689,17 @@
     .msg-empty { color: #888; font-size: 0.8rem; text-align: center; padding: 20px; }
     .msg-sticker { font-size: 2rem; }
     .msg-file { font-size: 0.8rem; color: #555; }
+    /* 🖼 Media Telegram (lihat sahaja) — JPEG hitam-putih kecil dari worker, tiada animasi */
+    .tg-media { display: block; margin: 2px 0 3px; }
+    .tg-media img { display: block; max-width: 200px; max-height: 240px; border: 1px solid #999; border-radius: 6px; background: #fff; }
+    .tg-media.stiker img { max-width: 110px; max-height: 110px; border: none; background: transparent; }
+    .tg-media-label { font-size: 0.68rem; opacity: 0.75; margin-top: 2px; }
+    #tg-media-lihat {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #fff; z-index: 99995; text-align: center; padding: 10px; box-sizing: border-box;
+    }
+    #tg-media-lihat img { max-width: 100%; max-height: 85%; border: 1px solid #000; }
+    #tg-media-lihat div { font-size: 0.85rem; margin-top: 8px; }
     /* Progress balasan TG: bluetick → menaip → hantar (hanya dalam sesi chat) */
     .tg-langkah {
       margin-top: 5px; padding-top: 4px; border-top: 1px dashed rgba(255,255,255,0.6);
@@ -5892,6 +5903,48 @@ async function openChat(dialog, cid, name) {
     });
 }
 
+// 🖼 Media Telegram (lihat sahaja): gambar kecil dari worker + label jenis
+var TG_LABEL_MEDIA = {
+  gambar: '🖼 Gambar', stiker: 'Stiker', gif: 'GIF', video: '🎬 Video', video_bulat: '🎬 Video bulat',
+  suara: '🎤 Mesej suara', audio: '🎵 Audio', fail: '📎 Fail', pautan: '🔗 Pautan', lain: '📦 Media'
+};
+function _tgLabelMedia(d) {
+  var lbl = TG_LABEL_MEDIA[d.mediaJenis] || '📎 Media';
+  if ((d.mediaJenis === 'fail' || d.mediaJenis === 'audio') && d.mediaNama) lbl += ': ' + d.mediaNama;
+  return lbl;
+}
+function _tgMediaHtml(d) {
+  if (!d.hasMedia) return '';
+  var lbl = _tgLabelMedia(d);
+  if (d.mediaUrl) {
+    var st = d.mediaJenis === 'stiker';
+    var ukuran = (d.mediaW && d.mediaH) ? ' width="' + d.mediaW + '" height="' + d.mediaH + '"' : '';
+    return '<div class="tg-media' + (st ? ' stiker' : '') + '"><img src="' + escHtml(d.mediaUrl) + '"' + ukuran +
+      ' alt="' + escHtml(lbl) + '" data-tg-lihat="1">' +
+      (st ? '' : '<div class="tg-media-label">' + escHtml(lbl) + (d.mediaJenis === 'gambar' ? '' : ' (tekan untuk besarkan)') + '</div>') + '</div>';
+  }
+  return '<div class="msg-file">' + escHtml(lbl) + '</div>';
+}
+// Tekan gambar → papar besar (tekan lagi untuk tutup). Satu pendengar untuk semua bubble.
+(function() {
+  var log = document.getElementById('tg-log');
+  if (!log || log._tgLihatPasang) return;
+  log._tgLihatPasang = true;
+  log.addEventListener('click', function(e) {
+    var t = e.target;
+    if (!t || t.tagName !== 'IMG' || !t.getAttribute('data-tg-lihat')) return;
+    var ov = document.getElementById('tg-media-lihat');
+    if (!ov) {
+      ov = document.createElement('div');
+      ov.id = 'tg-media-lihat';
+      ov.onclick = function() { ov.style.display = 'none'; ov.innerHTML = ''; };
+      document.body.appendChild(ov);
+    }
+    ov.innerHTML = '<img src="' + t.getAttribute('src') + '"><div>Tekan di mana-mana untuk tutup</div>';
+    ov.style.display = 'block';
+  });
+})();
+
 function appendMsgBubbleFS(d) {
   const body = document.getElementById('tg-log');
   const isOut = !!d.isOut;
@@ -5901,8 +5954,8 @@ function appendMsgBubbleFS(d) {
   const bubble = document.createElement('div');
   bubble.className = 'msg-bubble ' + (isOut ? 'msg-out' : 'msg-in');
   bubble.dataset.msgid = d.msgId || '';
-  bubble.setAttribute('data-teks', text || (d.hasMedia ? '[Media]' : ''));
-  const mediaHtml = d.hasMedia ? '<div class="msg-file">📎 <span>[Media]</span></div>' : '';
+  bubble.setAttribute('data-teks', text || (d.hasMedia ? '[' + _tgLabelMedia(d) + ']' : ''));
+  const mediaHtml = _tgMediaHtml(d);
   const quoteHtml = d.replyTo ? htmlQuoteTg(d.replyTo.name, d.replyTo.text) : '';
   bubble.innerHTML = quoteHtml + (mediaHtml || '') + (text ? '<div>' + escHtml(text) + '</div>' : '') + '<div class="msg-time">' + time + '</div>';
   const empty = body.querySelector('.msg-empty');
