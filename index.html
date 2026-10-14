@@ -759,8 +759,8 @@
     /* Baris ketiga (Aa z x c v b n m Padam) lebih rendah — 42px */
     #kb-sendiri:not(.kb-nombor) .kb-baris:nth-child(3) .kb-k { height: 42px; }
     #kb-sendiri .kb-k.kb-gelap, #kb-sendiri .kb-k.kb-tekan { background: #000; color: #fff; }
-    /* Huruf besar KEKAL (tekan Aa 2 kali cepat) → garis putih tebal di bawah butang */
-    #kb-sendiri .kb-k.kb-caps { box-shadow: inset 0 -5px 0 #fff; text-decoration: underline; }
+    /* Huruf besar KEKAL (tekan Aa 2 kali cepat) → "AA" bergaris bawah sahaja (tiada jalur putih) */
+    #kb-sendiri .kb-k.kb-caps { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
     #kb-sendiri.kb-nombor .kb-k { height: 52px; font-size: 1.4rem; }
     #kb-sendiri.kb-nombor .kb-k.kb-lebar { font-size: 0.9rem; }
     #kb-sendiri .kb-k.kb-lebar[data-k="DEL"] { font-size: 0.85rem; }
@@ -10274,6 +10274,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     // Kemas kini butang Aa SAHAJA (bukan lukis semula seluruh papan kekunci)
     // Aa: tekan sekali = SATU huruf besar (huruf papan kekunci jadi besar, kembali kecil selepas taip)
     //     tekan 2 kali cepat = huruf besar KEKAL (AA + garis bawah) · tekan lagi = kembali kecil
+    var _tHuruf = null;
     function kemaskiniShift() {
       var besar = shift || caps;
       var b = kb.querySelector('[data-k="SHIFT"]');
@@ -10282,14 +10283,19 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         b.textContent = caps ? 'AA' : 'Aa';
       }
       if (lapisan !== 'huruf') return;
-      var hs = kb.querySelectorAll('.kb-k');
-      for (var i = 0; i < hs.length; i++) {
-        var hk = hs[i].getAttribute('data-k');
-        if (hk && hk.length === 1 && hk >= 'a' && hk <= 'z') {
-          var lb = besar ? hk.toUpperCase() : hk;
-          if (hs[i].textContent !== lb) hs[i].textContent = lb;
+      // Tukar 26 huruf SELEPAS butang Aa dikemas kini (jangan sekat tekanan seterusnya)
+      clearTimeout(_tHuruf);
+      _tHuruf = setTimeout(function() {
+        var bsr = shift || caps;
+        var hs = kb.querySelectorAll('.kb-k');
+        for (var i = 0; i < hs.length; i++) {
+          var hk = hs[i].getAttribute('data-k');
+          if (hk && hk.length === 1 && hk >= 'a' && hk <= 'z') {
+            var lb = bsr ? hk.toUpperCase() : hk;
+            if (hs[i].textContent !== lb) hs[i].textContent = lb;
+          }
         }
-      }
+      }, 0);
     }
 
     function kemaskiniTinggi() {
@@ -10626,10 +10632,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (shift && !caps) { shift = false; kemaskiniShift(); }
     }
 
+    var _adaSentuh = false; // peranti sentuh (Kindle) → abaikan SEMUA isyarat tetikus palsu
     function onTekan(e) {
       var jenisSentuh = e.type === 'touchstart';
-      if (jenisSentuh) masaSentuh = Date.now();
-      else if (Date.now() - masaSentuh < 700) { e.preventDefault(); return; } // elak tekanan berganda (sentuh + tetikus)
+      if (jenisSentuh) { masaSentuh = Date.now(); _adaSentuh = true; }
+      // Elak tekanan berganda: Kindle hantar "mousedown" palsu selepas sentuhan — kadang-kadang
+      // lebih 0.7 saat kemudian bila skrin e-ink sibuk melukis → dulu dikira tekanan ke-2 (Aa melompat ke AA)
+      else if (_adaSentuh || Date.now() - masaSentuh < 700) { e.preventDefault(); return; }
       e.preventDefault(); // jangan ambil fokus dari kotak taip
       var t = e.target, b = null;
       while (t && t !== kb) { if (t.className && String(t.className).indexOf('kb-k') > -1) { b = t; break; } t = t.parentNode; }
