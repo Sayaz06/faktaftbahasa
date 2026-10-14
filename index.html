@@ -10103,6 +10103,15 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
     function lukis() {
       var rows = SUSUNAN[lapisan], html = '';
+      // Kotak taip besar (textarea: Taip, Perjanjian, Main/Other Motivation, dll.) → butang Enter (baris baru)
+      // sebelum Delete All. Chat Telegram tidak — Enter di situ = hantar mesej.
+      if ((lapisan === 'huruf' || lapisan === 'simbol') && elAktif && elAktif.tagName === 'TEXTAREA' && elAktif.id !== 'tg-msg-input') {
+        rows = rows.slice();
+        var brAkhir = rows[rows.length - 1].slice();
+        var ixPadam = brAkhir.indexOf('PADAMSEMUA');
+        brAkhir.splice(ixPadam < 0 ? brAkhir.length : ixPadam, 0, 'ENTER');
+        rows[rows.length - 1] = brAkhir;
+      }
       kb.className = (lapisan === 'nombor' || lapisan === 'pin') ? 'kb-nombor' : '';
       for (var i = 0; i < rows.length; i++) {
         html += '<div class="kb-baris">';
@@ -10163,6 +10172,24 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function letakKursor(el, pos) {
       try { el.setSelectionRange(pos, pos); } catch (x) {}
     }
+    // Salin gaya kotak taip ke cermin. PENTING: lebar cermin = lebar SEBENAR kawasan teks (clientWidth tolak padding).
+    // Dulu salin "width" penuh → bila teks panjang & bar skrol muncul (Kindle), kotak sebenar balut baris lebih awal
+    // daripada cermin → kursor & tap lari ke perkataan/baris sebelumnya.
+    function salinGayaCermin(el, cs) {
+      var st = _cermin.style;
+      for (var i = 0; i < SALIN_GAYA.length; i++) st[SALIN_GAYA[i]] = cs[SALIN_GAYA[i]];
+      var besar = el.tagName === 'TEXTAREA';
+      st.whiteSpace = besar ? 'pre-wrap' : 'pre';
+      st.wordWrap = besar ? 'break-word' : 'normal';
+      try { st.overflowWrap = besar ? 'break-word' : 'normal'; st.wordBreak = cs.wordBreak || 'normal'; } catch (x) {}
+      if (besar) {
+        var pl = parseFloat(cs.paddingLeft) || 0, pr = parseFloat(cs.paddingRight) || 0;
+        st.boxSizing = 'content-box';
+        st.width = Math.max(0, el.clientWidth - pl - pr) + 'px';
+        st.height = 'auto';
+      }
+      return besar;
+    }
     function lukisKursor() {
       var el = elAktif;
       if (!el || kb.style.display === 'none') { kursor.style.display = 'none'; return; }
@@ -10173,11 +10200,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         _cermin.style.cssText = 'position:absolute;visibility:hidden;top:0;left:-9999px;overflow:hidden;';
         document.body.appendChild(_cermin);
       }
-      var st = _cermin.style;
-      for (var i = 0; i < SALIN_GAYA.length; i++) st[SALIN_GAYA[i]] = cs[SALIN_GAYA[i]];
-      var besar = el.tagName === 'TEXTAREA';
-      st.whiteSpace = besar ? 'pre-wrap' : 'pre';
-      st.wordWrap = besar ? 'break-word' : 'normal';
+      var besar = salinGayaCermin(el, cs);
       var v = el.value;
       if ((el.getAttribute('type') || '').toLowerCase() === 'password') v = v.replace(/[\s\S]/g, '\u2022');
       _cermin.textContent = v.substring(0, pos);
@@ -10304,11 +10327,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         _cermin.style.cssText = 'position:absolute;visibility:hidden;top:0;left:-9999px;overflow:hidden;';
         document.body.appendChild(_cermin);
       }
-      var st = _cermin.style;
-      for (var i = 0; i < SALIN_GAYA.length; i++) st[SALIN_GAYA[i]] = cs[SALIN_GAYA[i]];
-      var besar = el.tagName === 'TEXTAREA';
-      st.whiteSpace = besar ? 'pre-wrap' : 'pre';
-      st.wordWrap = besar ? 'break-word' : 'normal';
+      var besar = salinGayaCermin(el, cs);
       // Salin teks ke cermin — setiap perkataan dalam <span> sendiri
       _cermin.textContent = '';
       var re = /\S+/g, m, akhir = 0, kata = [];
