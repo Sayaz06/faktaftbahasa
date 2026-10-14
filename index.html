@@ -78,12 +78,12 @@
     .btn-row .btn-sm.on { background: #000; color: #fff; }
     .btn-row .btn-sm:active { background: #000; color: #fff; }
     /* Butang togol di menu (JQ / Quran / Taip / Monitor / Rehat / Keyboard Lebar) — semua sama saiz & gaya */
-    #btn-jq, #btn-quran-jq, #btn-taip, #btn-monitor, #btn-rehat, #btn-rehat-pusingan, #btn-rehat-jalan, #btn-jalan-minit, #btn-kb-lebar {
+    #btn-jq, #btn-quran-jq, #btn-taip, #btn-monitor, #btn-rehat, #btn-rehat-pusingan, #btn-rehat-jalan, #btn-jalan-minit, #btn-recap, #btn-recap-mula, #btn-kb-lebar {
       display: block; width: 100%; padding: 9px 8px; margin: 4px 0 0;
       font-size: 0.95rem; font-weight: bold; text-align: center;
       border: 2px solid #000; border-radius: 6px; background: #fff; color: #000; cursor: pointer;
     }
-    #btn-jq.on, #btn-quran-jq.on, #btn-taip.on, #btn-monitor.on, #btn-rehat.on, #btn-rehat-jalan.on, #btn-kb-lebar.on { background: #000; color: #fff; }
+    #btn-jq.on, #btn-quran-jq.on, #btn-taip.on, #btn-monitor.on, #btn-rehat.on, #btn-rehat-jalan.on, #btn-recap.on, #btn-kb-lebar.on { background: #000; color: #fff; }
     /* REHAT NAFAS — guide → gelap → "All set" → kotak Inhale / Hold / Exhale / Hold (peralihan pudar + kabur) */
     #rehat-overlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -804,6 +804,9 @@
     <!-- REHAT JALAN: selepas F2 habis (sebelum laci tamat) → rehat jalan kaki 1 / 2 / 3 minit -->
     <button id="btn-rehat-jalan" class="btn" style="margin-top:8px;">REHAT JALAN: OFF</button>
     <button id="btn-jalan-minit" class="btn" style="margin-top:4px;">MASA JALAN: 1 min</button>
+    <!-- RECAP: selepas rehat jalan (atau F2) → setiap ayat: tunjuk satu bahasa, sebut terjemahan (tersorok), UNHIDE, kemudian sebaliknya -->
+    <button id="btn-recap" class="btn" style="margin-top:8px;">RECAP: OFF</button>
+    <button id="btn-recap-mula" class="btn" style="margin-top:4px;">RECAP MULA: B. INGGERIS</button>
     <button id="btn-kb-lebar" class="btn" style="margin-top:8px;">KEYBOARD LEBAR: OFF</button>
     <script>
     (function() {
@@ -1710,6 +1713,11 @@
         });
       }
 
+      // RECAP ON: selepas rehat jalan (atau F2) → setiap ayat 2 kad: bahasa pertama di atas, kemudian sebaliknya
+      if (recapAktif && !srBebas && noteCards.length) {
+        out = out.concat(_kadRecap(noteCards, title, d.id, isSR));
+      }
+
       out.push({
         front: isSR ? ('SR selesai — ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0)) : 'Laci Tamat. Tekan SETERUSNYA.',
         back: '', tips: '', imageUrl: img,
@@ -1862,6 +1870,11 @@
         cJalan.isRehat = false;
         cJalan.isRehatJalan = true;
         out.push(cJalan);
+      }
+
+      // RECAP ON: selepas rehat jalan (atau F2) → setiap baris 2 kad: depan di atas, kemudian sebaliknya
+      if (recapAktif && !srBebas && itemCards.length) {
+        out = out.concat(_kadRecap(itemCards, title, d.id, isSR));
       }
 
       out.push({
@@ -2119,6 +2132,55 @@
           JALAN_MINIT = _jalanMinitSah(d.minit);
           updateRehatJalanButton();
         }).catch(function() { rehatJalanAktif = false; JALAN_MINIT = 1; updateRehatJalanButton(); });
+    }
+
+    // ══════════════════════════════════════════
+    // RECAP — selepas rehat jalan (atau F2), sebelum laci tamat
+    // Setiap ayat: kad 1 = bahasa pertama di atas, terjemahan disorok → sebut → UNHIDE
+    //              kad 2 = sebaliknya. Tetapan: kindle_settings/recap { aktif, mula: 'bi' | 'bm' }
+    // ══════════════════════════════════════════
+    var recapAktif = false;
+    var recapMula = 'bi'; // 'bi' = Bahasa Inggeris dulu (muka depan), 'bm' = Bahasa Melayu dulu (muka belakang)
+
+    function _kadRecap(senarai, title, drawerId, isSR) {
+      var out = [];
+      var urutan = recapMula === 'bm' ? ['belakang', 'depan'] : ['depan', 'belakang'];
+      for (var i = 0; i < senarai.length; i++) {
+        var s = senarai[i];
+        if (!s.front || !s.back) continue; // tiada terjemahan → langkau
+        for (var u = 0; u < 2; u++) {
+          out.push({
+            front: s.front, back: s.back, tips: '', imageUrl: '',
+            title: title, drawerId: drawerId, isF0: false, isTamat: false, isSR: !!isSR,
+            isRecap: true, recapAtas: urutan[u], fasa: 3
+          });
+        }
+      }
+      return out;
+    }
+
+    function updateRecapButton() {
+      var btn = document.getElementById('btn-recap');
+      if (btn) {
+        btn.textContent = recapAktif ? 'RECAP: ON' : 'RECAP: OFF';
+        btn.className = recapAktif ? 'btn-sm on' : 'btn-sm';
+      }
+      var bm = document.getElementById('btn-recap-mula');
+      if (bm) {
+        bm.textContent = 'RECAP MULA: ' + (recapMula === 'bm' ? 'B. MELAYU' : 'B. INGGERIS');
+        bm.style.opacity = recapAktif ? '1' : '0.5';
+      }
+    }
+
+    function loadRecapState() {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('recap')
+        .get().then(function(snap) {
+          var d = snap.exists ? (snap.data() || {}) : {};
+          recapAktif = d.aktif === true;
+          recapMula = d.mula === 'bm' ? 'bm' : 'bi';
+          updateRecapButton();
+        }).catch(function() { recapAktif = false; recapMula = 'bi'; updateRecapButton(); });
     }
 
     function mulaRehatJalan(selepas) {
@@ -3428,8 +3490,46 @@
       }      
 
       var c = cards[cardIndex];
+      // Butang Flip kembali "Flip" bila bukan kad RECAP
+      var btnFlipAsal = document.getElementById('btn-flip');
+      if (btnFlipAsal && !c.isRecap && btnFlipAsal.textContent !== 'Flip') btnFlipAsal.textContent = 'Flip';
       // Auto skip kad tamat — terus proses tanpa papar
       if (c.isTamat) { afterTamat(c); return; }
+      // Kad RECAP — satu bahasa di atas, terjemahan disorok (• • •) → sebut → UNHIDE (butang Flip)
+      if (c.isRecap) {
+        showTips = false;
+        var tbRecap = document.getElementById('taip-ayat-box');
+        if (tbRecap) tbRecap.style.display = 'none';
+        var tcb = document.getElementById('tips-close-btn');
+        if (tcb) tcb.classList.remove('visible');
+        var atasDepan = c.recapAtas === 'depan';
+        var teksAtas = (atasDepan ? c.front : c.back) || '(kosong)';
+        var teksBawah = (atasDepan ? c.back : c.front) || '(kosong)';
+        var namaAtas, namaBawah;
+        if (mode === 'bahasa') {
+          namaAtas = atasDepan ? 'BAHASA INGGERIS' : 'BAHASA MELAYU';
+          namaBawah = atasDepan ? 'ayat Bahasa Melayu' : 'ayat Bahasa Inggeris';
+        } else {
+          namaAtas = atasDepan ? 'MUKA DEPAN' : 'MUKA BELAKANG';
+          namaBawah = atasDepan ? 'bahagian belakang' : 'bahagian depan';
+        }
+        var rcPos = 0, rcTot = 0;
+        for (var rq = 0; rq < cards.length; rq++) {
+          if (cards[rq].isRecap && cards[rq].drawerId === c.drawerId) { rcTot++; if (rq <= cardIndex) rcPos++; }
+        }
+        var teksRecap = teksAtas + '\n\n— Sebut ' + namaBawah + ' —\n\n' + (isFlipped ? teksBawah : '• • •');
+        setText('play-mode', (srModeAktif ? 'SR · ' : '') + 'RECAP');
+        setText('side-label', namaAtas);
+        setText('main-text', teksRecap);
+        mainEl.className = teksRecap.length > 80 ? 'big-text long-text' : 'big-text';
+        setText('play-progress', rcPos + ' / ' + rcTot);
+        setText('play-meta', isFlipped ? '' : '(Sebut dahulu, kemudian tekan UNHIDE)');
+        setCardImage('');
+        if (btnFlipAsal) { btnFlipAsal.textContent = isFlipped ? 'Hide' : 'Unhide'; btnFlipAsal.className = isFlipped ? 'btn-sm on' : 'btn-sm'; }
+        var btnTipsRc = document.getElementById('btn-tips');
+        if (btnTipsRc) btnTipsRc.className = 'btn-sm';
+        return;
+      }
       // Kad REHAT (nafas) / REHAT JALAN (jalan kaki) — animasi, kemudian terus ke kad seterusnya
       if (c.isRehat || c.isRehatJalan) {
         isFlipped = false; showTips = false;
@@ -4622,11 +4722,11 @@
         return;
       }
 
-      // Reset flip hanya bila tukar fasa, kekal flip dalam fasa yang sama
+      // Reset flip hanya bila tukar fasa, kekal flip dalam fasa yang sama (RECAP: setiap kad mula tersorok)
       var fasaSebelum = c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1);
       var nextC = cards[cardIndex + 1];
       var fasaSelepas = nextC ? (nextC.isF0 ? 0 : (nextC.fasa !== undefined ? nextC.fasa : -1)) : -1;
-      if (fasaSelepas !== fasaSebelum) { isFlipped = false; showTips = false; }
+      if (fasaSelepas !== fasaSebelum || c.isRecap) { isFlipped = false; showTips = false; }
 
       cardIndex++;
       if (cardIndex < cards.length) { syncIndex(cardIndex); renderCard(); }
@@ -4918,6 +5018,22 @@
       updateRehatJalanButton();
       db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('rehat_jalan')
         .set({ aktif: rehatJalanAktif, minit: JALAN_MINIT, updatedAt: Date.now() }, { merge: true }).catch(function() {});
+    };
+
+    // RECAP — berkuat kuasa bila laci dimuat semula (masuk Laci Bahasa / Fakta dari menu)
+    document.getElementById('btn-recap').onclick = function() {
+      recapAktif = !recapAktif;
+      updateRecapButton();
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('recap')
+        .set({ aktif: recapAktif, mula: recapMula, updatedAt: Date.now() }, { merge: true }).catch(function() {});
+    };
+
+    // RECAP MULA — Bahasa Inggeris dulu ⇄ Bahasa Melayu dulu
+    document.getElementById('btn-recap-mula').onclick = function() {
+      recapMula = recapMula === 'bm' ? 'bi' : 'bm';
+      updateRecapButton();
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('recap')
+        .set({ aktif: recapAktif, mula: recapMula, updatedAt: Date.now() }, { merge: true }).catch(function() {});
     };
 
     document.getElementById('btn-quran-jq').onclick = function() {
@@ -9753,6 +9869,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           loadMonitorState();
           loadRehatState();
           loadRehatJalanState();
+          loadRecapState();
           // Load status Quran JQ dari Firestore
           db.collection('users').doc(currentUser.uid)
             .collection('kindle_settings').doc('quran_jq')
