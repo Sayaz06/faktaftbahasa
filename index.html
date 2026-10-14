@@ -2295,6 +2295,15 @@
         label2.style.cssText = 'position:absolute;top:50%;left:0;width:100%;margin-top:-0.75em;font-size:1.5rem;color:#fff;';
         kotak.appendChild(label2);
       }
+      // BEKAS UDARA — bulatan lembut dalam petak: Inhale mengembang (kelabu), Hold makin pekat (putih),
+      // Exhale mengecut (kembali kelabu), Hold kosong makin gelap. Diletak dalam jalur → pudar bersama garisan.
+      var udara = el('rehat-udara');
+      if (!udara) {
+        udara = document.createElement('div');
+        udara.id = 'rehat-udara';
+        udara.style.cssText = 'position:absolute;border-radius:50%;width:0;height:0;left:50%;top:50%;';
+        jalur.insertBefore(udara, jalur.firstChild);
+      }
       var seg = {}, guide = {}, trek = {}, i;
       for (i = 0; i < SISI.length; i++) {
         seg[SISI[i]] = el('rehat-seg-' + SISI[i]);
@@ -2339,10 +2348,31 @@
         else { cx = H; cy = S - H - p * L; }
         gaya(titik, { left: px(cx - D / 2), top: px(cy - D / 2) });
       }
+      // Bekas udara ikut fasa (p = 0 hingga 1, dilicinkan) — saiz, kepekatan & cahaya
+      var UDARA_MAKS = S - 56, UDARA_MIN = Math.round((S - 56) * 0.22);
+      var udaraAktif = false; // true hanya semasa animasi nafas sebenar (bukan guide)
+      function lukisUdara(s, p) {
+        var e = (1 - Math.cos(Math.PI * p)) / 2; // ease-in-out
+        var saiz, kel, alfa;
+        function antara(a, b) { return a + (b - a) * e; }
+        if (s === 'atas') { saiz = antara(UDARA_MIN, UDARA_MAKS); kel = antara(240, 120); alfa = antara(0.92, 0.55); }        // Inhale: mengembang, tekanan dilepas → kelabu
+        else if (s === 'kanan') { saiz = UDARA_MAKS + 4 * Math.sin(Math.PI * p); kel = antara(120, 240); alfa = antara(0.55, 0.92); } // Hold: tekanan → makin putih
+        else if (s === 'bawah') { saiz = antara(UDARA_MAKS, UDARA_MIN); kel = antara(240, 110); alfa = antara(0.92, 0.4); }   // Exhale: mengecut, kembali kelabu
+        else { saiz = UDARA_MIN; kel = antara(110, 240); alfa = antara(0.4, 0.92); }                                        // Hold kosong: tekanan → makin putih
+        var g = Math.round(kel), c = 'rgba(' + g + ',' + g + ',' + g + ',';
+        gaya(udara, {
+          width: px(saiz), height: px(saiz), marginLeft: px(-saiz / 2), marginTop: px(-saiz / 2),
+          background: c + alfa.toFixed(3) + ')',
+          boxShadow: '0 0 ' + px(saiz * 0.18) + ' ' + c + (alfa * 0.6).toFixed(3) + ')'
+        });
+        // Perkataan kekal jelas: hitam bila udara terang, putih bila udara gelap (guide sentiasa putih)
+        label.style.color = (udaraAktif && (g * alfa) / 255 > 0.5) ? '#000' : '#fff';
+      }
       function kosongkanSeg() {
         lukisanId++;
         for (var j = 0; j < SISI.length; j++) gaya(seg[SISI[j]], { width: '0px', height: '0px' });
         letakTitik('atas', 0);
+        lukisUdara('kiri', 1); // mula dalam keadaan kosong (gelap & kecil)
       }
       function tukarLabel(teks) {
         kabur(label, true);
@@ -2355,7 +2385,7 @@
           if (id !== lukisanId) return;
           var p = (kini() - mula) / ms;
           if (p > 1) p = 1;
-          letakSeg(s, p); letakTitik(s, p);
+          letakSeg(s, p); letakTitik(s, p); lukisUdara(s, p);
           if (p < 1) { if (rAF) rAF(langkah); else setTimeout(langkah, 200); }
         }
         langkah();
@@ -2409,6 +2439,7 @@
         label.textContent = ''; label2.textContent = '';
         kabur(label, true); kabur(label2, true);
         for (var j = 0; j < SISI.length; j++) kabur(guide[SISI[j]], true);
+        udaraAktif = true; // mula animasi nafas → warna perkataan ikut bulatan udara
         kosongkanSeg();
         lajuPudar(label, 0.5);
         // Kesan SAMA dengan guide → "All set": yang lama kabur keluar 1.2s, 0.4s kemudian yang baru kabur masuk 0.8s
@@ -2446,7 +2477,7 @@
         // Pastikan sisi semasa LENGKAP sebelum sisi seterusnya (elak jurang bila peranti lambat)
         var f = FASA[fi];
         lukisanId++;
-        letakSeg(f.sisi, 1); letakTitik(f.sisi, 1);
+        letakSeg(f.sisi, 1); letakTitik(f.sisi, 1); lukisUdara(f.sisi, 1);
         fi++;
         if (fi < FASA.length) { mulaFasa(); return; }
         pusingan++;
