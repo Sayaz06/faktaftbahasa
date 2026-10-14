@@ -78,12 +78,12 @@
     .btn-row .btn-sm.on { background: #000; color: #fff; }
     .btn-row .btn-sm:active { background: #000; color: #fff; }
     /* Butang togol di menu (JQ / Quran / Taip / Monitor / Rehat / Keyboard Lebar) — semua sama saiz & gaya */
-    #btn-jq, #btn-quran-jq, #btn-taip, #btn-monitor, #btn-rehat, #btn-rehat-pusingan, #btn-kb-lebar {
+    #btn-jq, #btn-quran-jq, #btn-taip, #btn-monitor, #btn-rehat, #btn-rehat-pusingan, #btn-rehat-jalan, #btn-jalan-minit, #btn-kb-lebar {
       display: block; width: 100%; padding: 9px 8px; margin: 4px 0 0;
       font-size: 0.95rem; font-weight: bold; text-align: center;
       border: 2px solid #000; border-radius: 6px; background: #fff; color: #000; cursor: pointer;
     }
-    #btn-jq.on, #btn-quran-jq.on, #btn-taip.on, #btn-monitor.on, #btn-rehat.on, #btn-kb-lebar.on { background: #000; color: #fff; }
+    #btn-jq.on, #btn-quran-jq.on, #btn-taip.on, #btn-monitor.on, #btn-rehat.on, #btn-rehat-jalan.on, #btn-kb-lebar.on { background: #000; color: #fff; }
     /* REHAT NAFAS — guide → gelap → "All set" → kotak Inhale / Hold / Exhale / Hold (peralihan pudar + kabur) */
     #rehat-overlay {
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -113,6 +113,25 @@
       font-size: 1.5rem; color: #fff;
     }
     #rehat-info { margin-top: 18px; font-size: 0.85rem; color: #999; min-height: 1.2em; }
+    /* REHAT JALAN KAKI — selepas F2 habis, sebelum laci tamat (guna kesan pudar + kabur yang sama) */
+    #jalan-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: #000; z-index: 99990; flex-direction: column; align-items: center; justify-content: center;
+      color: #fff; text-align: center; opacity: 0;
+      -webkit-transition: opacity 1.5s ease; transition: opacity 1.5s ease;
+    }
+    #jalan-overlay.active { display: flex; }
+    #jalan-overlay.nampak { opacity: 1; }
+    #jalan-intro {
+      position: absolute; left: 0; right: 0; top: 50%; margin-top: -0.8em;
+      font-size: 1.4rem; color: #fff; padding: 0 16px;
+    }
+    #jalan-utama { text-align: center; }
+    #jalan-label { font-size: 1.5rem; color: #fff; margin-bottom: 10px; min-height: 1.3em; }
+    #jalan-masa { font-size: 3.2rem; color: #fff; letter-spacing: 0.05em; margin-bottom: 18px; }
+    #jalan-bar { position: relative; width: 200px; height: 6px; background: #444; margin: 0 auto; }
+    #jalan-bar-isi { position: absolute; left: 0; top: 0; height: 6px; width: 0; background: #fff; }
+    #jalan-nota { margin-top: 18px; font-size: 0.85rem; color: #999; }
     /* Keyboard Lebar ON → papan kekunci ikut lebar penuh skrin Kindle */
     body.kb-lebar-penuh #kb-sendiri { max-width: none; }
     /* Skrin kunci (manual & azan) → tiada latar papan kekunci, hanya butang terapung */
@@ -782,6 +801,9 @@
     <button id="btn-rehat" class="btn" style="margin-top:8px;">REHAT: OFF</button>
     <!-- Bilangan pusingan kotak nafas: 3 → 6 → 9 → 12 → 3 (1 pusingan = 20 saat) -->
     <button id="btn-rehat-pusingan" class="btn" style="margin-top:4px;">PUSINGAN REHAT: 3</button>
+    <!-- REHAT JALAN: selepas F2 habis (sebelum laci tamat) → rehat jalan kaki 1 / 2 / 3 minit -->
+    <button id="btn-rehat-jalan" class="btn" style="margin-top:8px;">REHAT JALAN: OFF</button>
+    <button id="btn-jalan-minit" class="btn" style="margin-top:4px;">MASA JALAN: 1 min</button>
     <button id="btn-kb-lebar" class="btn" style="margin-top:8px;">KEYBOARD LEBAR: OFF</button>
     <script>
     (function() {
@@ -1243,6 +1265,17 @@
     <div id="rehat-info" class="rehat-pudar"></div>
   </div>
 
+  <!-- REHAT JALAN KAKI — "Time for a short walk" → kiraan masa + bar → "Well done!" -->
+  <div id="jalan-overlay">
+    <div id="jalan-intro" class="rehat-pudar rehat-kabur">Time for a short walk</div>
+    <div id="jalan-utama" class="rehat-pudar rehat-kabur">
+      <div id="jalan-label" class="rehat-pudar">Walk</div>
+      <div id="jalan-masa">1:00</div>
+      <div id="jalan-bar"><div id="jalan-bar-isi"></div></div>
+      <div id="jalan-nota">Stand up and walk around</div>
+    </div>
+  </div>
+
   <!-- Popup PIN untuk ON JQ -->
   <div id="jq-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:999;">
     <div style="margin:20px auto 0;background:#fff;border:2px solid #000;border-radius:8px;padding:10px 12px;max-width:300px;width:90%;text-align:center;">
@@ -1669,6 +1702,13 @@
         }
       }
 
+      // REHAT JALAN ON: selepas F2 habis → rehat jalan kaki, kemudian laci tamat (SR Bebas tidak terlibat)
+      if (rehatJalanAktif && !srBebas && noteCards.length) {
+        out.push({
+          front: '', back: '', tips: '', imageUrl: '',
+          title: title, drawerId: d.id, isF0: false, isTamat: false, isSR: !!isSR, isRehatJalan: true, fasa: 2
+        });
+      }
 
       out.push({
         front: isSR ? ('SR selesai — ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0)) : 'Laci Tamat. Tekan SETERUSNYA.',
@@ -1814,6 +1854,14 @@
           out.push(cf2);
           }
         }
+      }
+
+      // REHAT JALAN ON: selepas F2 baris terakhir habis → rehat jalan kaki, kemudian laci tamat
+      if (rehatJalanAktif && !srBebas && itemCards.length) {
+        var cJalan = _kadRehatFakta(itemCards[itemCards.length - 1], itemCards.length - 1, 2);
+        cJalan.isRehat = false;
+        cJalan.isRehatJalan = true;
+        out.push(cJalan);
       }
 
       out.push({
@@ -2032,6 +2080,127 @@
           REHAT_PUSINGAN = _rehatPusinganSah(d.pusingan);
           updateRehatButton();
         }).catch(function() { rehatAktif = false; REHAT_PUSINGAN = 3; updateRehatButton(); });
+    }
+
+    // ══════════════════════════════════════════
+    // REHAT JALAN KAKI — selepas F2 habis (sebelum laci tamat), 1 / 2 / 3 minit
+    // Tetapan: kindle_settings/rehat_jalan { aktif, minit }
+    // ══════════════════════════════════════════
+    var rehatJalanAktif = false;
+    var JALAN_PILIHAN = [1, 2, 3];
+    var JALAN_MINIT = 1;
+    var _rjBerjalan = false;
+
+    function _jalanMinitSah(n) {
+      n = parseInt(n, 10);
+      for (var i = 0; i < JALAN_PILIHAN.length; i++) if (JALAN_PILIHAN[i] === n) return n;
+      return 1;
+    }
+
+    function updateRehatJalanButton() {
+      var btn = document.getElementById('btn-rehat-jalan');
+      if (btn) {
+        btn.textContent = rehatJalanAktif ? 'REHAT JALAN: ON' : 'REHAT JALAN: OFF';
+        btn.className = rehatJalanAktif ? 'btn-sm on' : 'btn-sm';
+      }
+      var bm = document.getElementById('btn-jalan-minit');
+      if (bm) {
+        bm.textContent = 'MASA JALAN: ' + JALAN_MINIT + ' min';
+        bm.style.opacity = rehatJalanAktif ? '1' : '0.5';
+      }
+    }
+
+    function loadRehatJalanState() {
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('rehat_jalan')
+        .get().then(function(snap) {
+          var d = snap.exists ? (snap.data() || {}) : {};
+          rehatJalanAktif = d.aktif === true;
+          JALAN_MINIT = _jalanMinitSah(d.minit);
+          updateRehatJalanButton();
+        }).catch(function() { rehatJalanAktif = false; JALAN_MINIT = 1; updateRehatJalanButton(); });
+    }
+
+    function mulaRehatJalan(selepas) {
+      if (_rjBerjalan) return;
+      var ov = document.getElementById('jalan-overlay');
+      if (!ov) { selepas(); return; }
+      _rjBerjalan = true;
+      function el(id) { return document.getElementById(id); }
+      var intro = el('jalan-intro'), utama = el('jalan-utama'), label = el('jalan-label');
+      var masa = el('jalan-masa'), isi = el('jalan-bar-isi');
+      var rAF = window.requestAnimationFrame || window.webkitRequestAnimationFrame || null;
+      var JUM = JALAN_MINIT * 60 * 1000, mula = 0, idLukis = 0;
+
+      function kini() { return new Date().getTime(); }
+      function kabur(e, ya) {
+        e.className = e.className.replace(/\s*rehat-kabur/g, '') + (ya ? ' rehat-kabur' : '');
+      }
+      function lajuPudar(e, saat) {
+        e.style.webkitTransition = 'opacity ' + saat + 's ease, -webkit-filter ' + saat + 's ease';
+        e.style.transition = 'opacity ' + saat + 's ease, filter ' + saat + 's ease';
+      }
+      function fmt(ms) {
+        var s = Math.ceil(ms / 1000);
+        if (s < 0) s = 0;
+        var m = Math.floor(s / 60), d = s % 60;
+        return m + ':' + (d < 10 ? '0' : '') + d;
+      }
+
+      // ── Persediaan ──
+      lajuPudar(intro, 0.8); lajuPudar(utama, 0.8); lajuPudar(label, 0.6);
+      kabur(intro, true); kabur(utama, true); kabur(label, false);
+      label.textContent = 'Walk';
+      masa.textContent = fmt(JUM);
+      isi.style.width = '0px';
+      ov.className = 'active';
+      ov.offsetWidth; // paksa lukis sebelum pudar masuk
+      setTimeout(function() { ov.className = 'active nampak'; }, 30);
+
+      // 1) "Time for a short walk" kabur masuk, kekal 3 saat
+      setTimeout(function() { kabur(intro, false); }, 600);
+      setTimeout(keUtama, 600 + 800 + 3000);
+      // 2) Intro kabur keluar 1.2s → 0.4s kemudian kiraan masa kabur masuk 0.8s (kesan sama dengan Rehat Nafas)
+      function keUtama() {
+        lajuPudar(intro, 1.2);
+        kabur(intro, true);
+        setTimeout(function() { kabur(utama, false); }, 400);
+        setTimeout(mulaKira, 400 + 800);
+      }
+      // 3) Kiraan masa + bar (ikut masa sebenar)
+      function mulaKira() {
+        mula = kini();
+        var id = ++idLukis;
+        function langkah() {
+          if (id !== idLukis) return;
+          var berlalu = kini() - mula;
+          var p = berlalu / JUM;
+          if (p > 1) p = 1;
+          isi.style.width = Math.round(p * 200) + 'px';
+          masa.textContent = fmt(JUM - berlalu);
+          if (p < 1) { if (rAF) rAF(langkah); else setTimeout(langkah, 500); }
+          else siap();
+        }
+        langkah();
+      }
+      // 4) "Well done!" → skrin pudar keluar → sambung laci
+      function siap() {
+        idLukis++;
+        kabur(label, true);
+        setTimeout(function() { label.textContent = 'Well done!'; kabur(label, false); }, 600);
+        setTimeout(tamat, 600 + 600 + 2000);
+      }
+      function tamat() {
+        ov.className = 'active';
+        setTimeout(function() {
+          ov.className = '';
+          kabur(intro, true); kabur(utama, true);
+          label.textContent = 'Walk';
+          isi.style.width = '0px';
+          _rjBerjalan = false;
+          try { selepas(); } catch (e) {}
+        }, 1500);
+      }
     }
 
     // Saiz kotak = panjang bar nafas kunci manual (200px), tebal garisan sama (6px)
@@ -3261,22 +3430,22 @@
       var c = cards[cardIndex];
       // Auto skip kad tamat — terus proses tanpa papar
       if (c.isTamat) { afterTamat(c); return; }
-      // Kad REHAT — animasi nafas, kemudian terus ke kad seterusnya (5 kali lagi fasa yang sama)
-      if (c.isRehat) {
+      // Kad REHAT (nafas) / REHAT JALAN (jalan kaki) — animasi, kemudian terus ke kad seterusnya
+      if (c.isRehat || c.isRehatJalan) {
         isFlipped = false; showTips = false;
         var tbRehat = document.getElementById('taip-ayat-box');
         if (tbRehat) tbRehat.style.display = 'none';
-        setText('play-mode', (srModeAktif ? 'SR · ' : '') + (c.fasa === 1 ? 'F1' : 'F2') + ' · REHAT');
+        setText('play-mode', (srModeAktif ? 'SR · ' : '') + (c.isRehatJalan ? 'REHAT JALAN' : ((c.fasa === 1 ? 'F1' : 'F2') + ' · REHAT')));
         setText('side-label', 'REHAT');
-        setText('main-text', 'Rehat sebentar...');
+        setText('main-text', c.isRehatJalan ? 'Jalan kaki sebentar...' : 'Rehat sebentar...');
         mainEl.className = 'big-text';
         setText('play-progress', '');
         setText('play-meta', '');
         setCardImage('');
-        if (_rehatJalan) return;
+        if (_rehatJalan || _rjBerjalan) return;
         isBusy = true;
         var idxRehat = cardIndex, kadRehat = c;
-        mulaRehatNafas(function() {
+        (c.isRehatJalan ? mulaRehatJalan : mulaRehatNafas)(function() {
           isBusy = false;
           if (cards[idxRehat] !== kadRehat || cardIndex !== idxRehat) return; // kad sudah bertukar → jangan ganggu
           isFlipped = false; showTips = false;
@@ -3324,10 +3493,10 @@
 
       // Kira progress dalam fasa + laci semasa sahaja
       var fasaSemasa = c.isGambar ? -1 : (c.isF0 ? 0 : (c.fasa !== undefined ? c.fasa : -1));
-      // Kad REHAT tidak dikira (REHAT ON → F1 1/10 ... 5/10 → rehat → 6/10 ... 10/10)
+      // Kad REHAT / REHAT JALAN tidak dikira (REHAT ON → F1 1/10 ... 5/10 → rehat → 6/10 ... 10/10)
       var fasaPos = 0, fasaTotal = 0;
       for (var pi = 0; pi < cards.length; pi++) {
-        if (cards[pi].isTamat || cards[pi].isRehat) continue;
+        if (cards[pi].isTamat || cards[pi].isRehat || cards[pi].isRehatJalan) continue;
         var pf = cards[pi].isGambar ? -1 : (cards[pi].isF0 ? 0 : (cards[pi].fasa !== undefined ? cards[pi].fasa : -1));
         var sameLaci = (cards[pi].drawerId === c.drawerId)
           && (mode !== 'fakta' || cards[pi].itemIndex === c.itemIndex);
@@ -4731,6 +4900,24 @@
       updateRehatButton();
       db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('rehat')
         .set({ aktif: rehatAktif, pusingan: REHAT_PUSINGAN, updatedAt: Date.now() }, { merge: true }).catch(function() {});
+    };
+
+    // REHAT JALAN — berkuat kuasa bila laci dimuat semula (masuk Laci Bahasa / Fakta dari menu)
+    document.getElementById('btn-rehat-jalan').onclick = function() {
+      rehatJalanAktif = !rehatJalanAktif;
+      updateRehatJalanButton();
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('rehat_jalan')
+        .set({ aktif: rehatJalanAktif, minit: JALAN_MINIT, updatedAt: Date.now() }, { merge: true }).catch(function() {});
+    };
+
+    // MASA JALAN — 1 → 2 → 3 → 1 minit (disimpan di Firebase, terus berkuat kuasa pada rehat jalan seterusnya)
+    document.getElementById('btn-jalan-minit').onclick = function() {
+      var idx = 0;
+      for (var i = 0; i < JALAN_PILIHAN.length; i++) if (JALAN_PILIHAN[i] === JALAN_MINIT) idx = i;
+      JALAN_MINIT = JALAN_PILIHAN[(idx + 1) % JALAN_PILIHAN.length];
+      updateRehatJalanButton();
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('rehat_jalan')
+        .set({ aktif: rehatJalanAktif, minit: JALAN_MINIT, updatedAt: Date.now() }, { merge: true }).catch(function() {});
     };
 
     document.getElementById('btn-quran-jq').onclick = function() {
@@ -9565,6 +9752,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           loadTaipState();
           loadMonitorState();
           loadRehatState();
+          loadRehatJalanState();
           // Load status Quran JQ dari Firestore
           db.collection('users').doc(currentUser.uid)
             .collection('kindle_settings').doc('quran_jq')
