@@ -8433,6 +8433,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     // ══════════════════════════════════════════
     var _wsNotifUnsub = null;
     var _wsNotifDocs  = [];
+    var _wsNotifSemuaId = {}; // fromKey -> SEMUA id dokumen aktif (termasuk pendua yang disorok)
 
 
     function subscribeWsNotif(uid) {
@@ -8441,6 +8442,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         .collection('ws_notification')
         .onSnapshot(function(snap) {
           var raw = [];
+          _wsNotifSemuaId = {};
           snap.forEach(function(d) {
             var x = d.data();
             if (x.active === true) {
@@ -8449,6 +8451,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
               var displayFrom = rawFrom || '—';
               var keyFrom = displayFrom.toLowerCase();
               raw.push({ id: d.id, from: displayFrom, fromKey: keyFrom, message: x.message || '', ts: x.ts || 0 });
+              if (!_wsNotifSemuaId[keyFrom]) _wsNotifSemuaId[keyFrom] = [];
+              _wsNotifSemuaId[keyFrom].push(d.id);
             }
           });
           raw.sort(function(a,b) { return b.ts - a.ts; });
@@ -8543,10 +8547,16 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           wsConfirm('Tandakan "' + displayName + '" sebagai dibaca?', function() {
             if (!currentUser) return;
             var uid = currentUser.uid;
-            var toDelete = _wsNotifDocs.filter(function(d) { return d.fromKey === fk; });
-            var promises = toDelete.map(function(d) {
-              return db.collection('users').doc(uid).collection('ws_notification').doc(d.id).delete();
-            });
+            // Padam SEMUA dokumen nama ini — termasuk pendua yang disorok (dulu tertinggal → noti muncul semula)
+            var ids = (_wsNotifSemuaId[fk] || []).slice();
+            _wsNotifDocs.forEach(function(d) { if (d.fromKey === fk && ids.indexOf(d.id) < 0) ids.push(d.id); });
+            var col = db.collection('users').doc(uid).collection('ws_notification');
+            var promises = [];
+            for (var bi = 0; bi < ids.length; bi += 400) {
+              var batchPadam = db.batch();
+              for (var bj = bi; bj < ids.length && bj < bi + 400; bj++) batchPadam['delete'](col.doc(ids[bj]));
+              promises.push(batchPadam.commit());
+            }
             Promise.all(promises).then(function() {
               _wsNotifDocs = _wsNotifDocs.filter(function(d) { return d.fromKey !== fk; });
               updateWsNotifBadge();
