@@ -299,6 +299,24 @@
       line-height: 1.3;
     }
 
+    /* ── PENANDA LACI (Perjanjian / Main / Other Motivation) ── */
+    .laci-penanda { border-width: 4px !important; }
+    .laci-penanda-label {
+      display: block; background: #000; color: #fff; font-size: 0.72rem; font-weight: bold;
+      text-align: center; padding: 3px; border-radius: 4px; margin-bottom: 6px; letter-spacing: 0.1em;
+    }
+    .laci-pergi { display: flex; gap: 6px; margin-bottom: 6px; }
+    .laci-pergi input {
+      flex: 1; min-width: 0; padding: 8px; font-size: 0.95rem; border: 2px solid #000; border-radius: 6px;
+      background: #fff; color: #000; font-family: inherit; box-sizing: border-box;
+    }
+    .laci-pergi button, .laci-tanda-btn {
+      border: 2px solid #000; background: #fff; color: #000; font-weight: bold; font-size: 0.8rem;
+      padding: 6px 10px; border-radius: 6px; cursor: pointer; font-family: inherit;
+    }
+    .laci-tanda-btn.on { background: #000; color: #fff; }
+    .laci-no { font-weight: bold; font-size: 0.78rem; margin-bottom: 4px; }
+
     /* ── LACI PERJANJIAN (KINDLE) ── */
     .pj-card { border: 2px solid #000; border-radius: 8px; padding: 8px; margin-bottom: 8px; background: #fff; }
     .pj-head { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
@@ -1008,6 +1026,8 @@
     <!-- ON: tajuk di depan, ayat di Flip · OFF: tajuk + ayat di depan -->
     <button id="btn-tf-mainMotivation" data-tf="mainMotivation" style="width:100%;margin-bottom:8px;padding:9px;border:2px solid #000;background:#fff;color:#000;font-weight:bold;font-size:0.85rem;border-radius:6px;cursor:pointer;font-family:inherit;">Tajuk depan, ayat di Flip: OFF</button>
     <button id="btn-mm-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Motivasi</button>
+    <!-- Pergi terus ke #nombor · Penanda: Edit / Tanda → masuk semula terus ke laci bertanda -->
+    <div class="laci-pergi"><input id="mm-pergi" type="number" inputmode="numeric" placeholder="Pergi ke # ..."><button data-pergi="mainMotivation">Pergi</button><button data-ke-penanda="mainMotivation">Penanda</button></div>
     <div id="mm-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
     <button id="btn-mm-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Balik ke Menu</button>
   </div>
@@ -1049,6 +1069,8 @@
     <!-- ON: tajuk di depan, ayat di Flip · OFF: tajuk + ayat di depan -->
     <button id="btn-tf-otherMotivation" data-tf="otherMotivation" style="width:100%;margin-bottom:8px;padding:9px;border:2px solid #000;background:#fff;color:#000;font-weight:bold;font-size:0.85rem;border-radius:6px;cursor:pointer;font-family:inherit;">Tajuk depan, ayat di Flip: OFF</button>
     <button id="btn-om-tambah" class="btn btn-primary" style="margin-bottom:8px;">+ Tambah Motivasi</button>
+    <!-- Pergi terus ke #nombor · Penanda: Edit / Tanda → masuk semula terus ke laci bertanda -->
+    <div class="laci-pergi"><input id="om-pergi" type="number" inputmode="numeric" placeholder="Pergi ke # ..."><button data-pergi="otherMotivation">Pergi</button><button data-ke-penanda="otherMotivation">Penanda</button></div>
     <div id="om-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
     <button id="btn-om-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Balik ke Menu</button>
   </div>
@@ -1119,6 +1141,8 @@
     <button id="btn-tf-perjanjian" data-tf="perjanjian" style="width:100%;margin-bottom:8px;padding:9px;border:2px solid #000;background:#fff;color:#000;font-weight:bold;font-size:0.85rem;border-radius:6px;cursor:pointer;font-family:inherit;">Tajuk depan, ayat di Flip: OFF</button>
     <button id="btn-pj-tambah" class="btn btn-primary" style="margin-bottom:4px;">+ Tambah Perjanjian</button>
     <div style="font-size:0.7rem;color:#444;text-align:center;margin-bottom:6px;">Tekan <b>#nombor</b> untuk pindah terus · Guna <b>=</b> dalam teks untuk flip</div>
+    <!-- Pergi terus ke #nombor · Penanda: Edit / Tanda → masuk semula terus ke laci bertanda -->
+    <div class="laci-pergi"><input id="pj-pergi" type="number" inputmode="numeric" placeholder="Pergi ke # ..."><button data-pergi="perjanjian">Pergi</button><button data-ke-penanda="perjanjian">Penanda</button></div>
     <div id="pj-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
     <button id="btn-pj-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Balik ke Menu</button>
   </div>
@@ -1588,7 +1612,145 @@
         el.className = 'screen active';
         el.style.display = '';
       }
+      // Masuk laci Perjanjian / Main / Other Motivation → lompat terus ke PENANDA
+      if (PENANDA_SKRIN[id]) {
+        var jenisP = PENANDA_SKRIN[id];
+        _penandaLompat[jenisP] = true;
+        setTimeout(function() { _penandaMuat(function() { _penandaSelepasRender(jenisP); }); }, 60);
+      }
     }
+
+    // ══════════════════════════════════════════
+    // PENANDA LACI — Perjanjian / Main Motivation / Other Motivation
+    // Tekan Edit (automatik) atau Tanda → laci itu jadi penanda. Masuk semula → terus ke penanda.
+    // Disimpan: kindle_settings/penanda_laci { perjanjian, mainMotivation, otherMotivation } (+ salinan dalam Kindle)
+    // Kotak "Pergi ke #" → taip nombor (cth 15) → terus ke laci #15
+    // ══════════════════════════════════════════
+    var PENANDA_SKRIN = { 'screen-perjanjian': 'perjanjian', 'screen-main-motivation': 'mainMotivation', 'screen-other-motivation': 'otherMotivation' };
+    var PENANDA_LIST = { perjanjian: 'pj-list', mainMotivation: 'mm-list', otherMotivation: 'om-list' };
+    var PENANDA_INPUT = { perjanjian: 'pj-pergi', mainMotivation: 'mm-pergi', otherMotivation: 'om-pergi' };
+    var _penanda = {}, _penandaDimuat = false, _penandaLompat = {};
+    try { _penanda = JSON.parse(localStorage.getItem('penanda_laci') || '{}') || {}; } catch (e) { _penanda = {}; }
+
+    function _penandaMuat(cb) {
+      if (_penandaDimuat || !currentUser) { if (cb) cb(); return; }
+      db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('penanda_laci').get()
+        .then(function(s) {
+          if (s.exists) {
+            var d = s.data() || {};
+            for (var k in d) if (k !== 'updatedAt' && d[k]) _penanda[k] = d[k];
+          }
+          _penandaDimuat = true;
+          if (cb) cb();
+        }).catch(function() { _penandaDimuat = true; if (cb) cb(); });
+    }
+    function tandaLaci(jenis, id) {
+      if (!id) return;
+      _penanda[jenis] = id;
+      try { localStorage.setItem('penanda_laci', JSON.stringify(_penanda)); } catch (e) {}
+      if (currentUser) {
+        var o = { updatedAt: Date.now() };
+        o[jenis] = id;
+        db.collection('users').doc(currentUser.uid).collection('kindle_settings').doc('penanda_laci')
+          .set(o, { merge: true }).catch(function() {});
+      }
+      _penandaTandaDom(jenis);
+    }
+    // Tanda kad penanda dalam senarai (sempadan tebal + label PENANDA + butang Tanda hitam)
+    function _penandaTandaDom(jenis) {
+      var list = document.getElementById(PENANDA_LIST[jenis]);
+      if (!list) return;
+      var kad = list.querySelectorAll('[data-pid]');
+      for (var i = 0; i < kad.length; i++) {
+        var c = kad[i], ya = c.getAttribute('data-pid') === _penanda[jenis];
+        c.className = c.className.replace(/\s*laci-penanda/g, '') + (ya ? ' laci-penanda' : '');
+        var lbl = c.querySelector('.laci-penanda-label');
+        if (ya && !lbl) {
+          lbl = document.createElement('div');
+          lbl.className = 'laci-penanda-label';
+          lbl.textContent = 'PENANDA';
+          c.insertBefore(lbl, c.firstChild);
+        } else if (!ya && lbl) lbl.parentNode.removeChild(lbl);
+        var bt = c.querySelector('.laci-tanda-btn');
+        if (bt) { bt.className = 'laci-tanda-btn' + (ya ? ' on' : ''); bt.textContent = ya ? 'Ditanda' : 'Tanda'; }
+      }
+    }
+    // Skrol sehingga kad berada di atas skrin. Senarai boleh skrol sendiri → skrol senarai;
+    // jika tidak (page yang skrol, macam Kindle sekarang) → skrol page.
+    function _skrolKeKad(list, kad) {
+      var rk = kad.getBoundingClientRect();
+      if (list.scrollHeight > list.clientHeight + 2) {
+        var rl = list.getBoundingClientRect();
+        list.scrollTop += (rk.top - rl.top) - 6;
+      } else {
+        var kini = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        window.scrollTo(0, Math.max(0, kini + rk.top - 6));
+      }
+    }
+    function lompatKePenanda(jenis) {
+      var list = document.getElementById(PENANDA_LIST[jenis]);
+      var id = _penanda[jenis];
+      if (!list || !id) return false;
+      var kad = list.querySelector('[data-pid="' + id + '"]');
+      if (!kad) return false;
+      _skrolKeKad(list, kad);
+      return true;
+    }
+    function lompatKeNombor(jenis, n) {
+      var list = document.getElementById(PENANDA_LIST[jenis]);
+      if (!list) return false;
+      var kad = list.querySelectorAll('[data-pid]');
+      n = parseInt(n, 10);
+      if (!(n >= 1 && n <= kad.length)) return false;
+      _skrolKeKad(list, kad[n - 1]);
+      return true;
+    }
+    // Dipanggil selepas setiap render senarai: tanda kad + lompat ke penanda jika baru masuk skrin
+    function _penandaSelepasRender(jenis) {
+      _penandaTandaDom(jenis);
+      if (!_penandaLompat[jenis]) return;
+      var list = document.getElementById(PENANDA_LIST[jenis]);
+      if (!list || !list.querySelector('[data-pid]')) return; // data belum dimuat — cuba lagi bila render
+      _penandaLompat[jenis] = false;
+      lompatKePenanda(jenis);
+    }
+    // Butang Pergi / Penanda / Tanda (satu pendengar untuk semua)
+    document.addEventListener('click', function(e) {
+      var t = e.target;
+      if (!t || !t.getAttribute) return;
+      var jp = t.getAttribute('data-pergi');
+      if (jp) {
+        var inp = document.getElementById(PENANDA_INPUT[jp]);
+        var nilai = inp ? inp.value : '';
+        if (!lompatKeNombor(jp, nilai)) {
+          var bil = (document.getElementById(PENANDA_LIST[jp]) || document).querySelectorAll('[data-pid]').length;
+          if (inp) { inp.value = ''; inp.placeholder = nilai ? ('#' + nilai + ' tiada (1-' + bil + ')') : 'Taip nombor dulu'; }
+        } else if (inp) { inp.blur(); }
+        return;
+      }
+      var kp = t.getAttribute('data-ke-penanda');
+      if (kp) { if (!lompatKePenanda(kp)) t.textContent = 'Tiada penanda'; return; }
+      var tj = t.getAttribute('data-tanda');
+      if (tj) {
+        var kad = t; while (kad && !(kad.getAttribute && kad.getAttribute('data-pid'))) kad = kad.parentNode;
+        if (kad) tandaLaci(tj, kad.getAttribute('data-pid'));
+        e.stopPropagation();
+      }
+    }, true);
+    // Enter dalam kotak "Pergi ke #" = tekan Pergi
+    document.addEventListener('keydown', function(e) {
+      var t = e.target;
+      if (!t || (e.key !== 'Enter' && e.keyCode !== 13)) return;
+      for (var j in PENANDA_INPUT) {
+        if (t.id === PENANDA_INPUT[j]) {
+          var b = document.querySelector('[data-pergi="' + j + '"]');
+          if (b) b.click();
+          if (e.preventDefault) e.preventDefault();
+          return;
+        }
+      }
+    }, true);
+
     function setText(id, t) {
       var el = document.getElementById(id);
       if (el) el.textContent = t || '';
@@ -5317,9 +5479,10 @@
         list.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Tiada motivasi. Tekan + Tambah.</div>';
         return;
       }
-      allMainMotivation.forEach(function(data) {
+      allMainMotivation.forEach(function(data, ixMM) {
         var div = document.createElement('div');
         div.style.cssText = 'border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:10px;';
+        div.setAttribute('data-pid', data.id);
         var imgHtml = data.imageUrl
           ? '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;margin-bottom:6px;object-fit:cover;">'
           : '<div style="font-size:0.7rem;color:#888;margin-bottom:6px;font-style:italic;">Tiada gambar lagi</div>';
@@ -5330,9 +5493,11 @@
           '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">' +
             '<div class="mm-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;padding:6px 10px;border-radius:4px;text-align:center;cursor:pointer;flex:1;">Edit</div>' +
             '<div class="mm-pindah-om" style="font-size:0.75rem;font-weight:bold;border:2px solid #000;padding:6px 10px;border-radius:4px;text-align:center;cursor:pointer;flex:1;">Pindah ke Other</div>' +
+            '<button class="laci-tanda-btn" data-tanda="mainMotivation">Tanda</button>' +
           '</div>';
+        div.innerHTML = '<div class="laci-no">#' + (ixMM + 1) + '</div>' + div.innerHTML;
         div.querySelector('.mm-edit-btn').addEventListener('click', function(e) {
-          e.stopPropagation(); bukaEditMM(dataCapture);
+          e.stopPropagation(); tandaLaci('mainMotivation', dataCapture.id); bukaEditMM(dataCapture);
         });
         div.querySelector('.mm-pindah-om').addEventListener('click', function(e) {
           e.stopPropagation();
@@ -5356,6 +5521,7 @@
         });
         list.appendChild(div);
       });
+      _penandaSelepasRender('mainMotivation');
     }
 
     function bukaEditMM(data) {
@@ -6874,9 +7040,10 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         return;
       }
 
-      allOtherMotivation.forEach(function(data) {
+      allOtherMotivation.forEach(function(data, ixOM) {
         var div = document.createElement('div');
         div.style.cssText = 'border:2px solid #000;border-radius:8px;padding:10px;margin-bottom:10px;';
+        div.setAttribute('data-pid', data.id);
 
         var imgHtml = data.imageUrl
           ? '<img src="' + data.imageUrl + '" style="width:100%;border-radius:6px;margin-bottom:6px;object-fit:cover;">'
@@ -6889,10 +7056,12 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">' +
             '<div class="om-edit-btn" style="font-size:0.75rem;color:#fff;background:#000;padding:6px 10px;border-radius:4px;text-align:center;cursor:pointer;flex:1;">Edit</div>' +
             '<div class="om-pindah-mm" style="font-size:0.75rem;font-weight:bold;border:2px solid #000;padding:6px 10px;border-radius:4px;text-align:center;cursor:pointer;flex:1;">Pindah ke Main</div>' +
+            '<button class="laci-tanda-btn" data-tanda="otherMotivation">Tanda</button>' +
           '</div>';
+        div.innerHTML = '<div class="laci-no">#' + (ixOM + 1) + '</div>' + div.innerHTML;
 
         div.querySelector('.om-edit-btn').addEventListener('click', function(e) {
-          e.stopPropagation(); bukaEditOM(dataCapture);
+          e.stopPropagation(); tandaLaci('otherMotivation', dataCapture.id); bukaEditOM(dataCapture);
         });
 
         div.querySelector('.om-pindah-mm').addEventListener('click', function(e) {
@@ -6918,6 +7087,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
         list.appendChild(div);
       });
+      _penandaSelepasRender('otherMotivation');
     }
 
     function bukaEditOM(data) {
@@ -7072,7 +7242,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         var pos = teks.indexOf('=');
         var utama = pos === -1 ? teks : teks.slice(0, pos).trim();
         var flip = pos === -1 ? '' : teks.slice(pos + 1).trim();
-        html += '<div class="pj-card" data-idx="' + i + '">' +
+        html += '<div class="pj-card" data-idx="' + i + '" data-pid="' + pjEsc(p.id) + '">' +
           '<div class="pj-head">' +
             '<button class="pj-pos" data-act="pos">#' + (i + 1) + '</button>' +
             '<div class="pj-title">' + (pjEsc(p.title) || '(Tiada tajuk)') + '</div>' +
@@ -7081,10 +7251,14 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           '</div>' +
           '<div class="pj-text">' + (pjEsc(utama) || '<span style="color:#888;">(Tiada teks)</span>') + '</div>' +
           (flip ? '<div class="pj-flip">Flip: ' + pjEsc(flip) + '</div>' : '') +
-          '<button class="pj-edit-btn" data-act="edit">Edit</button>' +
+          '<div style="display:flex;gap:6px;align-items:stretch;">' +
+            '<button class="pj-edit-btn" data-act="edit" style="flex:1;">Edit</button>' +
+            '<button class="laci-tanda-btn" data-tanda="perjanjian" style="margin-top:6px;">Tanda</button>' +
+          '</div>' +
         '</div>';
       });
       list.innerHTML = html;
+      _penandaSelepasRender('perjanjian');
     }
 
     // Satu listener untuk semua butang dalam senarai
@@ -7100,7 +7274,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (act === 'up') pjPindah(idx, idx - 1);
       else if (act === 'down') pjPindah(idx, idx + 1);
       else if (act === 'pos') bukaPindahPj(idx);
-      else if (act === 'edit') bukaEditPj(allPerjanjianK[idx]);
+      else if (act === 'edit') { tandaLaci('perjanjian', allPerjanjianK[idx].id); bukaEditPj(allPerjanjianK[idx]); }
     });
 
     // Susun semula: keluarkan item & selit di kedudukan baru, order = 0..n-1
