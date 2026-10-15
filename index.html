@@ -852,6 +852,27 @@
     <button id="btn-recap" class="btn" style="margin-top:8px;">RECAP: OFF</button>
     <button id="btn-recap-mula" class="btn" style="margin-top:4px;">RECAP MULA: B. INGGERIS</button>
     <button id="btn-kb-lebar" class="btn" style="margin-top:8px;">KEYBOARD LEBAR: OFF</button>
+    <!-- KEYBOARD SENDIRI — ON: Kindle (papan kekunci atas skrin) | OFF: laptop (taip guna keyboard laptop). Simpan dalam peranti ini sahaja -->
+    <button id="btn-kb-sendiri" class="btn" style="margin-top:4px;">KEYBOARD SENDIRI: ON</button>
+    <script>
+    (function() {
+      var btn = document.getElementById('btn-kb-sendiri');
+      if (!btn) return;
+      function on() { try { return localStorage.getItem('kb_sendiri_mati') !== '1'; } catch (e) { return true; } }
+      function terap() {
+        var o = on();
+        btn.textContent = o ? 'KEYBOARD SENDIRI: ON' : 'KEYBOARD SENDIRI: OFF (LAPTOP)';
+        btn.className = o ? 'btn-sm on' : 'btn-sm';
+      }
+      terap();
+      btn.addEventListener('click', function() {
+        var baru = !on();
+        if (window.kbSendiriTetap) window.kbSendiriTetap(baru);
+        else { try { localStorage.setItem('kb_sendiri_mati', baru ? '0' : '1'); } catch (e) {} }
+        terap();
+      });
+    })();
+    </script>
     <script>
     (function() {
       // KEYBOARD LEBAR — ON: papan kekunci selebar skrin Kindle | OFF: selebar app (sama macam chat Telegram)
@@ -10289,7 +10310,36 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var t = (el.getAttribute('type') || 'text').toLowerCase();
       return !!JENIS_TEKS[t] && el.style.display !== 'none';
     }
+    // KEYBOARD SENDIRI OFF (laptop) → kotak taip biasa, guna keyboard fizikal
+    var kbMati = false;
+    try { kbMati = localStorage.getItem('kb_sendiri_mati') === '1'; } catch (x) {}
+    // Pulangkan semua kotak taip kepada asal (buang readonly & inputmode yang KITA letak sahaja)
+    function lepaskanSemua() {
+      var s = document.querySelectorAll('[data-kb-sedia]');
+      for (var i = 0; i < s.length; i++) {
+        var el = s[i];
+        if (el.getAttribute('data-kb-ro')) el.removeAttribute('readonly');
+        var im = el.getAttribute('data-kb-inputmode');
+        if (im) el.setAttribute('inputmode', im); else el.removeAttribute('inputmode');
+        el.removeAttribute('data-kb-ro');
+        el.removeAttribute('data-kb-sedia');
+        el.removeAttribute('data-kb-inputmode');
+        el.removeAttribute('data-kb-asal');
+      }
+    }
+    window.kbSendiriTetap = function(hidup) {
+      kbMati = !hidup;
+      try { localStorage.setItem('kb_sendiri_mati', kbMati ? '1' : '0'); } catch (x) {}
+      if (kbMati) {
+        if (elAktif) tutup();
+        lepaskanSemua();
+      } else {
+        var sm = document.querySelectorAll('input, textarea');
+        for (var j = 0; j < sm.length; j++) sediakan(sm[j]);
+      }
+    };
     function sediakan(el) {
+      if (kbMati) return;
       if (!bolehGuna(el) || el.getAttribute('data-kb-sedia')) return;
       el.setAttribute('data-kb-sedia', '1');
       el.setAttribute('data-kb-inputmode', el.getAttribute('inputmode') || '');
@@ -10866,6 +10916,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
     document.addEventListener('focusin', function(e) {
       var el = e.target;
+      if (kbMati) return; // laptop: guna keyboard laptop
       if (!bolehGuna(el) || el.getAttribute('data-kb-asal') === '1') return;
       sediakan(el);
       buka(el);
