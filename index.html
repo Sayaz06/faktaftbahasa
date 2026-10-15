@@ -382,6 +382,10 @@
     }
     .pj-text { font-size: 0.88rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
     .pj-flip { font-size: 0.72rem; font-style: italic; color: #444; margin-top: 3px; white-space: pre-wrap; word-break: break-word; }
+    /* Dua bahagian laci: PENERANGAN (teks asal) + AYAT PERJANJIAN (medan ayat) */
+    .pj-sek { font-weight: bold; font-size: 0.72rem; letter-spacing: 0.08em; margin: 4px 0 2px; }
+    .pj-ayat-tajuk { font-weight: bold; font-size: 1.02rem; margin-top: 8px; padding-top: 6px; border-top: 2px solid #000; }
+    .pj-ayat-nota { font-size: 0.68rem; font-style: italic; color: #444; margin-bottom: 3px; line-height: 1.35; }
     .pj-edit-btn {
       display: block; width: 100%; margin-top: 6px; padding: 8px; font-size: 0.82rem;
       font-weight: bold; background: #000; color: #fff; border: 2px solid #000;
@@ -1273,9 +1277,13 @@
     <div style="font-size:0.72rem;color:#555;margin:6px 0 2px;">Tajuk:</div>
     <input id="pj-edit-title" type="text" placeholder="Tajuk perjanjian..."
       style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;margin-bottom:8px;">
-    <div style="font-size:0.72rem;color:#555;margin-bottom:2px;">Teks: <i>(guna = untuk bahagian flip)</i></div>
-    <textarea id="pj-edit-text" placeholder="Cth: Saya tidak akan putus asa = Kerana Allah sentiasa bersama saya"
-      style="width:100%;flex:1;padding:10px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;resize:none;line-height:1.6;min-height:200px;"></textarea>
+    <div style="font-size:0.78rem;font-weight:bold;margin-bottom:2px;">Penerangan <i style="font-weight:normal;font-size:0.7rem;">(guna = untuk bahagian flip)</i></div>
+    <textarea id="pj-edit-text" placeholder="Penerangan perjanjian..."
+      style="width:100%;flex:1;padding:10px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;resize:none;line-height:1.6;min-height:110px;"></textarea>
+    <div style="font-size:1.02rem;font-weight:bold;margin-top:8px;">Ayat Perjanjian</div>
+    <div style="font-size:0.68rem;font-style:italic;color:#444;margin-bottom:3px;">(jika pertama kali ditulis, perlu mengangkat tangan dan pembacaan untuk membuat sumpahan)</div>
+    <textarea id="pj-edit-ayat" placeholder="Tulis ayat perjanjian di sini..."
+      style="width:100%;flex:1;padding:10px;font-size:0.95rem;border:2px solid #000;border-radius:6px;box-sizing:border-box;resize:none;line-height:1.6;min-height:110px;"></textarea>
     <div style="display:flex;gap:8px;margin-top:8px;">
       <button id="btn-pj-edit-back" style="flex:1;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Balik</button>
       <button id="btn-pj-edit-save" style="flex:1;padding:12px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Simpan</button>
@@ -7399,8 +7407,12 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
             '<button class="pj-arrow" data-act="up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
             '<button class="pj-arrow" data-act="down"' + (i === n - 1 ? ' disabled' : '') + '>↓</button>' +
           '</div>' +
+          '<div class="pj-sek">PENERANGAN</div>' +
           '<div class="pj-text">' + (pjEsc(utama) || '<span style="color:#888;">(Tiada teks)</span>') + '</div>' +
           (flip ? '<div class="pj-flip">Flip: ' + pjEsc(flip) + '</div>' : '') +
+          '<div class="pj-ayat-tajuk">Ayat Perjanjian</div>' +
+          '<div class="pj-ayat-nota">(jika pertama kali ditulis, perlu mengangkat tangan dan pembacaan untuk membuat sumpahan)</div>' +
+          '<div class="pj-text">' + (pjEsc((p.ayat || '').trim()) || '<span style="color:#888;">(Belum diisi)</span>') + '</div>' +
           '<div style="display:flex;gap:6px;align-items:stretch;">' +
             '<button class="pj-edit-btn" data-act="edit" style="flex:1;">Edit</button>' +
             '<button class="pj-tag-btn" data-act="tag" style="margin-top:6px;">' + (namaTag ? pjEsc(namaTag) : 'Tag') + '</button>' +
@@ -7881,9 +7893,10 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function bukaEditPj(p) {
       if (!p) return;
       pjEditId = p.id;
-      pjEditAsal = { title: p.title || '', text: p.text || '' };
+      pjEditAsal = { title: p.title || '', text: p.text || '', ayat: p.ayat || '' };
       document.getElementById('pj-edit-title').value = pjEditAsal.title;
       document.getElementById('pj-edit-text').value = pjEditAsal.text;
+      document.getElementById('pj-edit-ayat').value = pjEditAsal.ayat;
       setText('pj-edit-msg', '');
       setText('pj-edit-status', 'EDIT — ' + (p.title || 'Tanpa Tajuk'));
       showScreen('screen-pj-edit');
@@ -7893,12 +7906,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (!currentUser || !pjEditId) return;
       var title = document.getElementById('pj-edit-title').value.trim();
       var text = document.getElementById('pj-edit-text').value.trim();
+      var ayat = document.getElementById('pj-edit-ayat').value.trim();
       var btn = document.getElementById('btn-pj-edit-save');
       btn.disabled = true;
       btn.textContent = 'Menyimpan...';
-      pjCol().doc(pjEditId).update({ title: title, text: text, updatedAt: Date.now() })
+      pjCol().doc(pjEditId).update({ title: title, text: text, ayat: ayat, updatedAt: Date.now() })
         .then(function() {
-          pjEditAsal = { title: title, text: text };
+          pjEditAsal = { title: title, text: text, ayat: ayat };
           btn.disabled = false;
           btn.textContent = 'Simpan';
           setText('pj-edit-msg', 'Tersimpan!');
@@ -7919,7 +7933,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     document.getElementById('btn-pj-edit-back').onclick = function() {
       var t = document.getElementById('pj-edit-title').value.trim();
       var x = document.getElementById('pj-edit-text').value.trim();
-      if (pjEditId && (t !== pjEditAsal.title || x !== pjEditAsal.text)) {
+      var y = document.getElementById('pj-edit-ayat').value.trim();
+      if (pjEditId && (t !== pjEditAsal.title || x !== pjEditAsal.text || y !== (pjEditAsal.ayat || '').trim())) {
         simpanEditPj(function() { showScreen('screen-perjanjian'); });
       } else {
         showScreen('screen-perjanjian');
