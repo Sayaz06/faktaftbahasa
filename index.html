@@ -1248,6 +1248,25 @@
     </div>
   </div>
 
+  <!-- PINDAH TAG KE KEDUDUKAN (tekan #nombor di page Tagging) -->
+  <div id="pj-tag-pindah-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border:3px solid #000;border-radius:10px;padding:18px;width:88%;max-width:330px;text-align:center;">
+      <div style="font-size:0.9rem;font-weight:bold;margin-bottom:4px;">Pindah tagging ke kedudukan:</div>
+      <div id="pj-tag-pindah-nama" style="font-size:0.8rem;margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      <input id="pj-tag-pindah-input" type="number" inputmode="numeric" min="1" placeholder="No." style="width:100%;padding:10px;font-size:1.3rem;border:2px solid #000;border-radius:6px;text-align:center;box-sizing:border-box;margin-bottom:4px;font-family:inherit;">
+      <div id="pj-tag-pindah-info" style="font-size:0.7rem;color:#444;margin-bottom:10px;"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button id="btn-pj-tag-pindah-atas" style="flex:1;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Paling Atas</button>
+        <button id="btn-pj-tag-pindah-bawah" style="flex:1;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Paling Bawah</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button id="btn-pj-tag-pindah-batal" style="flex:1;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Batal</button>
+        <button id="btn-pj-tag-pindah-ok" style="flex:1;padding:10px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Pindah</button>
+      </div>
+      <div id="pj-tag-pindah-err" style="font-size:0.78rem;margin-top:8px;min-height:1em;font-weight:bold;"></div>
+    </div>
+  </div>
+
   <!-- SCREEN: EDIT PERJANJIAN -->
   <div id="screen-pj-edit" class="screen" style="flex-direction:column;height:100vh;padding:8px;box-sizing:border-box;">
     <div class="status-bar" id="pj-edit-status">EDIT PERJANJIAN</div>
@@ -7609,7 +7628,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         var sedia = _pjTagPadam.id === t.id && Date.now() - _pjTagPadam.masa < 2000;
         html += '<div class="pj-card" data-tid="' + pjEsc(t.id) + '">' +
           '<div class="pj-head">' +
-            '<span class="pj-pos" style="cursor:default;">#' + (i + 1) + '</span>' +
+            '<button class="pj-pos" data-tact="pos">#' + (i + 1) + '</button>' +
             '<div class="pj-title">' + pjEsc(t.nama) + ' <span style="font-weight:normal;font-size:0.75rem;">(' + pjTagBil(t.id) + ' perjanjian)</span></div>' +
             '<button class="pj-arrow" data-tact="up"' + (i === 0 ? ' disabled' : '') + '>↑</button>' +
             '<button class="pj-arrow" data-tact="down"' + (i === n - 1 ? ' disabled' : '') + '>↓</button>' +
@@ -7681,7 +7700,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       for (i = 0; i < _pjTags.length; i++) if (_pjTags[i].id === tid) idx = i;
       if (idx < 0) return;
       var senarai = _pjTags.slice();
-      if (act === 'up' || act === 'down') {
+      if (act === 'pos') {
+        bukaPindahTag(idx);
+      } else if (act === 'up' || act === 'down') {
         var ke = act === 'up' ? idx - 1 : idx + 1;
         if (ke < 0 || ke >= senarai.length) return;
         var item = senarai.splice(idx, 1)[0];
@@ -7710,6 +7731,46 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           setTimeout(function() { if (_pjTagPadam.id === tid) { _pjTagPadam = { id: null, masa: 0 }; renderPjTagPage(); } }, 2100);
         }
       }
+    });
+
+    // ── PINDAH TAG TERUS KE KEDUDUKAN (tekan #nombor) ──
+    var _pjTagPindahIdx = -1;
+    function bukaPindahTag(idx) {
+      var n = _pjTags.length;
+      if (n < 2 || !_pjTags[idx]) return;
+      _pjTagPindahIdx = idx;
+      setText('pj-tag-pindah-nama', '#' + (idx + 1) + ' ' + (_pjTags[idx].nama || ''));
+      setText('pj-tag-pindah-info', '1 = paling atas · ' + n + ' = paling bawah');
+      setText('pj-tag-pindah-err', '');
+      var inp = document.getElementById('pj-tag-pindah-input');
+      inp.value = '';
+      inp.max = n;
+      document.getElementById('pj-tag-pindah-overlay').style.display = 'flex';
+      setTimeout(function() { inp.focus(); }, 100);
+    }
+    function tutupPindahTag() {
+      document.getElementById('pj-tag-pindah-overlay').style.display = 'none';
+      _pjTagPindahIdx = -1;
+    }
+    function sahPindahTag(ke) {
+      var n = _pjTags.length, dari = _pjTagPindahIdx;
+      if (dari < 0 || !_pjTags[dari]) return;
+      if (isNaN(ke) || ke < 0 || ke >= n) { setText('pj-tag-pindah-err', 'Masukkan nombor 1 hingga ' + n); return; }
+      tutupPindahTag();
+      if (ke === dari) return;
+      var senarai = _pjTags.slice();
+      var item = senarai.splice(dari, 1)[0];
+      senarai.splice(ke, 0, item);
+      pjSimpanTag(senarai, null, item.nama + ' ke #' + (ke + 1));
+    }
+    document.getElementById('btn-pj-tag-pindah-ok').onclick = function() {
+      sahPindahTag(parseInt(document.getElementById('pj-tag-pindah-input').value, 10) - 1);
+    };
+    document.getElementById('btn-pj-tag-pindah-atas').onclick = function() { sahPindahTag(0); };
+    document.getElementById('btn-pj-tag-pindah-bawah').onclick = function() { sahPindahTag(_pjTags.length - 1); };
+    document.getElementById('btn-pj-tag-pindah-batal').onclick = tutupPindahTag;
+    document.getElementById('pj-tag-pindah-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.keyCode === 13) document.getElementById('btn-pj-tag-pindah-ok').click();
     });
 
     // ── PILIH TAG UNTUK SATU PERJANJIAN ──
