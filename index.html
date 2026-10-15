@@ -7852,6 +7852,12 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         var t = _pjTags[i], bil = pjTagBil(t.id);
         html += '<button data-lompat-tag="' + pjEsc(t.id) + '"' + (bil ? '' : ' class="kosong"') + '>' + pjEsc(t.nama) + ' (' + bil + ')</button>';
       }
+      // Paling bawah: TIADA TAG → terus ke kumpulan perjanjian belum ditag (bawah sekali laci)
+      if (_pjTags.length) {
+        var bilTiada = 0;
+        for (var j = 0; j < allPerjanjianK.length; j++) if (!pjTagCari(allPerjanjianK[j].tagId)) bilTiada++;
+        html += '<button data-lompat-tag="_tiada" style="border-style:dashed;"' + (bilTiada ? '' : ' class="kosong"') + '>TIADA TAG (' + bilTiada + ')</button>';
+      }
       panel.innerHTML =
         '<button class="pj-tag-gulung" id="btn-pj-tag-naik" data-gulung="-1">Naik</button>' +
         '<div class="pj-tag-skrol" id="pj-tag-skrol">' + html + '</div>' +
