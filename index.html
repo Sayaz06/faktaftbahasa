@@ -316,6 +316,15 @@
     }
     .laci-tanda-btn.on { background: #000; color: #fff; }
     .laci-no { font-weight: bold; font-size: 0.78rem; margin-bottom: 4px; }
+    /* Butang terapung ATAS / PENANDA (kiri, atas butang Balik ke Menu) */
+    .laci-terapung {
+      position: fixed; left: 10px; z-index: 1000; width: 74px; padding: 9px 0;
+      border: 2px solid #000; background: #fff; color: #000; font-weight: bold; font-size: 0.8rem;
+      border-radius: 8px; cursor: pointer; font-family: inherit; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    .laci-terapung.ke-atas { bottom: 128px; }
+    .laci-terapung.ke-penanda { bottom: 76px; }
+    body.kb-buka .laci-terapung { display: none; }
 
     /* ── LACI PERJANJIAN (KINDLE) ── */
     .pj-card { border: 2px solid #000; border-radius: 8px; padding: 8px; margin-bottom: 8px; background: #fff; }
@@ -1029,6 +1038,8 @@
     <!-- Pergi terus ke #nombor · Penanda: Edit / Tanda → masuk semula terus ke laci bertanda -->
     <div class="laci-pergi"><input id="mm-pergi" type="number" inputmode="numeric" placeholder="Pergi ke # ..."><button data-pergi="mainMotivation">Pergi</button><button data-ke-penanda="mainMotivation">Penanda</button></div>
     <div id="mm-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
+    <button class="laci-terapung ke-atas" data-ke-atas="mainMotivation">Atas</button>
+    <button class="laci-terapung ke-penanda" data-ke-penanda="mainMotivation">Penanda</button>
     <button id="btn-mm-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Balik ke Menu</button>
   </div>
 
@@ -1072,6 +1083,8 @@
     <!-- Pergi terus ke #nombor · Penanda: Edit / Tanda → masuk semula terus ke laci bertanda -->
     <div class="laci-pergi"><input id="om-pergi" type="number" inputmode="numeric" placeholder="Pergi ke # ..."><button data-pergi="otherMotivation">Pergi</button><button data-ke-penanda="otherMotivation">Penanda</button></div>
     <div id="om-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
+    <button class="laci-terapung ke-atas" data-ke-atas="otherMotivation">Atas</button>
+    <button class="laci-terapung ke-penanda" data-ke-penanda="otherMotivation">Penanda</button>
     <button id="btn-om-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Balik ke Menu</button>
   </div>
 
@@ -1144,6 +1157,8 @@
     <!-- Pergi terus ke #nombor · Penanda: Edit / Tanda → masuk semula terus ke laci bertanda -->
     <div class="laci-pergi"><input id="pj-pergi" type="number" inputmode="numeric" placeholder="Pergi ke # ..."><button data-pergi="perjanjian">Pergi</button><button data-ke-penanda="perjanjian">Penanda</button></div>
     <div id="pj-list" style="overflow-y:auto;flex:1;padding-bottom:70px;"></div>
+    <button class="laci-terapung ke-atas" data-ke-atas="perjanjian">Atas</button>
+    <button class="laci-terapung ke-penanda" data-ke-penanda="perjanjian">Penanda</button>
     <button id="btn-pj-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Balik ke Menu</button>
   </div>
 
@@ -1728,8 +1743,25 @@
         } else if (inp) { inp.blur(); }
         return;
       }
+      // Butang terapung Atas: terus ke paling atas (kotak Cop / Tambah / Pergi)
+      var ka = t.getAttribute('data-ke-atas');
+      if (ka) {
+        var la = document.getElementById(PENANDA_LIST[ka]);
+        if (la) la.scrollTop = 0;
+        window.scrollTo(0, 0);
+        if (document.documentElement) document.documentElement.scrollTop = 0;
+        if (document.body) document.body.scrollTop = 0;
+        return;
+      }
       var kp = t.getAttribute('data-ke-penanda');
-      if (kp) { if (!lompatKePenanda(kp)) t.textContent = 'Tiada penanda'; return; }
+      if (kp) {
+        if (!lompatKePenanda(kp)) {
+          var asal = t.textContent;
+          t.textContent = 'Tiada';
+          setTimeout(function() { t.textContent = asal; }, 1500);
+        }
+        return;
+      }
       var tj = t.getAttribute('data-tanda');
       if (tj) {
         var kad = t; while (kad && !(kad.getAttribute && kad.getAttribute('data-pid'))) kad = kad.parentNode;
