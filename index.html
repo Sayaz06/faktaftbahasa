@@ -330,9 +330,16 @@
     #screen-perjanjian .laci-terapung.ke-penanda { bottom: 128px; }
     .laci-terapung.ke-tag { bottom: 76px; }
     .pj-tag-panel {
-      position: fixed; left: 92px; bottom: 76px; z-index: 1001; width: 180px; max-height: 60vh; overflow-y: auto;
+      position: fixed; left: 92px; bottom: 76px; z-index: 1001; width: 190px; max-height: 80vh;
+      flex-direction: column; box-sizing: border-box;
       background: #fff; border: 2px solid #000; border-radius: 8px; padding: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.35);
     }
+    /* Senarai tag boleh skrol (sapu atas/bawah) + butang Naik / Turun untuk Kindle */
+    .pj-tag-skrol { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .pj-tag-panel button.pj-tag-gulung {
+      flex: 0 0 auto; text-align: center; background: #000; color: #fff; padding: 7px 6px; margin: 2px 0;
+    }
+    .pj-tag-panel button.pj-tag-gulung:disabled { background: #fff; color: #bbb; border-color: #bbb; }
     .pj-tag-panel button {
       display: block; width: 100%; margin: 3px 0; padding: 9px 6px; border: 2px solid #000; background: #fff; color: #000;
       font-weight: bold; font-size: 0.8rem; border-radius: 6px; text-align: left; font-family: inherit; cursor: pointer;
@@ -7752,6 +7759,17 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       _skrolKeKad(list, el);
       return true;
     }
+    // Naik / Turun: aktif hanya bila senarai lebih panjang dari panel
+    function pjTagKemaskiniGulung() {
+      var sk = document.getElementById('pj-tag-skrol');
+      var naik = document.getElementById('btn-pj-tag-naik'), turun = document.getElementById('btn-pj-tag-turun');
+      if (!sk || !naik || !turun) return;
+      var boleh = sk.scrollHeight > sk.clientHeight + 2;
+      naik.style.display = boleh ? 'block' : 'none';
+      turun.style.display = boleh ? 'block' : 'none';
+      naik.disabled = sk.scrollTop <= 1;
+      turun.disabled = sk.scrollTop + sk.clientHeight >= sk.scrollHeight - 1;
+    }
     document.getElementById('btn-pj-tag-terapung').onclick = function() {
       var panel = document.getElementById('pj-tag-panel');
       if (panel.style.display !== 'none') { panel.style.display = 'none'; return; }
@@ -7761,11 +7779,27 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         var t = _pjTags[i], bil = pjTagBil(t.id);
         html += '<button data-lompat-tag="' + pjEsc(t.id) + '"' + (bil ? '' : ' class="kosong"') + '>' + pjEsc(t.nama) + ' (' + bil + ')</button>';
       }
-      panel.innerHTML = html;
-      panel.style.display = 'block';
+      panel.innerHTML =
+        '<button class="pj-tag-gulung" id="btn-pj-tag-naik" data-gulung="-1">Naik</button>' +
+        '<div class="pj-tag-skrol" id="pj-tag-skrol">' + html + '</div>' +
+        '<button class="pj-tag-gulung" id="btn-pj-tag-turun" data-gulung="1">Turun</button>';
+      // Tinggi panel: dari atas skrin hingga atas butang Tag
+      panel.style.maxHeight = Math.max(160, (window.innerHeight || 600) - 90) + 'px';
+      panel.style.display = 'flex';
+      var sk = document.getElementById('pj-tag-skrol');
+      sk.scrollTop = 0;
+      sk.onscroll = pjTagKemaskiniGulung;
+      pjTagKemaskiniGulung();
     };
     document.getElementById('pj-tag-panel').addEventListener('click', function(e) {
       var el = e.target;
+      var g = el && el.getAttribute ? el.getAttribute('data-gulung') : null;
+      if (g) {
+        // Gulung hampir satu skrin panel (tinggal satu butang sebagai rujukan)
+        var sk = document.getElementById('pj-tag-skrol');
+        if (sk) { sk.scrollTop += parseInt(g, 10) * Math.max(40, sk.clientHeight - 44); pjTagKemaskiniGulung(); }
+        return;
+      }
       while (el && el !== this && !(el.getAttribute && el.getAttribute('data-lompat-tag'))) el = el.parentNode;
       if (!el || el === this) return;
       if (lompatKeTag(el.getAttribute('data-lompat-tag'))) { this.style.display = 'none'; return; }
