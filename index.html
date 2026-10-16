@@ -7395,10 +7395,14 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         if (adaTag) {
           var kunci = namaTag ? p.tagId : '_tiada';
           if (kunci !== kunciLepas) {
+            var kt = pjTiadaKira();
             html += '<div class="pj-tag-kepala" data-tag-kepala="' + pjEsc(kunci) + '">' +
-              (namaTag ? pjEsc(namaTag) + ' (' + pjTagBil(p.tagId) + ')' : 'TIADA TAG') + '</div>';
+              (namaTag ? pjEsc(namaTag) + ' (' + pjTagBil(p.tagId) + ')' :
+                'TIADA TAG (' + kt.nampak + ')' + (kt.arkib ? ' · ' + kt.arkib + ' DIARKIB' : '')) + '</div>';
             kunciLepas = kunci;
           }
+          // Tiada tag + diarkib → tidak dipapar dalam laci (data kekal, boleh Unarchive)
+          if (!namaTag && p.arkib) return;
         }
         html += '<div class="pj-card" data-idx="' + i + '" data-pid="' + pjEsc(p.id) + '">' +
           '<div class="pj-head">' +
@@ -7602,7 +7606,12 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       for (i = 0; i < susunan.length; i++) {
         var p = susunan[i], o = {}, ubahP = false;
         if (p.order !== i) { o.order = i; ubahP = true; }
-        if (ubah.hasOwnProperty(p.id)) { o.tagId = ubah[p.id]; ubahP = true; }
+        if (ubah.hasOwnProperty(p.id)) {
+          o.tagId = ubah[p.id];
+          // Diberi tag → keluar dari arkib secara automatik
+          if (ubah[p.id] && p.arkib) { o.arkib = false; p.arkib = false; }
+          ubahP = true;
+        }
         if (ubahP) { batch.update(pjCol().doc(p.id), o); ada = true; }
       }
       if (!ada) { renderPjTagPage(); if (selepas) selepas(); return; }
@@ -7854,9 +7863,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       }
       // Paling bawah: TIADA TAG → terus ke kumpulan perjanjian belum ditag (bawah sekali laci)
       if (_pjTags.length) {
-        var bilTiada = 0;
-        for (var j = 0; j < allPerjanjianK.length; j++) if (!pjTagCari(allPerjanjianK[j].tagId)) bilTiada++;
-        html += '<button data-lompat-tag="_tiada" style="border-style:dashed;"' + (bilTiada ? '' : ' class="kosong"') + '>TIADA TAG (' + bilTiada + ')</button>';
+        var kt = pjTiadaKira();
+        html += '<button data-lompat-tag="_tiada" style="border-style:dashed;"' + ((kt.nampak || kt.arkib) ? '' : ' class="kosong"') + '>' + pjTiadaLabel(kt) + '</button>';
       }
       panel.innerHTML =
         '<button class="pj-tag-gulung" id="btn-pj-tag-naik" data-gulung="-1">Naik</button>' +
@@ -7870,6 +7878,39 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       sk.onscroll = pjTagKemaskiniGulung;
       pjTagKemaskiniGulung();
     };
+    // ── ARKIB perjanjian TIADA TAG (medan arkib pada perjanjian — tiada yang dipadam) ──
+    function pjTiadaKira() {
+      var r = { nampak: 0, arkib: 0 };
+      for (var i = 0; i < allPerjanjianK.length; i++) {
+        var p = allPerjanjianK[i];
+        if (pjTagCari(p.tagId)) continue;
+        if (p.arkib) r.arkib++; else r.nampak++;
+      }
+      return r;
+    }
+    function pjTiadaLabel(kt) {
+      return 'TIADA TAG (' + kt.nampak + ')' + (kt.arkib ? ' · arkib ' + kt.arkib : '');
+    }
+    // arkib = true: arkibkan semua yang tiada tag & sedang dipapar · false: keluarkan semua dari arkib
+    function pjArkibTiada(arkib) {
+      if (!currentUser) return;
+      if (_pjSusunBusy) { pjStatus('Tunggu sebentar...', 1500); return; }
+      var batch = db.batch(), n = 0;
+      for (var i = 0; i < allPerjanjianK.length; i++) {
+        var p = allPerjanjianK[i];
+        if (pjTagCari(p.tagId) || !!p.arkib === arkib) continue;
+        batch.update(pjCol().doc(p.id), { arkib: arkib });
+        p.arkib = arkib;
+        n++;
+      }
+      if (!n) { pjStatus(arkib ? 'Tiada untuk diarkib' : 'Arkib kosong', 2000); return; }
+      _pjSusunBusy = true;
+      pjStatus('Menyimpan...');
+      batch.commit()
+        .then(function() { pjStatus(arkib ? (n + ' perjanjian diarkib') : (n + ' perjanjian dikeluarkan dari arkib'), 2500); })
+        .catch(function(e) { pjStatus('Gagal: ' + (e.message || e), 4000); })
+        .then(function() { _pjSusunBusy = false; renderPerjanjianK(); renderPjTagPage(); });
+    }
     document.getElementById('pj-tag-panel').addEventListener('click', function(e) {
       var el = e.target;
       var g = el && el.getAttribute ? el.getAttribute('data-gulung') : null;
@@ -7879,8 +7920,31 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         if (sk) { sk.scrollTop += parseInt(g, 10) * Math.max(40, sk.clientHeight - 44); pjTagKemaskiniGulung(); }
         return;
       }
+      // Pilihan Archive / Unarchive
+      var ak = el && el.getAttribute ? el.getAttribute('data-arkib') : null;
+      if (ak) { this.style.display = 'none'; pjArkibTiada(ak === '1'); return; }
       while (el && el !== this && !(el.getAttribute && el.getAttribute('data-lompat-tag'))) el = el.parentNode;
       if (!el || el === this) return;
+      // TIADA TAG: tekan 1 = turun ke kumpulan · tekan lagi = pilihan Archive / Unarchive
+      if (el.getAttribute('data-lompat-tag') === '_tiada') {
+        var kt = pjTiadaKira();
+        if (el.getAttribute('data-tahap') === '1') {
+          var pil = document.createElement('div');
+          pil.innerHTML =
+            '<button data-arkib="1"' + (kt.nampak ? '' : ' class="kosong"') + '>Archive (' + kt.nampak + ')</button>' +
+            '<button data-arkib="0"' + (kt.arkib ? '' : ' class="kosong"') + '>Unarchive (' + kt.arkib + ')</button>';
+          e.stopPropagation(); // butang lama dibuang — jangan biar "tekan di luar" tutup panel
+          el.parentNode.replaceChild(pil, el);
+          pjTagKemaskiniGulung();
+          var skp = document.getElementById('pj-tag-skrol');
+          if (skp) skp.scrollTop = skp.scrollHeight;
+          return;
+        }
+        lompatKeTag('_tiada');
+        el.setAttribute('data-tahap', '1');
+        el.textContent = pjTiadaLabel(kt) + ' - tekan lagi';
+        return;
+      }
       if (lompatKeTag(el.getAttribute('data-lompat-tag'))) { this.style.display = 'none'; return; }
       var asal = el.textContent;
       el.textContent = 'Tiada perjanjian';
