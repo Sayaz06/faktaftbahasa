@@ -864,6 +864,8 @@
     <div class="sub" id="menu-user">—</div>
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
+    <!-- SOALAN FAKTA: ON → Laci Fakta papar SOALAN sahaja (baris yang ada soalan) · tiada SR -->
+    <button id="btn-soalan-fakta" class="btn" style="margin-top:4px;">SOALAN FAKTA: OFF</button>
     <!-- Ulang SR Bahasa tanpa had (atas → bawah, pusing semula) — TIADA kesan pada jadual SR -->
     <button id="btn-go-sr-bebas" class="btn">SR Bebas (Bahasa)</button>
     <button id="btn-go-gotick" class="btn">Go-Tick</button>
@@ -1186,6 +1188,36 @@
     </div>
     <button id="btn-om-edit-del" style="width:100%;margin-top:8px;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:4px;cursor:pointer;">Padam Laci Ini</button>
     <div id="om-edit-msg" style="text-align:center;font-size:0.75rem;margin-top:6px;min-height:1em;font-weight:bold;"></div>
+  </div>
+
+  <!-- SCREEN: SOALAN FAKTA (mod ulang kaji periksa — tiada SR) -->
+  <style>
+    #btn-soalan-fakta.on { background: #000; color: #fff; }
+    .sf-label { font-size: 0.72rem; font-weight: bold; letter-spacing: 0.08em; margin: 8px 0 3px; }
+    .sf-kotak {
+      border: 2px solid #000; border-radius: 8px; padding: 10px; font-size: 1.05rem; line-height: 1.55;
+      white-space: pre-wrap; word-break: break-word; min-height: 60px;
+    }
+    .sf-fakta { font-size: 0.85rem; line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: #333; }
+  </style>
+  <div id="screen-soalan-fakta" class="screen">
+    <div class="status-bar" id="sf-status">SOALAN FAKTA</div>
+    <div id="sf-laci" style="font-size:0.8rem;font-weight:bold;margin-top:6px;"></div>
+    <div id="sf-kira" style="font-size:0.72rem;color:#444;"></div>
+    <div class="sf-label">SOALAN</div>
+    <div id="sf-soalan" class="sf-kotak"></div>
+    <div id="sf-jawapan-wrap" style="display:none;">
+      <div class="sf-label">JAWAPAN</div>
+      <div id="sf-jawapan" class="sf-kotak"></div>
+      <div class="sf-label">FAKTA ASAL</div>
+      <div id="sf-fakta" class="sf-fakta"></div>
+    </div>
+    <button id="btn-sf-jawapan" class="btn btn-primary" style="margin-top:10px;">Tunjuk Jawapan</button>
+    <div style="display:flex;gap:6px;">
+      <button id="btn-sf-sebelum" class="btn" style="flex:1;">Sebelum</button>
+      <button id="btn-sf-seterusnya" class="btn btn-primary" style="flex:1;">Seterusnya</button>
+    </div>
+    <button id="btn-sf-back" class="btn" style="margin-top:10px;">Balik ke Menu</button>
   </div>
 
   <!-- SCREEN: LACI PERJANJIAN (sync dengan app phone) -->
@@ -5472,7 +5504,126 @@
     };
     document.getElementById('btn-logout').onclick = function() { auth.signOut(); };
     document.getElementById('btn-go-bahasa').onclick = function() { srBebas = false; startBahasa(); };
-    document.getElementById('btn-go-fakta').onclick = function() { srBebas = false; startFakta(); };
+    document.getElementById('btn-go-fakta').onclick = function() {
+      // SOALAN FAKTA ON → mod soalan (tiada SR, tiada fasa) · OFF → Laci Fakta biasa
+      if (sfOn()) { bukaSoalanFakta(); return; }
+      srBebas = false; startFakta();
+    };
+
+    // ══════════════════════════════════════════
+    // SOALAN FAKTA — setiap baris fakta boleh ada medan soalan + jawapan (diisi di app phone)
+    // ON: Laci Fakta papar SOALAN sahaja → Tunjuk Jawapan (jawapan + fakta asal) → Seterusnya
+    // Ikut susunan laci topik aktif, pusing semula bila habis. TIDAK sentuh SR / progress hafalan.
+    // Tetapan ON/OFF disimpan dalam Kindle ini sahaja.
+    // ══════════════════════════════════════════
+    var sfSenarai = [], sfIdx = 0, sfTopikId = null, sfJawapanNampak = false;
+    function sfOn() {
+      try { return localStorage.getItem('soalan_fakta_on') === '1'; } catch (e) { return false; }
+    }
+    function sfKemaskiniButang() {
+      var b = document.getElementById('btn-soalan-fakta');
+      if (!b) return;
+      b.textContent = 'SOALAN FAKTA: ' + (sfOn() ? 'ON' : 'OFF');
+      b.className = sfOn() ? 'btn on' : 'btn';
+    }
+    sfKemaskiniButang();
+    document.getElementById('btn-soalan-fakta').onclick = function() {
+      try { localStorage.setItem('soalan_fakta_on', sfOn() ? '0' : '1'); } catch (e) {}
+      sfKemaskiniButang();
+    };
+
+    function bukaSoalanFakta() {
+      if (!currentUser) return;
+      sfSenarai = []; sfIdx = 0; sfJawapanNampak = false;
+      showScreen('screen-soalan-fakta');
+      setText('sf-status', 'SOALAN FAKTA · Memuatkan...');
+      setText('sf-laci', ''); setText('sf-kira', ''); setText('sf-soalan', '');
+      document.getElementById('sf-jawapan-wrap').style.display = 'none';
+      loadCollections(function() {
+        var topik = null;
+        for (var i = 0; i < allTopics.length; i++) {
+          if (allTopics[i].isActive) { topik = allTopics[i]; break; }
+        }
+        if (!topik) {
+          setText('sf-status', 'SOALAN FAKTA');
+          setText('sf-soalan', 'Tiada topik aktif.\nTick SATU topik di phone.');
+          return;
+        }
+        db.collection('users').doc(currentUser.uid).collection('drawer')
+          .where('topicId', '==', topik.id).get()
+          .then(function(snap) {
+            var ds = [];
+            snap.forEach(function(doc) { var x = doc.data(); x.id = doc.id; ds.push(x); });
+            ds.sort(function(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); });
+            sfSenarai = [];
+            for (var j = 0; j < ds.length; j++) {
+              var items = ds[j].items || [];
+              for (var k = 0; k < items.length; k++) {
+                var it = items[k] || {};
+                var soalan = (it.soalan || '').trim();
+                if (!soalan) continue;
+                sfSenarai.push({
+                  soalan: soalan, jawapan: (it.jawapan || '').trim(),
+                  ayat: (it.ayat || it.text || '').trim(), title: ds[j].title || 'Laci', baris: k + 1
+                });
+              }
+            }
+            sfTopikId = topik.id;
+            var simpan = 0;
+            try { simpan = parseInt(localStorage.getItem('sf_pos_' + topik.id), 10) || 0; } catch (e) {}
+            sfIdx = (simpan >= 0 && simpan < sfSenarai.length) ? simpan : 0;
+            sfPapar();
+          })
+          .catch(function(e) {
+            setText('sf-status', 'SOALAN FAKTA');
+            setText('sf-soalan', 'Gagal memuatkan: ' + (e.message || e));
+          });
+      });
+    }
+
+    function sfPapar() {
+      var n = sfSenarai.length;
+      sfJawapanNampak = false;
+      document.getElementById('sf-jawapan-wrap').style.display = 'none';
+      document.getElementById('btn-sf-jawapan').textContent = 'Tunjuk Jawapan';
+      if (!n) {
+        setText('sf-status', 'SOALAN FAKTA');
+        setText('sf-laci', ''); setText('sf-kira', '');
+        setText('sf-soalan', 'Belum ada soalan dalam topik aktif.\nTambah di app phone: Laci Fakta, tekan Soalan pada baris.');
+        return;
+      }
+      var s = sfSenarai[sfIdx];
+      setText('sf-status', 'SOALAN FAKTA · ' + (sfIdx + 1) + ' / ' + n);
+      setText('sf-laci', s.title + ' · Baris ' + s.baris);
+      setText('sf-kira', 'Soalan ' + (sfIdx + 1) + ' daripada ' + n);
+      setText('sf-soalan', s.soalan);
+      setText('sf-jawapan', s.jawapan || '(Tiada jawapan)');
+      var eq = s.ayat.indexOf('=');
+      var depan = eq !== -1 ? s.ayat.slice(0, eq).trim() : s.ayat;
+      var belakang = eq !== -1 ? s.ayat.slice(eq + 1).trim() : '';
+      setText('sf-fakta', depan + (belakang ? '\n' + formatKtoBaris(belakang) : ''));
+      try { localStorage.setItem('sf_pos_' + sfTopikId, String(sfIdx)); } catch (e) {}
+      window.scrollTo(0, 0);
+    }
+
+    document.getElementById('btn-sf-jawapan').onclick = function() {
+      if (!sfSenarai.length) return;
+      sfJawapanNampak = !sfJawapanNampak;
+      document.getElementById('sf-jawapan-wrap').style.display = sfJawapanNampak ? 'block' : 'none';
+      this.textContent = sfJawapanNampak ? 'Sorok Jawapan' : 'Tunjuk Jawapan';
+    };
+    document.getElementById('btn-sf-seterusnya').onclick = function() {
+      if (!sfSenarai.length) return;
+      sfIdx = (sfIdx + 1) % sfSenarai.length;
+      sfPapar();
+    };
+    document.getElementById('btn-sf-sebelum').onclick = function() {
+      if (!sfSenarai.length) return;
+      sfIdx = (sfIdx - 1 + sfSenarai.length) % sfSenarai.length;
+      sfPapar();
+    };
+    document.getElementById('btn-sf-back').onclick = function() { showScreen('screen-menu'); };
+
     document.getElementById('btn-go-sr-bebas').onclick = function() { startSRBebas(); };
     document.getElementById('btn-back-menu').onclick = function() {
       isLoading = false;
