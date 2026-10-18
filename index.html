@@ -875,6 +875,14 @@
     <button id="btn-go-reminder-list" class="btn">[ REMINDER ]</button>
     <button id="btn-go-other-motivation" class="btn">[ OTHER MOTIVATION ]</button>
     <button id="btn-go-perjanjian" class="btn">[ LACI PERJANJIAN ]</button>
+    <!-- IBADAH (dahulu app Tasbih Kindle) — senarai kategori & laci disediakan worker (kindle_ibadah) -->
+    <button id="btn-go-ib-tasbih" class="btn" style="margin-top:8px;">[ COUNTDOWN TASBIH ]</button>
+    <button id="btn-go-ib-doa" class="btn">[ DOA ]</button>
+    <button id="btn-go-ib-hadis" class="btn">[ HADIS ]</button>
+    <button id="btn-go-ib-solat" class="btn">[ KESALAHAN DAN KHUSYUK SOLAT ]</button>
+    <button id="btn-go-ib-wirid" class="btn">[ WIRID ]</button>
+    <!-- QURAN — sesi Quran sama macam Quran: ON (kemajuan kindle_quran/current), pusing 10 ayat setiap sesi -->
+    <button id="btn-go-quran" class="btn">[ QURAN ]</button>
     <button id="btn-go-telegram" class="btn" style="margin-top:8px;background:#0088cc;color:#fff;border-color:#0088cc;">Telegram</button>
     <button id="btn-jq" class="btn" style="margin-top:8px;">JQ: OFF</button>
     <!-- JQ: tajuk depan, ayat di Flip (Main / Other Motivation & Perjanjian sekaligus) -->
@@ -1412,6 +1420,77 @@
   </div>
   
   <button id="tips-close-btn" title="Tutup Tips">×</button>
+
+  <!-- ══════════ IBADAH: PILIH KATEGORI ══════════ -->
+  <style>
+    .ib-kat-item { border: 2px solid #000; border-radius: 6px; padding: 10px; margin-bottom: 6px; cursor: pointer; font-weight: bold; font-size: 0.95rem; }
+    .ib-kat-item.aktif { background: #000; color: #fff; }
+    .ib-kat-sub { font-size: 0.72rem; font-weight: normal; margin-top: 2px; }
+    .ib-kira { text-align: center; margin: 8px 0 4px; }
+    .ib-kira-no { font-size: 3.6rem; font-weight: bold; line-height: 1; }
+    .ib-kira-sub { font-size: 0.85rem; color: #555; margin-top: 2px; }
+    .ib-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; margin: 6px 0; }
+    .ib-bar-isi { height: 100%; background: #000; width: 0%; }
+    .ib-laci { border: 2px solid #000; border-radius: 6px; padding: 8px 10px; margin: 8px 0; }
+    .ib-laci-kat { font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; }
+    .ib-laci-nama { font-size: 1rem; margin-bottom: 6px; }
+    .ib-laci-zikir { font-size: 1.15rem; font-weight: bold; line-height: 1.45; white-space: pre-wrap; }
+    .ib-laci-zikir.ib-arab { font-family: 'UthmanicHafs', 'Traditional Arabic', serif; font-size: 1.5rem; font-weight: 600; line-height: 1.9; direction: rtl; text-align: right; }
+    .ib-laci-maksud { font-size: 0.88rem; color: #333; margin-top: 6px; line-height: 1.4; font-style: italic; white-space: pre-wrap; }
+    .ib-laci-target { font-size: 0.75rem; color: #666; margin-top: 4px; }
+    .ib-nav { display: flex; gap: 4px; margin: 4px 0; }
+    .ib-nav button, .ib-baris button { flex: 1; padding: 10px 4px; font-size: 0.82rem; font-weight: bold; border: 2px solid #000; background: #fff; color: #000; border-radius: 5px; cursor: pointer; font-family: inherit; }
+    .ib-baris { display: flex; gap: 4px; margin: 4px 0; }
+    #ib-tap { display: block; width: 100%; margin: 8px 0 6px; padding: 44px 8px; font-size: 1.35rem; font-weight: bold; border: 3px solid #000; background: #000; color: #fff; border-radius: 8px; cursor: pointer; font-family: inherit; }
+    #ib-tap.ib-tap-besar { padding: 150px 8px; }
+    #ib-tap.ib-tap-siap { background: #fff; color: #000; border-style: dashed; }
+  </style>
+  <div id="screen-ib-kat" class="screen">
+    <div class="status-bar" id="ib-kat-status">PILIH KATEGORI</div>
+    <div id="ib-kat-list" style="padding-bottom:70px;margin-top:6px;"></div>
+    <button id="btn-ib-kat-back" style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:999;box-shadow:0 4px 12px rgba(0,0,0,0.3);width:80%;max-width:300px;padding:12px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:8px;cursor:pointer;">Balik ke Menu</button>
+  </div>
+
+  <!-- ══════════ IBADAH: KIRAAN (TASBIH / DOA / HADIS / SOLAT / WIRID) ══════════ -->
+  <div id="screen-ib-kira" class="screen">
+    <div class="status-bar" id="ib-status">TASBIH</div>
+    <div id="ib-conn" style="font-size:0.65rem;color:#555;text-align:right;min-height:0.9em;"></div>
+    <div class="ib-kira">
+      <div class="ib-kira-no" id="ib-kira-no">-</div>
+      <div class="ib-kira-sub" id="ib-kira-sub"></div>
+    </div>
+    <div class="ib-bar"><div class="ib-bar-isi" id="ib-bar-isi"></div></div>
+    <div class="ib-laci" id="ib-laci" style="display:none;">
+      <div class="ib-laci-kat" id="ib-laci-kat"></div>
+      <div class="ib-laci-nama" id="ib-laci-nama"></div>
+      <div class="ib-laci-zikir" id="ib-laci-zikir"></div>
+      <div class="ib-laci-maksud" id="ib-laci-maksud"></div>
+      <div class="ib-laci-target" id="ib-laci-target"></div>
+    </div>
+    <div class="ib-nav" id="ib-nav" style="display:none;">
+      <button id="btn-ib-sebelum">Sebelum</button>
+      <div id="ib-laci-kira" style="flex:0 0 auto;align-self:center;font-size:0.78rem;font-weight:bold;padding:0 6px;"></div>
+      <button id="btn-ib-seterusnya">Seterusnya</button>
+    </div>
+    <button id="ib-tap">TAP</button>
+    <div class="ib-baris">
+      <button id="btn-ib-balik">Balik</button>
+      <button id="btn-ib-segar">Segar Semula</button>
+      <button id="btn-ib-reset">Reset</button>
+    </div>
+    <div id="ib-err" class="msg error"></div>
+  </div>
+  <div id="ib-reset-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border:3px solid #000;border-radius:10px;padding:20px;width:85%;max-width:320px;text-align:center;">
+      <div style="font-size:0.9rem;font-weight:bold;margin-bottom:10px;">Taip "reset" untuk confirm:</div>
+      <input id="ib-reset-input" type="text" placeholder="reset" style="width:100%;padding:10px;font-size:1rem;border:2px solid #000;border-radius:6px;text-align:center;box-sizing:border-box;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;">
+        <button id="btn-ib-reset-batal" style="flex:1;padding:10px;border:2px solid #000;background:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Batal</button>
+        <button id="btn-ib-reset-ok" style="flex:1;padding:10px;border:2px solid #000;background:#000;color:#fff;font-weight:bold;border-radius:6px;cursor:pointer;">Reset</button>
+      </div>
+      <div id="ib-reset-err" style="font-size:0.78rem;margin-top:8px;min-height:1em;font-weight:bold;"></div>
+    </div>
+  </div>
 
   <div id="screen-play" class="screen">
     <div class="status-bar" id="play-status">—</div>
@@ -5430,6 +5509,354 @@
         .collection('kindle_settings').doc('quran_jq')
         .set({ aktif: quranAktif }).catch(function() {});
     };
+
+    // ══════════════════════════════════════════
+    // QURAN (menu) — guna sesi Quran yang sama dengan Quran: ON
+    // 10 ayat setiap sesi → habis → terus sesi seterusnya. Kemajuan: kindle_quran/current (sama).
+    // Tekan Menu untuk keluar.
+    // ══════════════════════════════════════════
+    var quranSolo = false;
+    function _quranSoloButang(papar) {
+      var ids = ['btn-flip', 'btn-tips'];
+      for (var i = 0; i < ids.length; i++) {
+        var b = document.getElementById(ids[i]);
+        if (b) b.style.visibility = papar ? '' : 'hidden';
+      }
+    }
+    function tamatQuranSolo() {
+      if (!quranSolo) return;
+      quranSolo = false;
+      window._qjqHandler = null;
+      var bu = document.getElementById('btn-quran-undo');
+      if (bu) bu.style.display = 'none';
+      var m = document.getElementById('main-text');
+      if (m) m.className = 'big-text';
+      _quranSoloButang(true);
+    }
+    document.getElementById('btn-go-quran').onclick = function() {
+      if (!currentUser) return;
+      quranSolo = true;
+      showScreen('screen-play');
+      setCardImage('');
+      var tb = document.getElementById('taip-ayat-box');
+      if (tb) tb.style.display = 'none';
+      _quranSoloButang(false);
+      setText('play-status', 'QURAN · Memuatkan...');
+      setText('play-mode', 'QURAN');
+      setText('main-text', 'Memuatkan ayat...');
+      setText('play-progress', ''); setText('play-meta', ''); setText('play-err', '');
+      _kemajuanCacheKindle = null;
+      function sesi() {
+        if (!quranSolo) return;
+        tunjukQuranJQ(function() { if (quranSolo) sesi(); });
+      }
+      sesi();
+    };
+    document.getElementById('btn-back-menu').addEventListener('click', tamatQuranSolo);
+
+    // ══════════════════════════════════════════
+    // IBADAH — Countdown Tasbih / Doa / Hadis / Solat / Wirid (dahulu app Tasbih Kindle)
+    // Kategori & laci disediakan WORKER dalam users/{uid}/kindle_ibadah:
+    //   {mode}                  → indeks { kategori:[{id,name,bil,bahagian,versi}], semua:{bil,bahagian,versi} }
+    //   {mode}__{timeId}__{n}   → { laci:[{id,title,zikir,maksud,target,timeId}] }
+    //   doa__semua__{n}         → Baca Semua Doa
+    // Kindle baca 1 dokumen indeks + dokumen kategori yang dibuka sahaja (cache ikut versi).
+    // Worker belum dikemas kini → baca terus dari koleksi asal (sekali, cache).
+    // Kiraan harian: {koleksi}/{YYYY-MM-DD} — satu dokumen, sync dua hala dengan phone.
+    // ══════════════════════════════════════════
+    var IB_TARGET = { tasbih: 10000, doa: 1000, hadis: 10, solat: 33, wirid: 100 };
+    var IB_KIRA = { tasbih: 'tasbih', doa: 'doa_tasbih', hadis: 'hadis_tasbih', solat: 'solat_tasbih', wirid: 'wirid_tasbih' };
+    var IB_TIMES = { doa: 'doa_times', hadis: 'hadis_times', solat: 'solat_times', wirid: 'routine_times' };
+    var IB_LACI = { doa: 'doa_drawers', hadis: 'hadis_drawers', solat: 'solat_drawers', wirid: 'routine_drawers' };
+    var IB_NAMA = { tasbih: 'COUNTDOWN TASBIH', doa: 'DOA', hadis: 'HADIS', solat: 'SOLAT', wirid: 'WIRID' };
+    var IB_KAT_TAJUK = { doa: 'PILIH KATEGORI DOA', hadis: 'PILIH KITAB ATAU BAB HADIS', solat: 'PILIH KATEGORI SOLAT', wirid: 'PILIH KATEGORI WIRID' };
+    var IB_TAP = { doa: 'TAP - BACA DOA', hadis: 'TAP - BACA HADIS', solat: 'TAP - BACA SOLAT', wirid: 'TAP - BACA WIRID' };
+
+    var ibMode = null, ibIndeks = null, ibCache = {}, ibLaciAktif = [], ibIdx = 0, ibTimeId = null, ibSemua = false;
+    var ibKira = null, ibKiraUnsub = null, ibIdxUnsub = null, ibTulisIdxMasa = 0, ibTapAkhir = 0, ibBelumSimpan = false;
+
+    function ibRef(nama) {
+      return db.collection('users').doc(currentUser.uid).collection('kindle_ibadah').doc(nama);
+    }
+    function ibHariIni() {
+      var d = new Date(Date.now() + 8 * 60 * 60 * 1000);
+      return d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2) + '-' + ('0' + d.getUTCDate()).slice(-2);
+    }
+    function ibIkutTajuk(a, b) { return (a.title || '').localeCompare(b.title || '', undefined, { numeric: true }); }
+    function ibIkutNama(a, b) { return (a.name || '').localeCompare(b.name || '', undefined, { numeric: true }); }
+    function ibMasa(ts) {
+      var d = new Date(ts + 8 * 60 * 60 * 1000), h = d.getUTCHours();
+      return (h % 12 || 12) + ':' + ('0' + d.getUTCMinutes()).slice(-2) + (h >= 12 ? 'pm' : 'am');
+    }
+
+    // ── MUAT INDEKS (1 dokumen dari worker) ──
+    function ibMuatIndeks(mode, cb) {
+      ibRef(mode).get().then(function(s) {
+        if (s.exists && s.data().kategori) { cb(s.data()); return; }
+        ibMuatTerus(mode, cb);
+      }).catch(function() { ibMuatTerus(mode, cb); });
+    }
+    // Fallback (worker belum dikemas kini): baca kategori + laci mod ini terus, sekali, simpan cache
+    function ibMuatTerus(mode, cb) {
+      if (ibCache['_terus_' + mode]) { cb(ibCache['_terus_' + mode]); return; }
+      var u = db.collection('users').doc(currentUser.uid);
+      Promise.all([u.collection(IB_TIMES[mode]).get(), u.collection(IB_LACI[mode]).get()]).then(function(r) {
+        var times = [], laci = [];
+        r[0].forEach(function(d) { var x = d.data(); times.push({ id: d.id, name: x.name || '' }); });
+        r[1].forEach(function(d) {
+          var x = d.data();
+          if (!(x.zikir || x.maksud || x.title)) return;
+          laci.push({ id: d.id, title: x.title || '', zikir: x.zikir || '', maksud: x.maksud || '', target: x.target || '', timeId: x.timeId || '' });
+        });
+        laci.sort(ibIkutTajuk);
+        times.sort(ibIkutNama);
+        var indeks = { kategori: [], terus: true }, semua = [], dahAda = {};
+        for (var i = 0; i < times.length; i++) {
+          var l = laci.filter(function(x) { return x.timeId === times[i].id; });
+          if (!l.length) continue;
+          indeks.kategori.push({ id: times[i].id, name: times[i].name || '(Tanpa nama)', bil: l.length });
+          ibCache[mode + '__' + times[i].id] = l;
+          for (var j = 0; j < l.length; j++) { semua.push(l[j]); dahAda[l[j].id] = 1; }
+        }
+        for (var k = 0; k < laci.length; k++) if (!dahAda[laci[k].id]) semua.push(laci[k]);
+        if (mode === 'doa' && semua.length) { indeks.semua = { bil: semua.length }; ibCache['doa__semua'] = semua; }
+        ibCache['_terus_' + mode] = indeks;
+        cb(indeks);
+      }).catch(function(e) { cb(null, e); });
+    }
+    // Laci satu kategori (atau 'semua') — dokumen bahagian dari worker, cache ikut versi
+    function ibMuatLaci(mode, kunci, info, cb) {
+      var k = mode + '__' + kunci, kv = k + '@' + (info && info.versi || '');
+      if (ibCache[kv]) { cb(ibCache[kv]); return; }
+      if (ibCache[k] && (!info || !info.versi)) { cb(ibCache[k]); return; }
+      var n = (info && info.bahagian) || 1, hasil = [], i = 1;
+      function seterusnya() {
+        if (i > n) { ibCache[kv] = hasil; cb(hasil); return; }
+        ibRef(k + '__' + i).get().then(function(s) {
+          if (s.exists && s.data().laci) hasil = hasil.concat(s.data().laci);
+          i++; seterusnya();
+        }).catch(function(e) { cb(null, e); });
+      }
+      seterusnya();
+    }
+
+    // ── MENU ──
+    function ibBukaKategori(mode) {
+      if (!currentUser) return;
+      ibMode = mode;
+      setText('ib-kat-status', IB_KAT_TAJUK[mode] + ' · Memuatkan...');
+      document.getElementById('ib-kat-list').innerHTML = '';
+      showScreen('screen-ib-kat');
+      ibMuatIndeks(mode, function(indeks, err) {
+        if (ibMode !== mode) return;
+        setText('ib-kat-status', IB_KAT_TAJUK[mode]);
+        if (!indeks) { document.getElementById('ib-kat-list').innerHTML = '<div class="msg error">Gagal memuatkan: ' + pjEsc((err && err.message) || '') + '</div>'; return; }
+        ibIndeks = indeks;
+        ibLukisKategori();
+      });
+    }
+    function ibLukisKategori() {
+      var list = document.getElementById('ib-kat-list'), html = '', kat = ibIndeks.kategori || [];
+      if (ibMode === 'doa' && ibIndeks.semua && ibIndeks.semua.bil) {
+        html += '<div class="ib-kat-item' + (ibSemua ? ' aktif' : '') + '" data-ib-kat="semua">Baca Semua Doa' +
+          '<div class="ib-kat-sub">' + ibIndeks.semua.bil + ' doa keseluruhan (ikut turutan kategori)</div></div>';
+      }
+      for (var i = 0; i < kat.length; i++) {
+        html += '<div class="ib-kat-item' + (!ibSemua && ibTimeId === kat[i].id ? ' aktif' : '') + '" data-ib-kat="' + pjEsc(kat[i].id) + '">' +
+          pjEsc(kat[i].name || '(Tanpa nama)') + '<div class="ib-kat-sub">' + kat[i].bil + ' laci</div></div>';
+      }
+      list.innerHTML = html || '<div class="msg">Tiada laci dalam mana-mana kategori.</div>';
+    }
+    document.getElementById('ib-kat-list').addEventListener('click', function(e) {
+      var el = e.target;
+      while (el && el !== this && !(el.getAttribute && el.getAttribute('data-ib-kat'))) el = el.parentNode;
+      if (!el || el === this || !ibIndeks) return;
+      var id = el.getAttribute('data-ib-kat'), mode = ibMode, info = null;
+      if (id === 'semua') info = ibIndeks.semua;
+      else for (var i = 0; i < ibIndeks.kategori.length; i++) if (ibIndeks.kategori[i].id === id) info = ibIndeks.kategori[i];
+      setText('ib-kat-status', IB_KAT_TAJUK[mode] + ' · Memuatkan laci...');
+      ibMuatLaci(mode, id, info, function(laci, err) {
+        if (ibMode !== mode) return;
+        setText('ib-kat-status', IB_KAT_TAJUK[mode]);
+        if (!laci) { setText('ib-kat-status', 'Gagal: ' + ((err && err.message) || '')); return; }
+        ibSemua = id === 'semua';
+        ibTimeId = ibSemua ? null : id;
+        ibLaciAktif = laci;
+        ibIdx = 0;
+        if (ibSemua) {
+          db.collection('users').doc(currentUser.uid).collection('settings').doc('doaReadAll').get()
+            .then(function(s) { var n = s.exists ? (s.data().lastIndex || 0) : 0; ibIdx = (n >= 0 && n < laci.length) ? n : 0; ibMulaKira(mode); })
+            .catch(function() { ibMulaKira(mode); });
+        } else {
+          ibMulaKira(mode);
+        }
+      });
+    });
+    document.getElementById('btn-ib-kat-back').onclick = function() { showScreen('screen-menu'); };
+
+    // ── SKRIN KIRAAN ──
+    function ibHentiDengar() {
+      if (ibKiraUnsub) { ibKiraUnsub(); ibKiraUnsub = null; }
+      if (ibIdxUnsub) { ibIdxUnsub(); ibIdxUnsub = null; }
+    }
+    function ibMulaKira(mode) {
+      ibHentiDengar();
+      ibMode = mode; ibKira = null; ibBelumSimpan = false;
+      var adaLaci = mode !== 'tasbih';
+      document.getElementById('ib-laci').style.display = adaLaci ? 'block' : 'none';
+      document.getElementById('ib-nav').style.display = adaLaci ? 'flex' : 'none';
+      setText('ib-status', IB_NAMA[mode]);
+      setText('ib-conn', 'Menyambung...');
+      setText('ib-err', '');
+      setText('ib-kira-no', '-'); setText('ib-kira-sub', '');
+      document.getElementById('ib-tap').className = adaLaci ? '' : 'ib-tap-besar';
+      document.getElementById('ib-tap').textContent = adaLaci ? IB_TAP[mode] : 'TAP - ISTIGFAR';
+      showScreen('screen-ib-kira');
+      if (adaLaci) ibLukisLaci();
+      ibDengarKira(mode);
+      // Kedudukan laci ikut phone (Baca Semua Doa · Hadis)
+      var dok = (mode === 'doa' && ibSemua) ? 'doaReadAll' : (mode === 'hadis' ? 'hadisReadAll' : null);
+      if (dok) {
+        ibIdxUnsub = db.collection('users').doc(currentUser.uid).collection('settings').doc(dok)
+          .onSnapshot(function(s) {
+            if (!s.exists || Date.now() - ibTulisIdxMasa < 2000) return;
+            var n = s.data().lastIndex || 0;
+            if (n !== ibIdx && n >= 0 && n < ibLaciAktif.length) { ibIdx = n; ibLukisLaci(); }
+          }, function() {});
+      }
+    }
+    function ibDengarKira(mode) {
+      var ref = db.collection('users').doc(currentUser.uid).collection(IB_KIRA[mode]).doc(ibHariIni());
+      ref.get().then(function(s) {
+        if (!s.exists) return ref.set({ dateKey: ibHariIni(), createdAt: Date.now(), remaining: IB_TARGET[mode], done: false });
+      }).then(function() {
+        if (ibMode !== mode) return;
+        ibKiraUnsub = ref.onSnapshot(function(s) {
+          if (!s.exists) return;
+          ibKira = s.data();
+          ibBelumSimpan = false;
+          setText('ib-conn', 'Tersambung · ' + ibMasa(ibKira.updatedAt || ibKira.createdAt || Date.now()));
+          ibLukisKira();
+        }, function(e) { setText('ib-conn', 'Ralat sambungan'); setText('ib-err', e.message || String(e)); });
+      }).catch(function(e) { setText('ib-conn', 'Gagal sambung'); setText('ib-err', e.message || String(e)); });
+    }
+    function ibLukisKira() {
+      if (!ibKira) return;
+      var sasaran = IB_TARGET[ibMode];
+      var baki = (ibKira.remaining !== undefined && ibKira.remaining !== null) ? ibKira.remaining : sasaran;
+      var siap = !!ibKira.done, selesai = Math.max(0, sasaran - baki);
+      setText('ib-kira-no', siap ? 'SIAP ' + sasaran : String(baki));
+      setText('ib-kira-sub', siap ? 'Selesai hari ini!' : (selesai + ' / ' + sasaran + ' selesai'));
+      document.getElementById('ib-bar-isi').style.width = Math.min(100, sasaran ? Math.round(selesai / sasaran * 100) : 0) + '%';
+      var t = document.getElementById('ib-tap');
+      if (siap) { t.className = 'ib-tap-siap'; t.textContent = 'SELESAI'; }
+      else if (ibMode === 'tasbih') { t.className = 'ib-tap-besar'; t.textContent = baki > 5000 ? 'TAP - ISTIGFAR 5000x' : 'TAP - SELAWAT 5000x'; }
+      else { t.className = ''; t.textContent = IB_TAP[ibMode]; }
+    }
+    function ibLukisLaci() {
+      var n = ibLaciAktif.length;
+      if (!n) { setText('ib-laci-kat', 'Tiada laci'); setText('ib-laci-nama', ''); setText('ib-laci-zikir', ''); setText('ib-laci-maksud', ''); setText('ib-laci-target', ''); setText('ib-laci-kira', ''); return; }
+      if (ibIdx >= n) ibIdx = 0;
+      var l = ibLaciAktif[ibIdx], katNama = '';
+      var kat = (ibIndeks && ibIndeks.kategori) || [];
+      for (var i = 0; i < kat.length; i++) if (kat[i].id === l.timeId) katNama = kat[i].name;
+      setText('ib-laci-kat', 'kategori : ' + (katNama || IB_NAMA[ibMode]));
+      setText('ib-laci-nama', l.title || '');
+      setText('ib-laci-zikir', l.zikir || '');
+      // Teks Arab → fon Uthmani, kanan ke kiri · teks rumi → biasa
+      document.getElementById('ib-laci-zikir').className = /[\u0600-\u06FF]/.test(l.zikir || '') ? 'ib-laci-zikir ib-arab' : 'ib-laci-zikir';
+      setText('ib-laci-maksud', l.maksud || '');
+      setText('ib-laci-target', l.target ? ('Target: ' + l.target) : '');
+      setText('ib-laci-kira', (ibIdx + 1) + ' / ' + n);
+    }
+    function ibSimpanIdx() {
+      if (!currentUser) return;
+      ibTulisIdxMasa = Date.now();
+      var u = db.collection('users').doc(currentUser.uid), data = { lastIndex: ibIdx, updatedAt: Date.now() };
+      if (ibSemua && ibMode === 'doa') { u.collection('settings').doc('doaReadAll').set(data, { merge: true }).catch(function() {}); return; }
+      if (ibMode === 'hadis') { u.collection('settings').doc('hadisReadAll').set(data, { merge: true }).catch(function() {}); return; }
+      if (ibTimeId && IB_TIMES[ibMode]) u.collection(IB_TIMES[ibMode]).doc(ibTimeId).update(data).catch(function() {});
+    }
+    document.getElementById('btn-ib-sebelum').onclick = function() {
+      if (!ibLaciAktif.length) return;
+      ibIdx = (ibIdx - 1 + ibLaciAktif.length) % ibLaciAktif.length;
+      ibLukisLaci(); ibSimpanIdx();
+    };
+    document.getElementById('btn-ib-seterusnya').onclick = function() {
+      if (!ibLaciAktif.length) return;
+      ibIdx = (ibIdx + 1) % ibLaciAktif.length;
+      ibLukisLaci(); ibSimpanIdx();
+    };
+
+    // ── TAP: tolak 1 · simpan setiap 5 kiraan (atau bila siap / keluar) ──
+    function ibSimpanKira() {
+      if (!currentUser || !ibKira || !ibMode) return;
+      ibBelumSimpan = false;
+      db.collection('users').doc(currentUser.uid).collection(IB_KIRA[ibMode]).doc(ibHariIni())
+        .set({ remaining: ibKira.remaining, done: !!ibKira.done, updatedAt: Date.now() }, { merge: true })
+        .catch(function(e) { setText('ib-err', 'Gagal simpan: ' + (e.message || e)); });
+    }
+    function ibTap() {
+      if (!currentUser || !ibKira) { setText('ib-err', 'Belum tersambung'); return; }
+      var kini = Date.now();
+      if (kini - ibTapAkhir < 300) return;
+      ibTapAkhir = kini;
+      if (ibKira.done) { setText('ib-err', 'Kiraan hari ini sudah selesai'); return; }
+      setText('ib-err', '');
+      var baki = (ibKira.remaining !== undefined && ibKira.remaining !== null) ? ibKira.remaining : IB_TARGET[ibMode];
+      baki = Math.max(0, baki - 1);
+      ibKira.remaining = baki;
+      if (baki === 0) ibKira.done = true;
+      ibLukisKira();
+      ibBelumSimpan = true;
+      if (baki % 5 === 0 || ibKira.done) ibSimpanKira();
+      if (ibMode === 'tasbih') {
+        db.collection('users').doc(currentUser.uid).collection('kindle_session').doc('command')
+          .set({ command: 'tasbih_tap', ts: kini, source: 'kindle_tasbih' }, { merge: true }).catch(function() {});
+      }
+    }
+    document.getElementById('ib-tap').addEventListener('click', ibTap);
+    document.getElementById('ib-tap').addEventListener('touchstart', function(e) { e.preventDefault(); ibTap(); }, { passive: false });
+
+    document.getElementById('btn-ib-balik').onclick = function() {
+      if (ibBelumSimpan) ibSimpanKira();
+      ibHentiDengar();
+      if (ibMode === 'tasbih') { showScreen('screen-menu'); return; }
+      showScreen('screen-ib-kat');
+      if (ibIndeks) ibLukisKategori();
+    };
+    document.getElementById('btn-ib-segar').onclick = function() {
+      if (ibBelumSimpan) ibSimpanKira();
+      if (ibKiraUnsub) { ibKiraUnsub(); ibKiraUnsub = null; }
+      setText('ib-conn', 'Menyegar...');
+      ibDengarKira(ibMode);
+    };
+    document.getElementById('btn-ib-reset').onclick = function() {
+      document.getElementById('ib-reset-input').value = '';
+      setText('ib-reset-err', '');
+      document.getElementById('ib-reset-overlay').style.display = 'flex';
+      setTimeout(function() { document.getElementById('ib-reset-input').focus(); }, 100);
+    };
+    document.getElementById('btn-ib-reset-batal').onclick = function() {
+      document.getElementById('ib-reset-overlay').style.display = 'none';
+    };
+    document.getElementById('btn-ib-reset-ok').onclick = function() {
+      if (document.getElementById('ib-reset-input').value.trim().toLowerCase() !== 'reset') { setText('ib-reset-err', 'Taip "reset" untuk confirm.'); return; }
+      document.getElementById('ib-reset-overlay').style.display = 'none';
+      if (!currentUser || !ibMode) return;
+      db.collection('users').doc(currentUser.uid).collection(IB_KIRA[ibMode]).doc(ibHariIni())
+        .set({ remaining: IB_TARGET[ibMode], done: false, updatedAt: Date.now() }, { merge: true })
+        .catch(function(e) { setText('ib-err', 'Gagal reset: ' + (e.message || e)); });
+    };
+    document.getElementById('ib-reset-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.keyCode === 13) document.getElementById('btn-ib-reset-ok').click();
+    });
+
+    document.getElementById('btn-go-ib-tasbih').onclick = function() { if (currentUser) { ibSemua = false; ibTimeId = null; ibLaciAktif = []; ibMulaKira('tasbih'); } };
+    document.getElementById('btn-go-ib-doa').onclick = function() { ibBukaKategori('doa'); };
+    document.getElementById('btn-go-ib-hadis').onclick = function() { ibBukaKategori('hadis'); };
+    document.getElementById('btn-go-ib-solat').onclick = function() { ibBukaKategori('solat'); };
+    document.getElementById('btn-go-ib-wirid').onclick = function() { ibBukaKategori('wirid'); };
 
     document.getElementById('btn-quran-undo').onclick = function() {
       if (!window._qjqHandler || qjqIdx <= 0) return;
