@@ -846,6 +846,14 @@
     }
     /* Butang Hantar semasa mesej sedang dihantar */
     #btn-tg-send:disabled { background: #999 !important; border-color: #999 !important; color: #fff; }
+    /* GROK CHAT — skrin penuh, log skrol di tengah, kotak taip di bawah (pendek bila papan kekunci Kindle dibuka) */
+    #screen-grok.active { height: 100vh; min-height: 0; padding: 6px; overflow: hidden; }
+    body.kb-buka #screen-grok.active { overflow: hidden !important; }
+    #grok-log .gk-m { margin: 0 0 8px 0; padding: 6px 8px; font-size: 0.95rem; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; }
+    #grok-log .gk-u { border: 2px solid #000; border-radius: 6px; margin-left: 24px; }
+    #grok-log .gk-g { border-left: 4px solid #000; }
+    #grok-log .gk-e { border: 2px dashed #000; }
+    #grok-log .gk-n { font-size: 0.7rem; font-weight: bold; margin-bottom: 2px; }
   </style>
 
 </head>
@@ -1018,6 +1026,22 @@
     <div id="tg-keluar-baris" style="display:none;margin:6px 8px 8px;align-items:stretch;">
       <button id="btn-tg-keluar" class="btn" style="flex:1;min-width:0;width:auto;margin:0;height:48px;font-size:0.9rem;padding:0 10px;border-radius:6px 0 0 6px;">Keluar</button>
       <button id="btn-tg-kunci" style="flex:0 0 48px;width:48px;height:48px;margin:0;padding:0;border:2px solid #000;border-left:none;border-radius:0 6px 6px 0;background:#000;color:#fff;font-size:0.75rem;font-weight:bold;font-family:inherit;cursor:pointer;">Kunci</button>
+    </div>
+  </div>
+
+  <!-- ══ GROK CHAT (xAI) — tanya soalan random · guna API key xAI yang sama dengan app phone ══ -->
+  <div id="screen-grok" class="screen">
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:4px;">
+      <button id="btn-grok-menu" class="btn" style="width:auto;margin:0;padding:8px 12px;font-size:0.9rem;">Menu</button>
+      <div id="grok-status" style="flex:1;min-width:0;font-size:0.72rem;text-align:center;font-weight:bold;">GROK</div>
+      <button id="btn-grok-lama" class="btn" style="width:auto;margin:0;padding:8px 10px;font-size:0.9rem;">Lama</button>
+      <button id="btn-grok-baru" class="btn" style="width:auto;margin:0;padding:8px 10px;font-size:0.9rem;">Baru</button>
+    </div>
+    <div id="grok-log" style="flex:1;min-height:0;overflow-y:auto;border:2px solid #000;border-radius:6px;padding:6px;background:#fff;"></div>
+    <div id="grok-senarai" style="display:none;flex:1;min-height:0;overflow-y:auto;border:2px solid #000;border-radius:6px;padding:6px;background:#fff;"></div>
+    <div style="display:flex;gap:6px;align-items:flex-end;margin-top:6px;">
+      <textarea id="grok-input" rows="2" placeholder="Tanya Grok..." style="flex:1;min-width:0;font-size:1rem;line-height:1.3;padding:6px 8px;border:2px solid #000;border-radius:6px;resize:none;font-family:inherit;background:#fff;color:#000;box-sizing:border-box;"></textarea>
+      <button id="btn-grok-hantar" class="btn" style="width:auto;margin:0;padding:10px 12px;font-size:0.95rem;">Hantar</button>
     </div>
   </div>
 
@@ -11390,6 +11414,227 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
   </div>
 
   <!-- PAPAN KEKUNCI SENDIRI — ganti keyboard Kindle untuk SEMUA kotak taip -->
+  <script>
+  // ══ GROK CHAT (Kindle) — ES5 sahaja ══
+  // RINGAN: Kindle TIDAK panggil xAI. Soalan ditulis ke Firestore users/{uid}/grok_chat, WORKER (Railway) yang tanya Grok
+  // (key xAI dalam Firestore, sama dengan phone) dan tulis jawapan. Kindle hanya tunggu SATU dokumen itu.
+  // Chat lama disimpan di Firestore ikut 'sesi' dan dicari semula guna butang Lama (dibaca bila ditekan sahaja).
+  (function() {
+    var G = { sesi: '', msgs: [], unsub: null, tm: null, id: null, sibuk: false, uid: null };
+    var elLog = document.getElementById('grok-log');
+    var elSen = document.getElementById('grok-senarai');
+    var elIn = document.getElementById('grok-input');
+    var elSt = document.getElementById('grok-status');
+    var btnHantar = document.getElementById('btn-grok-hantar');
+    var btnLama = document.getElementById('btn-grok-lama');
+    var modLama = false;
+
+    function kol() { return db.collection('users').doc(currentUser.uid).collection('grok_chat'); }
+    function kunci() { return 'kgrok_sesi_' + (currentUser ? currentUser.uid : 'x'); }
+    function sesiBaru() { return 's' + Date.now().toString(36) + Math.floor(Math.random() * 46656).toString(36); }
+    function simpanSesi() { try { localStorage.setItem(kunci(), G.sesi); } catch (e) {} }
+    function status(t) { elSt.textContent = t; }
+    function dua(n) { return n < 10 ? '0' + n : '' + n; }
+    function tarikh(ms) {
+      var d = new Date(ms || 0);
+      return dua(d.getDate()) + '/' + dua(d.getMonth() + 1) + ' ' + dua(d.getHours()) + ':' + dua(d.getMinutes());
+    }
+    function kad(kelas, nama, teks) {
+      var d = document.createElement('div');
+      d.className = 'gk-m ' + kelas;
+      var n = document.createElement('div');
+      n.className = 'gk-n';
+      n.textContent = nama;
+      var t = document.createElement('div');
+      t.textContent = teks;
+      d.appendChild(n); d.appendChild(t);
+      elLog.appendChild(d);
+    }
+    function lukis() {
+      elLog.innerHTML = '';
+      if (!G.msgs.length) {
+        var k = document.createElement('div');
+        k.style.cssText = 'text-align:center;font-size:0.85rem;padding:20px 8px;';
+        k.textContent = 'Tanya soalan apa sahaja. Tekan kotak di bawah untuk menaip. Butang Lama = chat terdahulu.';
+        elLog.appendChild(k);
+        return;
+      }
+      for (var i = 0; i < G.msgs.length; i++) {
+        var m = G.msgs[i];
+        kad('gk-u', 'ANDA', m.soalan);
+        if (m.status === 'siap') kad('gk-g', 'GROK', m.jawapan);
+        else if (m.status === 'ralat') kad('gk-e', 'GROK', m.jawapan);
+        else if (m.status === 'batal') kad('gk-e', 'GROK', '(Dihentikan)');
+        else kad('gk-g', 'GROK', 'Menunggu jawapan...');
+      }
+      elLog.scrollTop = elLog.scrollHeight;
+    }
+    function tunjukLog(ya) {
+      modLama = !ya;
+      elLog.style.display = ya ? '' : 'none';
+      elSen.style.display = ya ? 'none' : '';
+      btnLama.textContent = ya ? 'Lama' : 'Kembali';
+    }
+    function hentiTunggu() {
+      if (G.unsub) { try { G.unsub(); } catch (e) {} G.unsub = null; }
+      if (G.tm) { clearTimeout(G.tm); G.tm = null; }
+      G.id = null; G.sibuk = false;
+      btnHantar.textContent = 'Hantar';
+    }
+    function cariMsg(id) {
+      for (var i = 0; i < G.msgs.length; i++) if (G.msgs[i].id === id) return G.msgs[i];
+      return null;
+    }
+    // Tunggu SATU dokumen sahaja sehingga worker tulis jawapan
+    function tunggu(id) {
+      hentiTunggu();
+      G.id = id; G.sibuk = true;
+      btnHantar.textContent = 'Henti';
+      status('GROK - menunggu worker...');
+      G.unsub = kol().doc(id).onSnapshot(function(s) {
+        var x = s && s.exists ? s.data() : null;
+        if (!x) return;
+        var m = cariMsg(id);
+        if (m) { m.status = x.status; m.jawapan = x.jawapan || ''; }
+        if (x.status === 'menjawab') status('GROK - sedang menjawab...');
+        if (x.status === 'siap' || x.status === 'ralat' || x.status === 'batal') {
+          hentiTunggu();
+          status('GROK');
+          if (!modLama) lukis();
+        }
+      }, function() { hentiTunggu(); status('GROK - gagal sambung Firestore'); });
+      G.tm = setTimeout(function() {
+        hentiTunggu();
+        status('GROK - tiada balasan. Worker mungkin offline.');
+      }, 240000);
+    }
+    // Muat satu sesi dari Firestore (query satu medan sahaja, susun di sini)
+    function muatSesi() {
+      status('GROK - memuat chat...');
+      kol().where('sesi', '==', G.sesi).get().then(function(snap) {
+        var a = [];
+        snap.forEach(function(d) {
+          var x = d.data() || {};
+          a.push({ id: d.id, soalan: x.soalan || '', jawapan: x.jawapan || '', status: x.status || '', createdAt: x.createdAt || 0 });
+        });
+        a.sort(function(p, q) { return p.createdAt - q.createdAt; });
+        G.msgs = a;
+        lukis();
+        status('GROK');
+        // Ada soalan yang masih menunggu (baru sahaja dihantar) → sambung tunggu
+        for (var i = a.length - 1; i >= 0; i--) {
+          if ((a[i].status === 'menunggu' || a[i].status === 'menjawab') && (Date.now() - a[i].createdAt) < 600000) { tunggu(a[i].id); break; }
+        }
+      }).catch(function() { status('GROK - gagal memuat chat'); lukis(); });
+    }
+    function bukaGrok() {
+      if (!currentUser) return;
+      showScreen('screen-grok');
+      tunjukLog(true);
+      if (G.uid !== currentUser.uid) {
+        G.uid = currentUser.uid;
+        try { G.sesi = localStorage.getItem(kunci()) || ''; } catch (e) { G.sesi = ''; }
+        if (!G.sesi) { G.sesi = sesiBaru(); simpanSesi(); }
+        G.msgs = [];
+        lukis();
+        muatSesi();
+      } else {
+        lukis();
+      }
+    }
+    function hantar() {
+      if (G.sibuk) {
+        var id = G.id;
+        hentiTunggu();
+        if (id) kol().doc(id).update({ status: 'batal' }).catch(function() {});
+        var m0 = cariMsg(id);
+        if (m0 && m0.status !== 'siap') m0.status = 'batal';
+        status('GROK');
+        lukis();
+        return;
+      }
+      var teks = (elIn.value || '').replace(/^\s+|\s+$/g, '');
+      if (!teks) return;
+      var sekarang = Date.now();
+      elIn.value = '';
+      var d = { sesi: G.sesi, soalan: teks, status: 'menunggu', createdAt: sekarang };
+      status('GROK - menghantar...');
+      kol().add(d).then(function(ref) {
+        G.msgs.push({ id: ref.id, soalan: teks, jawapan: '', status: 'menunggu', createdAt: sekarang });
+        lukis();
+        tunggu(ref.id);
+      }).catch(function() { status('GROK - gagal hantar soalan'); });
+    }
+    // Senarai chat lama: 60 dokumen terkini, dikumpul ikut sesi
+    function senaraiLama() {
+      tunjukLog(false);
+      elSen.innerHTML = '';
+      var w = document.createElement('div');
+      w.style.cssText = 'text-align:center;font-size:0.85rem;padding:10px;';
+      w.textContent = 'Mencari chat lama...';
+      elSen.appendChild(w);
+      kol().orderBy('createdAt', 'desc').limit(60).get().then(function(snap) {
+        var sesi = {}, urut = [];
+        snap.forEach(function(d) {
+          var x = d.data() || {};
+          if (!x.sesi) return;
+          if (!sesi[x.sesi]) { sesi[x.sesi] = { id: x.sesi, akhir: x.createdAt || 0, awal: x.createdAt || 0, soalan: x.soalan || '', bil: 0 }; urut.push(sesi[x.sesi]); }
+          var s = sesi[x.sesi];
+          s.bil++;
+          if ((x.createdAt || 0) < s.awal) { s.awal = x.createdAt || 0; s.soalan = x.soalan || ''; }
+        });
+        elSen.innerHTML = '';
+        if (!urut.length) {
+          var k = document.createElement('div');
+          k.style.cssText = 'text-align:center;font-size:0.85rem;padding:20px 8px;';
+          k.textContent = 'Tiada chat lama.';
+          elSen.appendChild(k);
+          return;
+        }
+        urut.sort(function(p, q) { return q.akhir - p.akhir; });
+        for (var i = 0; i < urut.length && i < 20; i++) {
+          (function(s) {
+            var b = document.createElement('button');
+            b.className = 'btn';
+            b.style.cssText = 'text-align:left;margin:0 0 6px 0;padding:8px;font-size:0.85rem;';
+            var q = s.soalan.length > 60 ? s.soalan.slice(0, 60) + '...' : s.soalan;
+            b.textContent = tarikh(s.akhir) + ' (' + s.bil + ') ' + q;
+            b.onclick = function() {
+              hentiTunggu();
+              G.sesi = s.id; simpanSesi(); G.msgs = [];
+              tunjukLog(true);
+              lukis();
+              muatSesi();
+            };
+            elSen.appendChild(b);
+          })(urut[i]);
+        }
+      }).catch(function() { elSen.innerHTML = ''; status('GROK - gagal mencari chat lama'); });
+    }
+    var bGrok = document.createElement('button');
+    bGrok.id = 'btn-go-grok';
+    bGrok.className = 'btn';
+    bGrok.style.marginTop = '8px';
+    bGrok.textContent = 'CHAT GROK';
+    var bTg = document.getElementById('btn-go-telegram');
+    if (bTg && bTg.parentNode) bTg.parentNode.insertBefore(bGrok, bTg);
+    bGrok.onclick = bukaGrok;
+    document.getElementById('btn-grok-menu').onclick = function() {
+      showScreen('screen-menu');
+    };
+    btnHantar.onclick = hantar;
+    btnLama.onclick = function() {
+      if (modLama) { tunjukLog(true); lukis(); } else senaraiLama();
+    };
+    document.getElementById('btn-grok-baru').onclick = function() {
+      hentiTunggu();
+      G.sesi = sesiBaru(); simpanSesi(); G.msgs = [];
+      tunjukLog(true);
+      status('GROK');
+      lukis();
+    };
+  })();
+  </script>
   <div id="kb-sendiri"></div>
   <script>
   (function() {
