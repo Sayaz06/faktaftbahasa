@@ -11565,51 +11565,77 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         tunggu(ref.id);
       }).catch(function() { status('GROK - gagal hantar soalan'); });
     }
-    // Senarai chat lama: 60 dokumen terkini, dikumpul ikut sesi
+    // Senarai chat lama: baca 50 dokumen setiap kali (terkini dahulu), dikumpul ikut sesi.
+    // Tekan "Muat chat lebih lama" untuk terus ke belakang — TIADA had jumlah chat.
+    var LM = { sesi: {}, urut: [], kursor: null, habis: false, sibuk: false };
+    function lukisLama() {
+      elSen.innerHTML = '';
+      if (!LM.urut.length) {
+        var k = document.createElement('div');
+        k.style.cssText = 'text-align:center;font-size:0.85rem;padding:20px 8px;';
+        k.textContent = 'Tiada chat lama.';
+        elSen.appendChild(k);
+        return;
+      }
+      LM.urut.sort(function(p, q) { return q.akhir - p.akhir; });
+      for (var i = 0; i < LM.urut.length; i++) {
+        (function(s) {
+          var b = document.createElement('button');
+          b.className = 'btn';
+          b.style.cssText = 'text-align:left;margin:0 0 6px 0;padding:8px;font-size:0.85rem;';
+          var q = s.soalan.length > 60 ? s.soalan.slice(0, 60) + '...' : s.soalan;
+          b.textContent = tarikh(s.akhir) + ' (' + s.bil + ') ' + q;
+          b.onclick = function() {
+            hentiTunggu();
+            G.sesi = s.id; simpanSesi(); G.msgs = [];
+            tunjukLog(true);
+            lukis();
+            muatSesi();
+          };
+          elSen.appendChild(b);
+        })(LM.urut[i]);
+      }
+      var m = document.createElement('button');
+      m.className = 'btn';
+      m.style.cssText = 'margin:6px 0;padding:10px;font-size:0.85rem;';
+      if (LM.habis) { m.textContent = 'Semua chat sudah dipaparkan'; m.disabled = true; }
+      else { m.textContent = 'Muat chat lebih lama'; m.onclick = muatLama; }
+      elSen.appendChild(m);
+    }
+    function muatLama() {
+      if (LM.sibuk) return;
+      LM.sibuk = true;
+      status('GROK - mencari chat lama...');
+      var q = kol().orderBy('createdAt', 'desc');
+      if (LM.kursor !== null) q = q.startAfter(LM.kursor);
+      q.limit(50).get().then(function(snap) {
+        var n = 0, akhir = LM.kursor;
+        snap.forEach(function(d) {
+          n++;
+          var x = d.data() || {};
+          akhir = x.createdAt || 0;
+          if (!x.sesi) return;
+          if (!LM.sesi[x.sesi]) { LM.sesi[x.sesi] = { id: x.sesi, akhir: x.createdAt || 0, awal: x.createdAt || 0, soalan: x.soalan || '', bil: 0 }; LM.urut.push(LM.sesi[x.sesi]); }
+          var s = LM.sesi[x.sesi];
+          s.bil++;
+          if ((x.createdAt || 0) < s.awal) { s.awal = x.createdAt || 0; s.soalan = x.soalan || ''; }
+        });
+        LM.kursor = akhir;
+        if (n < 50) LM.habis = true;
+        LM.sibuk = false;
+        status('GROK');
+        if (modLama) lukisLama();
+      }).catch(function() { LM.sibuk = false; status('GROK - gagal mencari chat lama'); });
+    }
     function senaraiLama() {
       tunjukLog(false);
+      LM = { sesi: {}, urut: [], kursor: null, habis: false, sibuk: false };
       elSen.innerHTML = '';
       var w = document.createElement('div');
       w.style.cssText = 'text-align:center;font-size:0.85rem;padding:10px;';
       w.textContent = 'Mencari chat lama...';
       elSen.appendChild(w);
-      kol().orderBy('createdAt', 'desc').limit(60).get().then(function(snap) {
-        var sesi = {}, urut = [];
-        snap.forEach(function(d) {
-          var x = d.data() || {};
-          if (!x.sesi) return;
-          if (!sesi[x.sesi]) { sesi[x.sesi] = { id: x.sesi, akhir: x.createdAt || 0, awal: x.createdAt || 0, soalan: x.soalan || '', bil: 0 }; urut.push(sesi[x.sesi]); }
-          var s = sesi[x.sesi];
-          s.bil++;
-          if ((x.createdAt || 0) < s.awal) { s.awal = x.createdAt || 0; s.soalan = x.soalan || ''; }
-        });
-        elSen.innerHTML = '';
-        if (!urut.length) {
-          var k = document.createElement('div');
-          k.style.cssText = 'text-align:center;font-size:0.85rem;padding:20px 8px;';
-          k.textContent = 'Tiada chat lama.';
-          elSen.appendChild(k);
-          return;
-        }
-        urut.sort(function(p, q) { return q.akhir - p.akhir; });
-        for (var i = 0; i < urut.length && i < 20; i++) {
-          (function(s) {
-            var b = document.createElement('button');
-            b.className = 'btn';
-            b.style.cssText = 'text-align:left;margin:0 0 6px 0;padding:8px;font-size:0.85rem;';
-            var q = s.soalan.length > 60 ? s.soalan.slice(0, 60) + '...' : s.soalan;
-            b.textContent = tarikh(s.akhir) + ' (' + s.bil + ') ' + q;
-            b.onclick = function() {
-              hentiTunggu();
-              G.sesi = s.id; simpanSesi(); G.msgs = [];
-              tunjukLog(true);
-              lukis();
-              muatSesi();
-            };
-            elSen.appendChild(b);
-          })(urut[i]);
-        }
-      }).catch(function() { elSen.innerHTML = ''; status('GROK - gagal mencari chat lama'); });
+      muatLama();
     }
     var bGrok = document.createElement('button');
     bGrok.id = 'btn-go-grok';
