@@ -10039,6 +10039,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e0) {}
         el.style.zIndex = '2147483646';
         el.style.background = 'transparent';
+        el.style.display = 'block';
         el.className = 'jalan';
         var w = window.innerWidth || document.documentElement.clientWidth || 800;
         var h = window.innerHeight || document.documentElement.clientHeight || 600;
@@ -10064,19 +10065,27 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           if (n < jumlah) { _sapuTimer = setTimeout(langkah, 48); return; }
           el.style.background = '#fff';
           _sapuTimer = setTimeout(function() {
-            el.style.zIndex = '99990';
             var cb = _sapuSelepas;
             _sapuSelepas = null;
             if (cb) cb();
-            _sapuTimer = setTimeout(function() {
-              el.className = '';
-              el.style.background = '';
-              el.style.zIndex = '';
-              lukis(0);
-              _sapuJalan = false;
-              _sapuTimer = null;
-              if (_sapuSelepas) window.sapuDakwat(_sapuSelepas);
-            }, 450);
+            var manual = document.getElementById('lock-overlay');
+            var azan = document.getElementById('azan-lock');
+            if (manual) void manual.offsetWidth;
+            if (azan) void azan.offsetWidth;
+            var kotak = document.querySelectorAll('#lock-pin-input, #azan-pin-input, #azan-cd-pin-input');
+            for (var k = 0; k < kotak.length; k++) {
+              kotak[k].style.background = '#111';
+              kotak[k].style.color = '#fff';
+            }
+            el.className = '';
+            el.style.display = 'none';
+            el.style.background = 'transparent';
+            el.style.zIndex = '';
+            lukis(0);
+            bulat.style.background = 'transparent';
+            _sapuJalan = false;
+            _sapuTimer = null;
+            if (_sapuSelepas) window.sapuDakwat(_sapuSelepas);
           }, 400);
         }
         _sapuTimer = setTimeout(langkah, 48);
