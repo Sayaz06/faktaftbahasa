@@ -12053,16 +12053,17 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       letakKursor(el, pos);
       if (pos >= el.value.length) tatalBawah(el); // kursor di hujung → tatal ke bawah
       picu(el, 'input');
-      if (dalamSkrinKunci(el)) kilatPutihPin(el);
-      else lukisKursor();
+      if (!dalamSkrinKunci(el)) lukisKursor();
     }
     // Taip di kedudukan kursor
     function sisip(el, teks) {
       var v = el.value, p = kedudukan(el);
       var baru = v.slice(0, p[0]) + teks + v.slice(p[1]);
       if (el.maxLength > 0 && baru.length > el.maxLength) return;
+      var titikPertama = dalamSkrinKunci(el) && !v && baru.length === 1;
       el.value = baru;
       selepasUbah(el, p[0] + teks.length);
+      if (titikPertama) kilatPutihPin(el);
     }
     // Padam satu aksara SEBELUM kursor
     function padam(el) {
@@ -12379,7 +12380,6 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           }
           kekunci = kekunci.parentElement;
         }
-        setTimeout(function() { if (elAktif === el) kilatPutihPin(el); }, 40);
       } else document.body.classList.remove('kb-telus');
       // Fokus bukan dari tap (cth. butang balas mesej) → kursor terus ke hujung teks
       if (!(_sentuhKotak.el === el && Date.now() - _sentuhKotak.masa < 800)) letakKursor(el, el.value.length);
@@ -12454,7 +12454,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         // Tekan 2 kali dalam 2 saat baru padam semua — elak terpadam tak sengaja
         if (_padamSedia && Date.now() - _padamSedia < 1500) {
           batalPadamSemua();
-          if (el.value) { el.value = ''; picu(el, 'input'); picuKekunci(el, 'keyup', 'Backspace'); if (dalamSkrinKunci(el)) kilatPutihPin(el); }
+          if (el.value) { el.value = ''; picu(el, 'input'); picuKekunci(el, 'keyup', 'Backspace'); }
         } else {
           _padamSedia = Date.now();
           if (btn) { btn.textContent = 'Tekan\nlagi'; btn.className += ' kb-gelap'; }
