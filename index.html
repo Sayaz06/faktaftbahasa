@@ -533,6 +533,17 @@
     #ws-notif-badge.active { display: block; }
 
     /* ── AZAN LOCK SCREEN ── */
+    /* Bulatan hitam dari tengah membesar, kemudian overlay kunci sedia ada ditindih di atas */
+    #sapu-dakwat {
+      display: none; position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%; z-index: 2147483646;
+      overflow: hidden; background: transparent;
+    }
+    #sapu-dakwat.jalan { display: block; }
+    #sapu-bulatan {
+      position: absolute; left: 50%; top: 50%;
+      width: 0; height: 0; border-radius: 50%; background: #000;
+    }
     #lock-overlay {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%; background: #000; z-index: 99999;
@@ -1596,6 +1607,7 @@
 
   <!-- LOCK OVERLAY -->
 
+  <div id="sapu-dakwat"><div id="sapu-bulatan"></div></div>
 
   <!-- LOCK OVERLAY MANUAL -->
   <div id="lock-overlay">
@@ -10013,13 +10025,70 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           .set({ aktif: aktif, updatedAt: Date.now() }).catch(function() {});
       }
 
+      var _sapuJalan = false;
+      var _sapuSelepas = null;
+      var _sapuTimer = null;
+      window.sapuDakwat = function(tunjukKunci) {
+        var el = document.getElementById('sapu-dakwat');
+        var bulat = document.getElementById('sapu-bulatan');
+        if (!el || !bulat) { tunjukKunci(); return; }
+        _sapuSelepas = tunjukKunci;
+        if (_sapuJalan) return;
+        _sapuJalan = true;
+        if (_sapuTimer) { clearTimeout(_sapuTimer); _sapuTimer = null; }
+        try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e0) {}
+        el.style.zIndex = '2147483646';
+        el.style.background = 'transparent';
+        el.className = 'jalan';
+        var w = window.innerWidth || document.documentElement.clientWidth || 800;
+        var h = window.innerHeight || document.documentElement.clientHeight || 600;
+        var akhir = Math.ceil(Math.sqrt(w * w + h * h)) + 80;
+        var mulaSaiz = 18;
+        var jumlah = 12;
+        var n = 0;
+        function px(v) { return Math.round(v) + 'px'; }
+        function lukis(saiz) {
+          bulat.style.width = px(saiz);
+          bulat.style.height = px(saiz);
+          bulat.style.marginLeft = px(-saiz / 2);
+          bulat.style.marginTop = px(-saiz / 2);
+        }
+        lukis(mulaSaiz);
+        function langkah() {
+          n++;
+          var p = n / jumlah;
+          if (p > 1) p = 1;
+          var e = 1 - (1 - p) * (1 - p);
+          lukis(mulaSaiz + (akhir - mulaSaiz) * e);
+          if (n < jumlah) { _sapuTimer = setTimeout(langkah, 48); return; }
+          el.style.background = '#000';
+          el.style.zIndex = '99990';
+          var cb = _sapuSelepas;
+          _sapuSelepas = null;
+          if (cb) cb();
+          _sapuTimer = setTimeout(function() {
+            el.className = '';
+            el.style.background = '';
+            el.style.zIndex = '';
+            lukis(0);
+            _sapuJalan = false;
+            _sapuTimer = null;
+            if (_sapuSelepas) window.sapuDakwat(_sapuSelepas);
+          }, 220);
+        }
+        _sapuTimer = setTimeout(langkah, 48);
+      };
+
       function activateLock() {
-        lockFasaCd.className = '';
-        lockOverlay.className = 'active';
-        lockPinInput.value = '';
-        lockPinMsg.textContent = '';
-        simpanLockState(true);
-        setTimeout(function() { lockPinInput.focus(); }, 100);
+        if (lockOverlay.className.indexOf('active') !== -1) return;
+        window.sapuDakwat(function() {
+          lockFasaCd.className = '';
+          lockOverlay.className = 'active';
+          lockPinInput.value = '';
+          lockPinMsg.textContent = '';
+          simpanLockState(true);
+          setTimeout(function() { try { lockPinInput.focus(); } catch (e1) {} }, 260);
+        });
       }
 
       function deactivateLock() {
@@ -10597,8 +10666,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         // Tunjuk button countdown ikut fasa
         elAzan('azan-pin-cd-start').style.display = fasa === 'pin' ? 'block' : 'none';
         elAzan('azan-cd-start').style.display = fasa === 'countdown' ? 'block' : 'none';
-        elAzan('azan-lock').className = 'active';
-        simpanAzanLockState(true, fasa, namaWaktu, jamStr, lokasiNama);
+        var sudahBuka = lockEl && lockEl.classList.contains('active');
+        function tunjukAzanLock() {
+          elAzan('azan-lock').className = 'active';
+          simpanAzanLockState(true, fasa, namaWaktu, jamStr, lokasiNama);
+        }
+        if (sudahBuka || !window.sapuDakwat) tunjukAzanLock();
+        else window.sapuDakwat(tunjukAzanLock);
       }
 
       function cubaUnlockAzan() {
