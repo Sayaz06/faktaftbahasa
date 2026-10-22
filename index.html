@@ -533,7 +533,7 @@
     #ws-notif-badge.active { display: block; }
 
     /* ── AZAN LOCK SCREEN ── */
-    /* Bulatan hitam dari tengah membesar, kemudian overlay kunci sedia ada ditindih di atas */
+    /* Bulatan putih dari tengah membesar sampai penuh, baru overlay kunci hitam */
     #sapu-dakwat {
       display: none; position: fixed; top: 0; left: 0;
       width: 100%; height: 100%; z-index: 2147483646;
@@ -542,7 +542,7 @@
     #sapu-dakwat.jalan { display: block; }
     #sapu-bulatan {
       position: absolute; left: 50%; top: 50%;
-      width: 0; height: 0; border-radius: 50%; background: #000;
+      width: 0; height: 0; border-radius: 50%; background: #fff;
     }
     #lock-overlay {
       display: none; position: fixed; top: 0; left: 0;
@@ -10052,6 +10052,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           bulat.style.height = px(saiz);
           bulat.style.marginLeft = px(-saiz / 2);
           bulat.style.marginTop = px(-saiz / 2);
+          bulat.style.background = '#fff';
         }
         lukis(mulaSaiz);
         function langkah() {
@@ -10061,20 +10062,22 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           var e = 1 - (1 - p) * (1 - p);
           lukis(mulaSaiz + (akhir - mulaSaiz) * e);
           if (n < jumlah) { _sapuTimer = setTimeout(langkah, 48); return; }
-          el.style.background = '#000';
-          el.style.zIndex = '99990';
-          var cb = _sapuSelepas;
-          _sapuSelepas = null;
-          if (cb) cb();
+          el.style.background = '#fff';
           _sapuTimer = setTimeout(function() {
-            el.className = '';
-            el.style.background = '';
-            el.style.zIndex = '';
-            lukis(0);
-            _sapuJalan = false;
-            _sapuTimer = null;
-            if (_sapuSelepas) window.sapuDakwat(_sapuSelepas);
-          }, 220);
+            el.style.zIndex = '99990';
+            var cb = _sapuSelepas;
+            _sapuSelepas = null;
+            if (cb) cb();
+            _sapuTimer = setTimeout(function() {
+              el.className = '';
+              el.style.background = '';
+              el.style.zIndex = '';
+              lukis(0);
+              _sapuJalan = false;
+              _sapuTimer = null;
+              if (_sapuSelepas) window.sapuDakwat(_sapuSelepas);
+            }, 450);
+          }, 400);
         }
         _sapuTimer = setTimeout(langkah, 48);
       };
