@@ -12021,11 +12021,40 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       kursor.style.height = hs;
       kursor.style.display = 'block';
     }
+    var _pinPutihT = null, _pinPutihEl = null;
+    function kilatPutihPin(el) {
+      if (!el || !dalamSkrinKunci(el)) return;
+      if (_pinPutihEl && _pinPutihEl !== el) {
+        _pinPutihEl.style.backgroundColor = _pinPutihEl.getAttribute('data-pin-bg') || '#111';
+        _pinPutihEl.style.color = _pinPutihEl.getAttribute('data-pin-fg') || '#fff';
+        _pinPutihEl.style.webkitTextFillColor = '';
+      }
+      if (_pinPutihEl !== el) {
+        el.setAttribute('data-pin-bg', el.style.backgroundColor || '#111');
+        el.setAttribute('data-pin-fg', el.style.color || '#fff');
+        _pinPutihEl = el;
+      }
+      el.style.backgroundColor = '#fff';
+      el.style.color = '#fff';
+      el.style.webkitTextFillColor = '#fff';
+      try { el.offsetWidth; } catch (e) {}
+      clearTimeout(_pinPutihT);
+      _pinPutihT = setTimeout(function() {
+        _pinPutihT = null;
+        if (!_pinPutihEl) return;
+        _pinPutihEl.style.backgroundColor = _pinPutihEl.getAttribute('data-pin-bg') || '#111';
+        _pinPutihEl.style.color = _pinPutihEl.getAttribute('data-pin-fg') || '#fff';
+        _pinPutihEl.style.webkitTextFillColor = '';
+        try { _pinPutihEl.offsetWidth; } catch (e2) {}
+        _pinPutihEl = null;
+      }, 400);
+    }
     function selepasUbah(el, pos) {
       letakKursor(el, pos);
       if (pos >= el.value.length) tatalBawah(el); // kursor di hujung → tatal ke bawah
       picu(el, 'input');
-      lukisKursor();
+      if (dalamSkrinKunci(el)) kilatPutihPin(el);
+      else lukisKursor();
     }
     // Taip di kedudukan kursor
     function sisip(el, teks) {
@@ -12350,6 +12379,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           }
           kekunci = kekunci.parentElement;
         }
+        setTimeout(function() { if (elAktif === el) kilatPutihPin(el); }, 40);
       } else document.body.classList.remove('kb-telus');
       // Fokus bukan dari tap (cth. butang balas mesej) → kursor terus ke hujung teks
       if (!(_sentuhKotak.el === el && Date.now() - _sentuhKotak.masa < 800)) letakKursor(el, el.value.length);
@@ -12424,7 +12454,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         // Tekan 2 kali dalam 2 saat baru padam semua — elak terpadam tak sengaja
         if (_padamSedia && Date.now() - _padamSedia < 1500) {
           batalPadamSemua();
-          if (el.value) { el.value = ''; picu(el, 'input'); picuKekunci(el, 'keyup', 'Backspace'); }
+          if (el.value) { el.value = ''; picu(el, 'input'); picuKekunci(el, 'keyup', 'Backspace'); if (dalamSkrinKunci(el)) kilatPutihPin(el); }
         } else {
           _padamSedia = Date.now();
           if (btn) { btn.textContent = 'Tekan\nlagi'; btn.className += ' kb-gelap'; }
