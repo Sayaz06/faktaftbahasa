@@ -11988,7 +11988,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     }
     function lukisKursor() {
       var el = elAktif;
-      if (_tekanButang || !el || kb.style.display === 'none') { kursor.style.display = 'none'; _kursorX = ''; sorokPilihan(); return; }
+      if (_tekanButang || !el || kb.style.display === 'none' || dalamSkrinKunci(el)) { kursor.style.display = 'none'; _kursorX = ''; sorokPilihan(); return; }
       if (lukisPilihan()) { kursor.style.display = 'none'; _kursorX = ''; return; } // ada teks diloret → papar sorotan, bukan kursor
       var pos = kedudukan(el)[1];
       var cs = window.getComputedStyle(el);
