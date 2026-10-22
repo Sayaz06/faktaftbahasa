@@ -12106,6 +12106,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     // Kotak taip dalam overlay tetap (PIN, edit, dll) → naikkan overlay supaya tak terlindung
     function angkatOverlay(el, h) {
       turunOverlay();
+      if (dalamSkrinKunci(el)) return;
       var p = el, tetap = null;
       while (p && p !== document.body) {
         if (p.id === 'screen-telegram') return; // diurus oleh CSS
@@ -12336,9 +12337,20 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       elAktif = el;
       lapisan = modPin(el) ? 'pin' : (modNombor(el) ? 'nombor' : 'huruf');
       shift = false; caps = false;
-      // Skrin kunci → papan kekunci tanpa latar (butang terapung sahaja)
-      if (dalamSkrinKunci(el)) document.body.classList.add('kb-telus');
-      else document.body.classList.remove('kb-telus');
+      // Skrin kunci manual & azan → jangan anjak page bila papan kekunci buka
+      if (dalamSkrinKunci(el)) {
+        document.body.classList.add('kb-telus');
+        var kekunci = el;
+        while (kekunci && kekunci !== document.body) {
+          if (kekunci.id === 'azan-lock' || kekunci.id === 'lock-overlay') {
+            var saiz = window.saizKindle ? window.saizKindle() : null;
+            if (saiz) { kekunci.style.width = saiz.w + 'px'; kekunci.style.height = saiz.h + 'px'; }
+            kekunci.style.transform = '';
+            break;
+          }
+          kekunci = kekunci.parentElement;
+        }
+      } else document.body.classList.remove('kb-telus');
       // Fokus bukan dari tap (cth. butang balas mesej) → kursor terus ke hujung teks
       if (!(_sentuhKotak.el === el && Date.now() - _sentuhKotak.masa < 800)) letakKursor(el, el.value.length);
       lukis();
