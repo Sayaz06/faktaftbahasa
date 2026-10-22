@@ -143,6 +143,11 @@
     body.kb-telus #lock-cd-start,
     body.kb-telus #azan-pin-cd-start,
     body.kb-telus #azan-cd-start { visibility: hidden !important; }
+    /* Kursor asal pelayar jangan berkelip — e-ink Kindle tinggal bayang */
+    body.kb-buka input, body.kb-buka textarea {
+      caret-color: transparent;
+    }
+    #kb-kursor { -webkit-animation: none; animation: none; }
     .btn-row .btn-menu {
       background: #ddd;
       color: #000;
@@ -10041,8 +10046,9 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         el.style.background = 'transparent';
         el.style.display = 'block';
         el.className = 'jalan';
-        var w = window.innerWidth || document.documentElement.clientWidth || 800;
-        var h = window.innerHeight || document.documentElement.clientHeight || 600;
+        var s = window.saizKindle ? window.saizKindle() : null;
+        var w = (s && s.w) || window.innerWidth || document.documentElement.clientWidth || 800;
+        var h = (s && s.h) || window.innerHeight || document.documentElement.clientHeight || 600;
         var akhir = Math.ceil(Math.sqrt(w * w + h * h)) + 80;
         var mulaSaiz = 18;
         var jumlah = 12;
@@ -10094,6 +10100,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       function activateLock() {
         if (lockOverlay.className.indexOf('active') !== -1) return;
         window.sapuDakwat(function() {
+          var s = window.saizKindle ? window.saizKindle() : null;
+          if (s) { lockOverlay.style.width = s.w + 'px'; lockOverlay.style.height = s.h + 'px'; }
           lockFasaCd.className = '';
           lockOverlay.className = 'active';
           lockPinInput.value = '';
@@ -10105,6 +10113,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
       function deactivateLock() {
         lockOverlay.className = '';
+        lockOverlay.style.width = '';
+        lockOverlay.style.height = '';
         lockFasaCd.className = '';
         if (_lockCdTimer) { clearInterval(_lockCdTimer); _lockCdTimer = null; }
         lockPinInput.value = '';
@@ -10680,7 +10690,10 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         elAzan('azan-cd-start').style.display = fasa === 'countdown' ? 'block' : 'none';
         var sudahBuka = lockEl && lockEl.classList.contains('active');
         function tunjukAzanLock() {
-          elAzan('azan-lock').className = 'active';
+          var az = elAzan('azan-lock');
+          var s = window.saizKindle ? window.saizKindle() : null;
+          if (s && az) { az.style.width = s.w + 'px'; az.style.height = s.h + 'px'; }
+          az.className = 'active';
           simpanAzanLockState(true, fasa, namaWaktu, jamStr, lokasiNama);
         }
         if (sudahBuka || !window.sapuDakwat) tunjukAzanLock();
@@ -10709,6 +10722,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
             elAzan('azan-cd-pin-ok').disabled = false;
             elAzan('azan-cd-overlay').className = '';
             elAzan('azan-lock').className = '';
+            elAzan('azan-lock').style.width = '';
+            elAzan('azan-lock').style.height = '';
             simpanAzanLockState(false);
             // Simpan waktu yang dah diUnlock hari ini
             var namaWaktuSemasa = elAzan('azan-waktu-nama').textContent;
@@ -11754,6 +11769,21 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     // Setiap tekanan hantar keydown → input → keyup supaya semua handler lama (Enter, taip live, semak ayat) masih jalan.
     var kb = document.getElementById('kb-sendiri');
     if (!kb) return;
+    var _sw = 0, _sh = 0;
+    function catatSkrin() {
+      if (document.body.className.indexOf('kb-buka') !== -1) return;
+      var w = window.innerWidth || document.documentElement.clientWidth || 0;
+      var h = window.innerHeight || document.documentElement.clientHeight || 0;
+      if (w > _sw) _sw = w;
+      if (h > _sh) _sh = h;
+    }
+    catatSkrin();
+    window.addEventListener('resize', catatSkrin);
+    window.addEventListener('orientationchange', catatSkrin);
+    window.saizKindle = function() {
+      catatSkrin();
+      return { w: _sw || window.innerWidth || 800, h: _sh || window.innerHeight || 600 };
+    };
     var JENIS_TEKS = { text: 1, password: 1, number: 1, tel: 1, search: 1, email: 1, url: 1 };
     var SUSUNAN = {
       // Susun atur macam keyboard phone (SELA = ruang kosong separuh butang). Tiada butang Tutup —
@@ -11845,6 +11875,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       el.setAttribute('autocomplete', 'off');
       el.setAttribute('autocorrect', 'off');
       el.setAttribute('autocapitalize', 'off');
+      try { el.style.caretColor = 'transparent'; } catch (e) {}
     }
     function modNombor(el) {
       var t = (el.getAttribute('type') || '').toLowerCase();
@@ -11910,6 +11941,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     kursor.id = 'kb-kursor';
     kursor.style.cssText = 'display:none;position:fixed;width:2px;background:#000;z-index:2147483001;pointer-events:none;';
     document.body.appendChild(kursor);
+    var _tekanButang = false;
+    var _kursorX = '', _kursorY = '', _kursorH = '';
     var _cermin = null; // salinan tersembunyi kotak taip — untuk kira kedudukan piksel kursor
     var SALIN_GAYA = ['boxSizing','width','height','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth',
       'paddingTop','paddingRight','paddingBottom','paddingLeft','fontStyle','fontVariant','fontWeight','fontSize',
@@ -11943,8 +11976,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     }
     function lukisKursor() {
       var el = elAktif;
-      if (!el || kb.style.display === 'none') { kursor.style.display = 'none'; sorokPilihan(); return; }
-      if (lukisPilihan()) { kursor.style.display = 'none'; return; } // ada teks diloret → papar sorotan, bukan kursor
+      if (_tekanButang || !el || kb.style.display === 'none') { kursor.style.display = 'none'; _kursorX = ''; sorokPilihan(); return; }
+      if (lukisPilihan()) { kursor.style.display = 'none'; _kursorX = ''; return; } // ada teks diloret → papar sorotan, bukan kursor
       var pos = kedudukan(el)[1];
       var cs = window.getComputedStyle(el);
       if (!_cermin) {
@@ -11967,10 +12000,13 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       var x = r.left + bl + tanda.offsetLeft - el.scrollLeft;
       var y = besar ? (r.top + bt + tanda.offsetTop - el.scrollTop + (baris - tinggi) / 2)
                     : (r.top + (r.height - tinggi) / 2);
-      if (y < r.top - 1 || y + tinggi > r.bottom + 1 || x < r.left || x > r.right) { kursor.style.display = 'none'; return; }
-      kursor.style.left = Math.round(x) + 'px';
-      kursor.style.top = Math.round(y) + 'px';
-      kursor.style.height = Math.round(tinggi) + 'px';
+      if (y < r.top - 1 || y + tinggi > r.bottom + 1 || x < r.left || x > r.right) { kursor.style.display = 'none'; _kursorX = ''; return; }
+      var xs = Math.round(x) + 'px', ys = Math.round(y) + 'px', hs = Math.round(tinggi) + 'px';
+      if (kursor.style.display === 'block' && _kursorX === xs && _kursorY === ys && _kursorH === hs) return;
+      _kursorX = xs; _kursorY = ys; _kursorH = hs;
+      kursor.style.left = xs;
+      kursor.style.top = ys;
+      kursor.style.height = hs;
       kursor.style.display = 'block';
     }
     function selepasUbah(el, pos) {
@@ -12065,16 +12101,22 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         p = p.parentElement;
       }
       if (!tetap) return;
+      var s = window.saizKindle ? window.saizKindle() : null;
+      var tinggiSkrin = (s && s.h) || window.innerHeight || 0;
       var r = el.getBoundingClientRect();
-      var had = window.innerHeight - h - 10;
+      var had = tinggiSkrin - h - 10;
       if (r.bottom <= had) return;
       var naik = Math.min(r.bottom - had, Math.max(0, r.top - 10));
+      if (naik < 1) return;
       _naik = { el: tetap, transform: tetap.style.transform };
-      tetap.style.transform = 'translateY(-' + naik + 'px)';
+      tetap.style.transform = 'translateY(-' + Math.round(naik) + 'px)';
     }
     function pastikanNampak(el, h) {
+      if (!el || dalamSkrinKunci(el)) return;
+      var s = window.saizKindle ? window.saizKindle() : null;
+      var tinggiSkrin = (s && s.h) || window.innerHeight || 0;
       var r = el.getBoundingClientRect();
-      if (r.bottom > window.innerHeight - h - 8 || r.top < 0) {
+      if (r.bottom > tinggiSkrin - h - 8 || r.top < 0) {
         try { el.scrollIntoView({ block: 'center' }); } catch (x) { el.scrollIntoView(false); }
       }
     }
@@ -12332,6 +12374,8 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     function tekan(k, btn) {
       var el = elAktif;
       if (!el) return;
+      _tekanButang = true;
+      kursor.style.display = 'none';
       if (k === 'KIRI' || k === 'KANAN') { var arah = k === 'KIRI' ? -1 : 1; gerakKursor(el, arah); ulangGerak(arah); return; }
       if (k === 'DEL') { padam(el); mulaUlang(); return; }
       if (k === 'SHIFT') {
@@ -12395,7 +12439,12 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
     }
     kb.addEventListener('touchstart', onTekan, { passive: false });
     kb.addEventListener('mousedown', onTekan);
-    ['touchend', 'touchcancel', 'mouseup'].forEach(function(n) { document.addEventListener(n, hentiUlang, true); });
+    ['touchend', 'touchcancel', 'mouseup'].forEach(function(n) {
+      document.addEventListener(n, function() {
+        hentiUlang();
+        if (_tekanButang) { _tekanButang = false; _kursorX = ''; if (elAktif) lukisKursor(); }
+      }, true);
+    });
 
     // Sediakan kotak taip SEBELUM fokus (supaya keyboard Kindle tak sempat keluar)
     function sediakanSasaran(e) {
