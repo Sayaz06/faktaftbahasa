@@ -3780,7 +3780,7 @@
           _srAdaCache = false;
           _mulaLaciBiasaFakta();
         }).catch(function(e) {
-          isLoading = false;
+          isLoading = false; isBusy = false;
           srModeAktif = false; srLaciSemasa = null;
           setText('play-err', e.message);
           rebuildFaktaCards(function() { renderCard(); });
@@ -3799,7 +3799,9 @@
               }
               if (fd2) prefetchDrawer(fd2, 'drawer');
             }
-            isLoading = false; renderCard();
+            // isBusy WAJIB dilepaskan — JQ ON (motivasi dulu) set isBusy = true; tanpa SR ia tak pernah dilepaskan
+            // → butang SETERUSNYA mati pada kad 1/10.
+            isLoading = false; isBusy = false; renderCard();
           });
         }
 
