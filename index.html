@@ -2225,7 +2225,8 @@
       return cR;
     }
 
-    function cardsFromFaktaDrawer(d, isSR) {
+    // hanyaFid: SR ikut ID baris → bina kad untuk BARIS ITU SAHAJA
+    function cardsFromFaktaDrawer(d, isSR, hanyaFid) {
       var out = [];
       var tips = (d.tipsFakta || d.tips || '').trim();
       var title = d.title || 'Laci';
@@ -2235,6 +2236,7 @@
       if (d.items && d.items.length) {
         for (i = 0; i < d.items.length; i++) {
           var it = d.items[i];
+          if (hanyaFid && it.fid !== hanyaFid) continue;
           var ayat = (it.ayat || it.text || '').trim();
           if (!ayat) continue;
           var eq = ayat.indexOf('=');
@@ -2246,7 +2248,8 @@
             tips: tips,
             imageUrl: it.imageUrl || d.imageUrl || '',
             title: title, drawerId: d.id,
-            isF0: false, isTamat: false, isSR: !!isSR
+            isF0: false, isTamat: false, isSR: !!isSR,
+            fid: it.fid || null, srcIdx: i // ID kekal baris & kedudukan sebenar dalam laci
           });
         }
       } else if (d.notes) {
@@ -2273,7 +2276,8 @@
       for (i = 0; i < itemCards.length; i++) {
         // Fasa Gambar × 5 (hanya jika ada gambar pada baris ini)
         var barisImg = itemCards[i].imageUrl || '';
-        var barisImg2 = (d.items && d.items[i] && d.items[i].imageUrl11) ? d.items[i].imageUrl11 : '';
+        var srcI = itemCards[i].srcIdx != null ? itemCards[i].srcIdx : i; // indeks sebenar baris (bukan selepas langkau baris kosong)
+        var barisImg2 = (d.items && d.items[srcI] && d.items[srcI].imageUrl11) ? d.items[srcI].imageUrl11 : '';
         if (barisImg) {
           for (r = 0; r < 10; r++) {
             var cgIsG2 = (r >= 5); // kad 6-10 guna G2
@@ -2334,7 +2338,7 @@
       }
 
       // REHAT JALAN ON: selepas F2 baris terakhir habis → rehat jalan kaki, kemudian laci tamat
-      if (rehatJalanAktif && !srBebas && itemCards.length) {
+      if (rehatJalanAktif && !srBebas && !hanyaFid && itemCards.length) {
         var cJalan = _kadRehatFakta(itemCards[itemCards.length - 1], itemCards.length - 1, 2);
         cJalan.isRehat = false;
         cJalan.isRehatJalan = true;
@@ -2342,7 +2346,7 @@
       }
 
       // RECAP ON: selepas rehat jalan (atau F2) → setiap baris 2 kad: depan di atas, kemudian sebaliknya
-      if (recapAktif && !srBebas && itemCards.length) {
+      if (recapAktif && !srBebas && !hanyaFid && itemCards.length) {
         out = out.concat(_kadRecap(itemCards, title, d.id, isSR));
       }
 
@@ -3261,7 +3265,7 @@
       setText('play-err', '');
     }
 
-    function daftarSRBaru(drawerId, modeName, itemIndex, barisText) {
+    function daftarSRBaru(drawerId, modeName, itemIndex, barisText, fid) {
       var drawer, srColl;
       if (modeName === 'fakta') {
         drawer = allDrawers.filter(function(d) { return d.id === drawerId; })[0];
@@ -3272,10 +3276,15 @@
       }
       if (!drawer) return Promise.resolve();
 
-      // Fakta: satu baris = satu SR (docId = drawerId_b{itemIndex})
+      // Fakta: satu baris = satu SR, ikut ID KEKAL baris (docId = ID baris, cth "57") — sama dengan app phone.
+      // Baris tanpa ID (belum diberi oleh phone) TIDAK didaftar.
       var srDocId = drawerId;
-      if (modeName === 'fakta' && itemIndex !== undefined && itemIndex !== null) {
-        srDocId = drawerId + '_b' + itemIndex;
+      if (modeName === 'fakta') {
+        if (!fid) return Promise.resolve();
+        srDocId = String(fid);
+        var posSebenar = -1;
+        for (var pf = 0; pf < (drawer.items || []).length; pf++) { if (drawer.items[pf] && drawer.items[pf].fid === fid) { posSebenar = pf; break; } }
+        if (posSebenar >= 0) itemIndex = posSebenar;
       }
 
       var ref = db.collection('users').doc(currentUser.uid).collection(srColl).doc(srDocId);
@@ -3298,6 +3307,7 @@
           srData.jenisId = drawer.jenisId || '';
         } else {
           srData.topicId = drawer.topicId || '';
+          if (fid) srData.fid = fid; // ID kekal baris
           if (itemIndex !== undefined && itemIndex !== null) {
             srData.itemIndex = itemIndex;
             srData.barisText = (barisText || '').slice(0, 200);
@@ -3591,7 +3601,12 @@
               if (allDrawers[j].id === drawerId) { ifd = j; break; }
             }
             if (ifd !== -1) allDrawers[ifd] = drawer; else allDrawers.push(drawer);
-            cards = cardsFromFaktaDrawer(drawer, true);
+            // SR rekod baru (ada fid) → ulang BARIS ITU SAHAJA · rekod lama (tiada fid) → seluruh laci seperti dahulu
+            var kadSR = cardsFromFaktaDrawer(drawer, true, srData.fid || null);
+            var adaBarisSR = false;
+            for (var ks = 0; ks < kadSR.length; ks++) { if (!kadSR[ks].isTamat) { adaBarisSR = true; break; } }
+            if (srData.fid && !adaBarisSR) { cb && cb(false); return; } // baris sudah tiada — JANGAN padam rekod SR
+            cards = kadSR;
           }
           cardIndex = 0;
           srModeAktif = true;
@@ -5213,7 +5228,7 @@
         isBusy = true;
         setText('play-err', 'Daftar SR baris...');
         simpanLastDrawer(c.drawerId, c.itemIndex);
-        daftarSRBaru(c.drawerId, 'fakta', c.itemIndex, c.front).then(function() {
+        daftarSRBaru(c.drawerId, 'fakta', c.itemIndex, c.front, c.fid).then(function() {
           isBusy = false;
           setText('play-err', '');
           isFlipped = false; showTips = false;
