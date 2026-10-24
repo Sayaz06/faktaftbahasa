@@ -3371,8 +3371,12 @@
           .update({ lastIndex: newIndex }).catch(function() {});
         activePerkataan.lastIndex = newIndex;
       } else if (mode === 'fakta' && activeTopic) {
+        var upd = { lastIndex: newIndex };
+        // 📍 Baris semasa untuk phone (lencana hijau) — ID baris yang sedang dipapar (bukan semasa SR)
+        var kSem = cards[newIndex];
+        if (!srModeAktif && kSem && kSem.fid) upd.kindleFid = kSem.fid;
         db.collection('users').doc(currentUser.uid).collection('topics').doc(activeTopic.id)
-          .update({ lastIndex: newIndex }).catch(function() {});
+          .update(upd).catch(function() {});
         activeTopic.lastIndex = newIndex;
       }
     }
