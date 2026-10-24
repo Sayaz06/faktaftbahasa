@@ -2369,18 +2369,22 @@
     // Kerja susun & tick perkataan seterusnya kini dibuat oleh worker (Railway).
     function muatAktifRingan() {
       var uid = currentUser.uid;
-      function aktifGet(col) {
-        var q = db.collection('users').doc(uid).collection(col).where('isActive', '==', true).limit(1);
+      function aktifGet(col, had) {
+        var q = db.collection('users').doc(uid).collection(col).where('isActive', '==', true);
+        if (had) q = q.limit(had);
         return q.get({ source: 'server' }).catch(function() { return q.get(); });
       }
       return Promise.all([
-        aktifGet('bahasa_perkataan'),
-        aktifGet('topics')
+        aktifGet('bahasa_perkataan', 1),
+        aktifGet('topics', 0)
       ]).then(function(res) {
         allBahasaPerkataan = [];
         res[0].forEach(function(d) { var x = d.data(); x.id = d.id; allBahasaPerkataan.push(x); });
         allTopics = [];
         res[1].forEach(function(d) { var x = d.data(); x.id = d.id; allTopics.push(x); });
+        // Lebih daripada satu topik masih bertanda aktif → ambil yang PALING BARU ditick di phone (aktifAt)
+        allTopics.sort(function(a, b) { return (b.aktifAt || 0) - (a.aktifAt || 0); });
+        allTopics = allTopics.slice(0, 1);
         activePerkataan = allBahasaPerkataan[0] || null;
         activeTopic = allTopics[0] || null;
         return _muatJenisAktif();
@@ -3440,6 +3444,8 @@
             if (cj.isGambar || cj.fasa === 1) return j;
           }
         }
+        // lastDrawerId bukan laci topik ini (laci dipadam / kosong / dari topik lain) → mula dari awal
+        if (!passedLastLaci) return 0;
         return cards.length; // semua habis
       }
 
@@ -4290,7 +4296,15 @@
     }
 
     function findNextDrawerStart(fromIdx) {
+      // Laci seterusnya = kad pertama yang drawerId BERBEZA dengan laci semasa.
+      // Dulu cari kad F0 / Gambar sahaja — laci Fakta TANPA gambar tiada kad itu, jadi seluruh laci
+      // seterusnya terlangkau (cth: SLIDE 2 habis → terus ke SLIDE 4, SLIDE 3 hilang).
+      var semasa = cards[fromIdx] ? cards[fromIdx].drawerId : null;
       var i = fromIdx + 1;
+      if (semasa) {
+        while (i < cards.length && cards[i].drawerId === semasa) i++;
+        return i;
+      }
       while (i < cards.length && !cards[i].isF0 && !cards[i].isGambar && !cards[i].isTamat) i++;
       if (i < cards.length && cards[i].isTamat) i++;
       return i;
