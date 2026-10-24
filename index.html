@@ -2310,33 +2310,26 @@
           }
         }
 
-        // F1 × 5 → F2 × 5
-        // REHAT ON: F1 × 5 → [rehat nafas] → F1 × 5 lagi → F2 × 5 → [rehat nafas] → F2 × 5 lagi
-        var blokRehatF = (rehatAktif && !srBebas) ? 2 : 1;
-        for (var bF1 = 0; bF1 < blokRehatF; bF1++) {
-          if (bF1 > 0) out.push(_kadRehatFakta(itemCards[i], i, 1));
-          for (r = 0; r < 5; r++) {
-            var cf1 = {};
-            for (var kf1 in itemCards[i]) cf1[kf1] = itemCards[i][kf1];
-            cf1.itemIndex = i;
-            cf1.fasa = 1;
-            cf1.isLastOfBaris = false;
-            cf1.isEndF1 = (bF1 === blokRehatF - 1 && r === 4); // habis F1 → trigger motivasi JQ
-            out.push(cf1);
-          }
+        // REHAT OFF: F1 × 5 → F2 × 5
+        // REHAT ON : F1 × 5 → [rehat nafas] → F2 × 5   (satu rehat sahaja setiap baris, TIADA JQ di sini)
+        for (r = 0; r < 5; r++) {
+          var cf1 = {};
+          for (var kf1 in itemCards[i]) cf1[kf1] = itemCards[i][kf1];
+          cf1.itemIndex = i;
+          cf1.fasa = 1;
+          cf1.isLastOfBaris = false;
+          cf1.isEndF1 = (r === 4); // habis F1 (untuk prefetch sahaja — JQ tidak lagi dipapar di sini)
+          out.push(cf1);
         }
-        // F2 × 5
-        for (var bF2 = 0; bF2 < blokRehatF; bF2++) {
-          if (bF2 > 0) out.push(_kadRehatFakta(itemCards[i], i, 2));
-          for (r = 0; r < 5; r++) {
+        if (rehatAktif && !srBebas) out.push(_kadRehatFakta(itemCards[i], i, 1));
+        for (r = 0; r < 5; r++) {
           var cf2 = {};
           for (var kf2 in itemCards[i]) cf2[kf2] = itemCards[i][kf2];
           cf2.itemIndex = i;
           cf2.fasa = 2;
-          cf2.isLastOfBaris = (bF2 === blokRehatF - 1 && r === 4); // habis F2 → daftar SR
+          cf2.isLastOfBaris = (r === 4); // habis F2 → daftar SR
           cf2.isEndF1 = false;
           out.push(cf2);
-          }
         }
       }
 
@@ -5208,21 +5201,10 @@
           _prefetchLaciBiasaFakta();
         }
         // Dalam laci biasa isEndF1 — tiada prefetch (G1 ke-5 dah buat)
+        // JQ TIDAK lagi dipapar antara F1 → F2 (REHAT ON: kad rehat nafas yang muncul di sini)
         cardIndex++;
         syncIndex(cardIndex);
-        if (jqAktif && jqMotivasiList.length) {
-          var f2Index = cardIndex;
-          tunjukMotivasiJQ(function() {
-            cardIndex = f2Index;
-            var statusLabel = srModeAktif
-              ? ('SR FAKTA · ' + getLabelFasaSR((srLaciSemasa && srLaciSemasa.fasaSemasa) || 0))
-              : ('FAKTA · ' + ((activeTopic && activeTopic.name) || ''));
-            setText('play-status', statusLabel);
-            renderCard();
-          });
-        } else {
-          renderCard();
-        }
+        renderCard();
         return;
       }
 
