@@ -870,6 +870,14 @@
     #grok-log .gk-g { border-left: 4px solid #000; }
     #grok-log .gk-e { border: 2px dashed #000; }
     #grok-log .gk-n { font-size: 0.7rem; font-weight: bold; margin-bottom: 2px; }
+    /* MENU BERHALAMAN — titik menegak ganti scroll bar (e-ink: lompat terus, tiada skrol) */
+    #screen-menu.active { height: 100vh; min-height: 0; overflow: hidden; position: relative; padding-left: 40px; }
+    #screen-menu.active > * { flex-shrink: 0; }
+    #menu-titik-ruang { display: block; width: 1px; margin: 0; padding: 0; }
+    #menu-titik { position: fixed; left: 2px; top: 50%; z-index: 9000; }
+    #menu-titik .mt { display: block; width: 34px; height: 40px; margin: 0; padding: 0; border: none; background: transparent; }
+    #menu-titik .mt span { display: block; width: 16px; height: 16px; margin: 12px auto; border: 2px solid #000; border-radius: 50%; background: #fff; box-sizing: border-box; }
+    #menu-titik .mt.on span { background: #000; }
   </style>
 
 </head>
@@ -886,6 +894,8 @@
   <div id="screen-menu" class="screen">
     <h1>Istigfar Kindle</h1>
     <div class="sub" id="menu-user">—</div>
+    <!-- Titik halaman menu (menegak, kiri) — tekan titik untuk ke halaman menu seterusnya -->
+    <div id="menu-titik"></div>
     <button id="btn-go-bahasa" class="btn btn-primary">Laci Bahasa</button>
     <button id="btn-go-fakta" class="btn">Laci Fakta</button>
     <!-- SOALAN FAKTA: ON → Laci Fakta papar SOALAN sahaja (baris yang ada soalan) · tiada SR -->
@@ -11544,6 +11554,101 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
   </div>
 
   <!-- PAPAN KEKUNCI SENDIRI — ganti keyboard Kindle untuk SEMUA kotak taip -->
+  <script>
+  // ══ MENU BERHALAMAN (Kindle) — ES5 sahaja ══
+  // Menu dipecah ikut tinggi skrin. Tiada scroll bar / skrol tangan — tekan titik untuk lompat terus ke halaman itu.
+  // Halaman dikira semula sendiri bila saiz skrin / isi menu berubah.
+  (function() {
+    var menu = document.getElementById('screen-menu');
+    var bekas = document.getElementById('menu-titik');
+    if (!menu || !bekas) return;
+    var tops = [0], semasa = 0, kunciLama = '', masaRoda = 0;
+    // Ruang kosong di hujung menu — supaya halaman terakhir mula tepat di atas skrin (tidak bertindih halaman sebelum)
+    var ruang = document.createElement('div');
+    ruang.id = 'menu-titik-ruang';
+    menu.appendChild(ruang);
+    function nampak() { return (' ' + menu.className + ' ').indexOf(' active ') !== -1 && menu.offsetHeight > 0; }
+    function kiraHalaman() {
+      var tinggi = menu.clientHeight, t = [0], mula = 0, anak = menu.children;
+      for (var i = 0; i < anak.length; i++) {
+        var el = anak[i];
+        if (el === bekas || el === ruang || el.tagName === 'SCRIPT' || !el.offsetHeight) continue;
+        var atas = el.offsetTop, bawah = atas + el.offsetHeight;
+        if (bawah - mula > tinggi - 12 && atas > mula) { mula = atas - 8; t.push(mula); }
+      }
+      return t;
+    }
+    function lukis() {
+      var kunci = tops.length + ':' + semasa;
+      if (kunci === kunciLama) return; // e-ink: lukis semula hanya bila berubah
+      kunciLama = kunci;
+      if (tops.length < 2) { bekas.innerHTML = ''; return; }
+      var h = '';
+      for (var i = 0; i < tops.length; i++) {
+        h += '<button type="button" class="mt' + (i === semasa ? ' on' : '') + '" data-h="' + i + '"><span></span></button>';
+      }
+      bekas.innerHTML = h;
+      bekas.style.marginTop = (-(tops.length * 40) / 2) + 'px';
+    }
+    function pergi(i) {
+      if (i >= tops.length) i = tops.length - 1;
+      if (i < 0) i = 0;
+      semasa = i;
+      var max = menu.scrollHeight - menu.clientHeight;
+      menu.scrollTop = Math.max(0, Math.min(tops[i], max));
+      // Butang yang terpotong di bawah (milik halaman seterusnya) disorok — skrin e-ink nampak kemas
+      var had = (i + 1 < tops.length) ? tops[i + 1] + 8 : 1e9, anak = menu.children;
+      for (var k = 0; k < anak.length; k++) {
+        var el = anak[k];
+        if (el === bekas || el === ruang || el.tagName === 'SCRIPT') continue;
+        var sorok = el.offsetTop >= had;
+        if ((el.style.visibility === 'hidden') !== sorok) el.style.visibility = sorok ? 'hidden' : '';
+      }
+      lukis();
+    }
+    function laraskanTinggi() {
+      // Tinggi menu = tinggi skrin tolak padding body → tiada scroll bar pada page (tak guna calc / vh — Kindle lama)
+      var cs = window.getComputedStyle(document.body);
+      var h = window.innerHeight - (parseInt(cs.paddingTop, 10) || 0) - (parseInt(cs.paddingBottom, 10) || 0);
+      if (h > 100 && menu.style.height !== h + 'px') menu.style.height = h + 'px';
+    }
+    function segar() {
+      if (!nampak()) return;
+      laraskanTinggi();
+      var baru = kiraHalaman();
+      if (menu.lastChild !== ruang) menu.appendChild(ruang);
+      var akhir = baru[baru.length - 1];
+      var isiBawah = menu.scrollHeight - ruang.offsetHeight;
+      var perlu = Math.max(0, akhir + menu.clientHeight - isiBawah);
+      if (ruang.offsetHeight !== perlu) ruang.style.height = perlu + 'px';
+      if (baru.join(',') !== tops.join(',')) { tops = baru; kunciLama = ''; pergi(semasa); }
+      else lukis();
+    }
+    bekas.onclick = function(e) {
+      var b = e.target;
+      while (b && b !== bekas && !b.getAttribute('data-h')) b = b.parentNode;
+      if (!b || b === bekas) return;
+      pergi(parseInt(b.getAttribute('data-h'), 10));
+    };
+    // Laptop: roda tetikus → halaman seterusnya / sebelumnya
+    function roda(e) {
+      if (!nampak()) return;
+      var d = e.deltaY || (e.wheelDelta ? -e.wheelDelta : 0);
+      if (e.preventDefault) e.preventDefault();
+      var kini = new Date().getTime();
+      if (!d || kini - masaRoda < 350) return;
+      masaRoda = kini;
+      pergi(semasa + (d > 0 ? 1 : -1));
+    }
+    if (menu.addEventListener) {
+      menu.addEventListener('wheel', roda, false);
+      menu.addEventListener('mousewheel', roda, false);
+    }
+    window.addEventListener('resize', function() { segar(); }, false);
+    setInterval(segar, 1000);
+    segar();
+  })();
+  </script>
   <script>
   // ══ GROK CHAT (Kindle) — ES5 sahaja ══
   // RINGAN: Kindle TIDAK panggil xAI. Soalan ditulis ke Firestore users/{uid}/grok_chat, WORKER (Railway) yang tanya Grok
