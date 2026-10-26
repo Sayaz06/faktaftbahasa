@@ -981,9 +981,9 @@
     </script>
     <button id="btn-logout" class="btn" style="margin-top:12px;font-size:0.9rem;padding:10px;">Logout</button>
     <div class="footer">SR auto-check · progress sync phone</div>
-    <div id="azan-log-wrap" style="display:none;margin-top:8px;border:1px solid #334155;border-radius:8px;padding:8px;">
-      <div style="font-size:0.65rem;color:#9ca3af;margin-bottom:6px;">Waktu Solat Hari Ini</div>
-      <div id="azan-log-list" style="font-size:0.78rem;color:#e2e8f0;line-height:2;"></div>
+    <div id="azan-log-wrap" style="display:none;margin-top:8px;border:2px solid #000;border-radius:8px;padding:8px;background:#fff;">
+      <div style="font-size:0.8rem;font-weight:bold;color:#000;margin-bottom:6px;border-bottom:1px solid #000;padding-bottom:4px;">Waktu Solat Hari Ini</div>
+      <div id="azan-log-list" style="font-size:0.95rem;color:#000;line-height:2;"></div>
     </div>
   </div>
 
@@ -11101,15 +11101,17 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         var list = document.getElementById('azan-log-list');
         if (!wrap || !list || !waktuList || !waktuList.length) return;
         var namaSolat = ['Subuh', 'Zohor', 'Asar', 'Maghrib', 'Isyak'];
-        var html = '';
+        var html = '', dahAda = {};
         waktuList.forEach(function(item) {
-          if (namaSolat.indexOf(item.nama) === -1) return; // skip Subuh esok
+          if (namaSolat.indexOf(item.nama) === -1) return;
+          if (dahAda[item.nama]) return; // skip Subuh esok (nama sama berulang)
+          dahAda[item.nama] = true;
           var d = new Date(item.waktuMs);
           var hh = d.getHours(); var mm = d.getMinutes();
           var ampm = hh >= 12 ? 'pm' : 'am';
           var hh12 = hh % 12 || 12;
           var mmStr = mm < 10 ? '0' + mm : '' + mm;
-          html += '<div style="display:flex;justify-content:space-between;"><span>' + item.nama + '</span><span style="color:#34d399;">' + hh12 + ':' + mmStr + ampm + '</span></div>';
+          html += '<div style="display:flex;justify-content:space-between;color:#000;"><span>' + item.nama + '</span><span style="font-weight:bold;color:#000;">' + hh12 + ':' + mmStr + ampm + '</span></div>';
         });
         list.innerHTML = html;
         wrap.style.display = html ? 'block' : 'none';
