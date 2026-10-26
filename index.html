@@ -11644,6 +11644,31 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       menu.addEventListener('wheel', roda, false);
       menu.addEventListener('mousewheel', roda, false);
     }
+    // Sapu (swipe) atas / bawah dengan jari → terus lompat ke halaman seterusnya / sebelumnya (tiada skrol perlahan)
+    var sentuhY = null, sentuhX = null, sentuhMasa = 0;
+    function mulaSentuh(y, x) { sentuhY = y; sentuhX = x; sentuhMasa = new Date().getTime(); }
+    function tamatSentuh(y, x) {
+      if (sentuhY === null || !nampak()) { sentuhY = null; return; }
+      var dy = sentuhY - y, dx = sentuhX - x;
+      sentuhY = null;
+      if (Math.abs(dy) < 40 || Math.abs(dy) < Math.abs(dx) || new Date().getTime() - sentuhMasa > 1500) return;
+      pergi(semasa + (dy > 0 ? 1 : -1)); // sapu ke atas = halaman bawah · sapu ke bawah = halaman atas
+    }
+    if (menu.addEventListener) {
+      menu.addEventListener('touchstart', function(e) {
+        if (e.touches && e.touches.length === 1) mulaSentuh(e.touches[0].clientY, e.touches[0].clientX);
+      }, false);
+      menu.addEventListener('touchmove', function(e) {
+        if (sentuhY !== null && nampak() && e.preventDefault) e.preventDefault(); // halang skrol asal / lantun
+      }, false);
+      menu.addEventListener('touchend', function(e) {
+        var t = e.changedTouches && e.changedTouches[0];
+        if (t) tamatSentuh(t.clientY, t.clientX);
+      }, false);
+      // Laptop: seret dengan tetikus pun boleh
+      menu.addEventListener('mousedown', function(e) { mulaSentuh(e.clientY, e.clientX); }, false);
+      menu.addEventListener('mouseup', function(e) { tamatSentuh(e.clientY, e.clientX); }, false);
+    }
     window.addEventListener('resize', function() { segar(); }, false);
     setInterval(segar, 1000);
     segar();
