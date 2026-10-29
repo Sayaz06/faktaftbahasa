@@ -36,6 +36,8 @@
     #screen-om-edit.active { display: flex; }
 
     h1 { font-size: 1.15rem; text-align: center; margin: 4px 0 6px; }
+    /* TARIKH EMAS di bawah tajuk app — gaya sama, kecil sedikit */
+    .tarikh-emas { display: none; text-align: center; font-size: 0.95rem; font-weight: bold; margin: -2px 0 6px; }
     .sub { text-align: center; font-size: 0.78rem; color: #333; margin-bottom: 8px; }
 
     .btn {
@@ -885,6 +887,7 @@
 
   <div id="screen-login" class="screen active">
     <h1>Kindle Learning Tool</h1>
+    <div class="tarikh-emas" id="te-login"></div>
     <div class="sub">Linked dengan phone · PIN</div>
     <input id="pin-input" class="pin-input" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" autocomplete="off">
     <button id="btn-login" class="btn btn-primary">Masuk</button>
@@ -893,6 +896,7 @@
 
   <div id="screen-menu" class="screen">
     <h1>Kindle Learning Tool</h1>
+    <div class="tarikh-emas" id="te-menu"></div>
     <div class="sub" id="menu-user">—</div>
     <!-- Titik halaman menu (menegak, kiri) — tekan titik untuk ke halaman menu seterusnya -->
     <div id="menu-titik"></div>
@@ -8749,7 +8753,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         showScreen('screen-perjanjian');
         var ts = Date.now();
         pjCopDoc().set({ doneTs: ts, updatedAt: ts }, { merge: true })
-          .then(function() { renderPjCopDone(ts); setText('pj-cop-save', '✓ Disahkan'); })
+          .then(function() { renderPjCopDone(ts); teSet(ts); setText('pj-cop-save', '✓ Disahkan'); })
           .catch(function(e) { setText('pj-cop-save', 'Gagal: ' + (e.message || e)); });
       });
     };
@@ -11479,6 +11483,36 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       }, 60 * 1000);
     }
 
+    // ══════════════════════════════════════════
+    // TARIKH EMAS — tarikh solat taubat disahkan (butang "Done — Solat Taubat" di Laci Perjanjian)
+    // Sumber: users/{uid}/settings/perjanjianCop.doneTs · salinan dalam peranti (papar serta-merta sebelum login)
+    // ══════════════════════════════════════════
+    var TE_BULAN = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+    function teTeks(ts) {
+      var d = new Date(ts);
+      return d.getDate() + ' ' + TE_BULAN[d.getMonth()] + ' ' + d.getFullYear();
+    }
+    function tePapar(ts) {
+      ['te-login', 'te-menu'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = ts ? ('Tarikh Emas: ' + teTeks(ts)) : '';
+        el.style.display = ts ? 'block' : 'none';
+      });
+    }
+    function teSet(ts) {
+      try { if (ts) localStorage.setItem('tarikh_emas', String(ts)); else localStorage.removeItem('tarikh_emas'); } catch (e) {}
+      tePapar(ts);
+    }
+    function teMuat() {
+      try { var c = parseInt(localStorage.getItem('tarikh_emas') || '0', 10); if (c) tePapar(c); } catch (e) {}
+      if (!currentUser) return;
+      db.collection('users').doc(currentUser.uid).collection('settings').doc('perjanjianCop').get()
+        .then(function(s) { teSet(s.exists ? (s.data().doneTs || 0) : 0); })
+        .catch(function() {});
+    }
+    teMuat();
+
     auth.onAuthStateChanged(function(user) {
       document.body.classList.remove('auth-checking');
       currentUser = user;
@@ -11486,6 +11520,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (user) {
         setText('menu-user', 'Linked · Login OK');
         loadJQStatus();
+        teMuat();
         subscribeJoggingMotivasi();
         subscribeChampion();
         subscribeWsNotif(user.uid);
