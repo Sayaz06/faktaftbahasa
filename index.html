@@ -4,6 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Kindle Learning Tool</title>
+  <!-- PWA (27 Nov): app boleh dipasang (download) di phone. Fail manifest.json, sw.js, icon-192.png dan icon-512.png berada di repo yang sama. -->
+  <meta name="theme-color" content="#000000">
+  <meta name="description" content="Laci Fakta, Laci Bahasa, SR dan Go-Tick. Linked dengan app phone.">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Fakta Bahasa">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -12717,6 +12728,15 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       }, 0);
     });
   })();
+  </script>
+  <script>
+  // PWA (27 Nov): daftar service worker (sw.js) supaya app boleh dipasang di phone dan masih boleh dibuka tanpa internet.
+  // Kindle tiada service worker, jadi blok ini tidak buat apa-apa di Kindle.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('sw.js').catch(function(e) { console.warn('Service worker gagal didaftar:', e); });
+    });
+  }
   </script>
 </body>  
 </html>
