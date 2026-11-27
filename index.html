@@ -8910,9 +8910,16 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
         var allDone = items.length > 0 && ticked === items.length;
         var btn = document.createElement('button');
         btn.className = 'gt-tajuk-item' + (t.isEmergency ? ' emergency' : '');
-        var badge = t.isEmergency ? ' 🚨' : '';
         var prog = ' (' + ticked + '/' + items.length + (allDone ? ' ✓' : '') + ')';
-        btn.textContent = (t.title || 'Tanpa Tajuk') + badge + prog;
+        // 27 Nov: tanda KECEMASAN ditulis dengan teks (Kindle tidak boleh papar emoji)
+        btn.appendChild(document.createTextNode(t.title || 'Tanpa Tajuk'));
+        if (t.isEmergency) {
+          var bd = document.createElement('span');
+          bd.className = 'gt-emergency-badge';
+          bd.textContent = 'KECEMASAN';
+          btn.appendChild(bd);
+        }
+        btn.appendChild(document.createTextNode(prog));
         btn.onclick = function() { gtOpenDestinasi(t); };
         list.appendChild(btn);
       });
@@ -8922,7 +8929,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       gtActiveTajuk = t;
       var items = t.items || [];
       var ticked = items.filter(function(it) { return it.ticked; }).length;
-      setText('gt-check-status', (t.isEmergency ? '🚨 ' : '') + (t.title || '') + ' · ' + ticked + '/' + items.length);
+      setText('gt-check-status', (t.isEmergency ? 'KECEMASAN: ' : '') + (t.title || '') + ' · ' + ticked + '/' + items.length);
       gtRenderChecklist();
       showScreen('screen-gotick-check');
     }
@@ -8962,7 +8969,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
           var gl = document.createElement('div');
           gl.className = 'gt-group-label';
           gl.style.cssText = grp.isEmergency ? 'color:#800;border-bottom-color:#800;' : '';
-          gl.textContent = (grp.isEmergency ? '🚨 ' : '') + grp.name;
+          gl.textContent = (grp.isEmergency ? 'KECEMASAN: ' : '') + grp.name;
           el.appendChild(gl);
         }
         grp.items.forEach(function(entry) {
@@ -8985,14 +8992,14 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
 
       // Update status
       var ticked = items.filter(function(it) { return it.ticked; }).length;
-      setText('gt-check-status', (gtActiveTajuk.isEmergency ? '🚨 ' : '') + (gtActiveTajuk.title || '') + ' · ' + ticked + '/' + items.length + (ticked === items.length && items.length > 0 ? ' ✓' : ''));
+      setText('gt-check-status', (gtActiveTajuk.isEmergency ? 'KECEMASAN: ' : '') + (gtActiveTajuk.title || '') + ' · ' + ticked + '/' + items.length + (ticked === items.length && items.length > 0 ? ' ✓' : ''));
     }
 
     function gtToggleItem(idx) {
       if (!gtActiveTajuk || !currentUser) return;
       var items = (gtActiveTajuk.items || []).slice();
       if (idx < 0 || idx >= items.length) return;
-      items[idx] = { group: items[idx].group || '', name: items[idx].name || '', ticked: !items[idx].ticked };
+      items[idx] = { group: items[idx].group || '', name: items[idx].name || '', ticked: !items[idx].ticked, isEmergency: !!items[idx].isEmergency }; // 27 Nov: kekalkan tanda Kecemasan
       gtActiveTajuk.items = items;
       db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
         .update({ items: items, updatedAt: Date.now() })
@@ -9004,7 +9011,7 @@ if(document.getElementById('btn-tg-clear-session')) document.getElementById('btn
       if (!gtActiveTajuk || !currentUser) return;
       wsConfirm('Untick semua item dalam "' + (gtActiveTajuk.title || '') + '"?', function() {
         var items = (gtActiveTajuk.items || []).map(function(it) {
-          return { group: it.group || '', name: it.name || '', ticked: false };
+          return { group: it.group || '', name: it.name || '', ticked: false, isEmergency: !!it.isEmergency }; // 27 Nov: kekalkan tanda Kecemasan
         });
         gtActiveTajuk.items = items;
         db.collection('users').doc(currentUser.uid).collection('go_tick_tajuk').doc(gtActiveTajuk.id)
